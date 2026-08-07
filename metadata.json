@@ -1,0 +1,8 @@
+{
+  "name": "SortStudio",
+  "description": "Roleta de sorteios avançada com modos de jogo, balanceamento de probabilidade dinâmico, sons customizáveis e mais.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
