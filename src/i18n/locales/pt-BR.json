@@ -13,7 +13,10 @@
       "add": "Adicionar",
       "bulkAdd": "Colar lista...",
       "pastePlaceholder": "Cole nomes aqui, um por linha...",
-      "importing": "Importando..."
+      "importing": "Importando...",
+      "sortOptions": "Opções de Ordenação",
+      "selectAll": "Selecionar todas",
+      "deselectAll": "Desmarcar todas"
     },
     "results": {
       "empty": "Nenhum resultado ainda",

@@ -144,6 +144,27 @@ export const useWheelActions = () => {
     if (!isSpinning) setItems((prev) => secureShuffle(prev));
   };
 
+  const handleToggleSelectAll = () => {
+    const { isSpinning, items, setItems } = useAppStore.getState();
+    if (isSpinning || items.length === 0) return;
+    const allSelected = items.every((i) => i.enabled !== false);
+    setItems((prev) => prev.map((item) => ({ ...item, enabled: !allSelected })));
+  };
+
+  const handleSelectAll = () => {
+    const { isSpinning, setItems } = useAppStore.getState();
+    if (!isSpinning) {
+      setItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
+    }
+  };
+
+  const handleDeselectAll = () => {
+    const { isSpinning, setItems } = useAppStore.getState();
+    if (!isSpinning) {
+      setItems((prev) => prev.map((item) => ({ ...item, enabled: false })));
+    }
+  };
+
   const handleSort = () => {
     const { isSpinning, setItems } = useAppStore.getState();
     if (!isSpinning) {
@@ -458,6 +479,9 @@ export const useWheelActions = () => {
     handleRemoveItem,
     handleMoveItem,
     handleShuffle,
+    handleToggleSelectAll,
+    handleSelectAll,
+    handleDeselectAll,
     handleSort,
     handleAddColor,
     handleRemoveColor,

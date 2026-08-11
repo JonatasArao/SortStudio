@@ -13,7 +13,10 @@
       "add": "Add",
       "bulkAdd": "Paste list...",
       "pastePlaceholder": "Paste names here, one per line...",
-      "importing": "Importing..."
+      "importing": "Importing...",
+      "sortOptions": "Sort Options",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all"
     },
     "results": {
       "empty": "No results yet",
