@@ -47,6 +47,9 @@
     },
     "general": {
       "title": "General Settings",
+      "basicInfo": "Basic Information",
+      "gameModes": "Game Modes",
+      "postDraw": "Post-Draw & Visuals",
       "drawName": "Draw Name",
       "eliminationMessage": "Elimination Message",
       "eliminationMessagePlh": "Ex: ELIMINATED 💀",
@@ -80,7 +83,19 @@
       "balanceScope": "Balancing Scope",
       "balanceScopeDesc": "Define if the win balancing (division/accumulation) should consider the full history or just the current season.",
       "balanceScopeCurrent": "Current Season Only",
-      "balanceScopeAll": "General Results (Everything)"
+      "balanceScopeAll": "General Results (Everything)",
+      "ignoreNewItemWeight": "Match chances for new items",
+      "ignoreNewItemWeightDesc": "Participants never drawn receive a weight based on those already drawn.",
+      "newItemWeightModeMax": "Highest",
+      "newItemWeightModeMaxDesc": "Equal to the participant with the highest chance.",
+      "newItemWeightModeMedian": "Median",
+      "newItemWeightModeMedianDesc": "Exact middle value among weights.",
+      "newItemWeightModeAverage": "Average",
+      "newItemWeightModeAverageDesc": "Arithmetic mean of current weights.",
+      "newItemWeightModeMin": "Lowest",
+      "newItemWeightModeMinDesc": "Equal to the participant with the lowest chance.",
+      "newItemWeightModeBase": "Original weight",
+      "newItemWeightModeBaseDesc": "Just the default weight (1), no additional bonuses."
     },
     "seasons": {
       "title": "Seasons",

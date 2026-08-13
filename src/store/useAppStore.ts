@@ -46,6 +46,10 @@ interface AppState {
   setSeasons: (seasons: Season[] | ((prev: Season[]) => Season[])) => void;
   pitySystemEnabled: boolean;
   setPitySystemEnabled: (pitySystemEnabled: boolean) => void;
+  ignoreNewItemWeight: boolean;
+  setIgnoreNewItemWeight: (val: boolean) => void;
+  newItemWeightMode: 'max' | 'median' | 'average' | 'min' | 'base';
+  setNewItemWeightMode: (mode: 'max' | 'median' | 'average' | 'min' | 'base') => void;
   showPitySystemVisually: boolean;
   setShowPitySystemVisually: (show: boolean) => void;
   antiRepetitionEnabled: boolean;
@@ -183,6 +187,10 @@ export const useAppStore = create<AppState>((set) => ({
   setSeasons: (seasons) => set((state) => ({ seasons: typeof seasons === 'function' ? seasons(state.seasons) : seasons })),
   pitySystemEnabled: false,
   setPitySystemEnabled: (pitySystemEnabled) => set({ pitySystemEnabled }),
+  ignoreNewItemWeight: false,
+  setIgnoreNewItemWeight: (ignoreNewItemWeight) => set({ ignoreNewItemWeight }),
+  newItemWeightMode: 'max',
+  setNewItemWeightMode: (newItemWeightMode) => set({ newItemWeightMode }),
   showPitySystemVisually: true,
   setShowPitySystemVisually: (show) => set({ showPitySystemVisually: show }),
   antiRepetitionEnabled: false,

@@ -47,6 +47,9 @@
     },
     "general": {
       "title": "Configurações Gerais",
+      "basicInfo": "Informações Básicas",
+      "gameModes": "Modos de Jogo",
+      "postDraw": "Pós-Sorteio e Visuais",
       "drawName": "Nome do Sorteio",
       "eliminationMessage": "Mensagem de Eliminação",
       "eliminationMessagePlh": "Ex: ELIMINADO 💀",
@@ -80,7 +83,19 @@
       "balanceScope": "Escopo do Balanceamento",
       "balanceScopeDesc": "Define se o balanceamento de vitórias (divisão/acumulação) deve considerar o histórico completo ou apenas a temporada atual.",
       "balanceScopeCurrent": "Apenas Temporada Atual",
-      "balanceScopeAll": "Resultados Gerais (Tudo)"
+      "balanceScopeAll": "Resultados Gerais (Tudo)",
+      "ignoreNewItemWeight": "Equiparar chances de novos",
+      "ignoreNewItemWeightDesc": "Participantes nunca sorteados recebem peso com base nos que já participaram.",
+      "newItemWeightModeMax": "Maior peso",
+      "newItemWeightModeMaxDesc": "Igual ao participante com maior chance.",
+      "newItemWeightModeMedian": "Mediana",
+      "newItemWeightModeMedianDesc": "Valor central exato entre os pesos.",
+      "newItemWeightModeAverage": "Média",
+      "newItemWeightModeAverageDesc": "Média aritmética dos pesos atuais.",
+      "newItemWeightModeMin": "Menor",
+      "newItemWeightModeMinDesc": "Igual ao participante com menor chance.",
+      "newItemWeightModeBase": "Peso original",
+      "newItemWeightModeBaseDesc": "Apenas o peso padrão (1), sem bônus adicionais."
     },
     "seasons": {
       "title": "Temporadas",

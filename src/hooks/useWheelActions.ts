@@ -1,4 +1,5 @@
 import { filterResultsByScope } from "../utils/seasonUtils";
+import { calculateWeights } from "../utils/weightUtils";
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { getSecureRandom, secureShuffle } from '../utils/cryptoRandom';
@@ -203,31 +204,24 @@ export const useWheelActions = () => {
     }
     clearTimeouts();
 
+    let itemsWithFinalWeights = currentValidItems.map(i => ({ ...i, weight: ignoreWeights ? 1 : (i.weight || 1) }));
+    if (!ignoreWeights) {
+      itemsWithFinalWeights = calculateWeights(
+        currentValidItems,
+        scopedResults,
+        state.pitySystemEnabled,
+        state.balanceWeightsByWins,
+        state.ignoreNewItemWeight,
+        state.newItemWeightMode,
+        state.eliminationMode,
+        state.wheelType,
+        true // applyPityAndBalance is always true during actual spin
+      );
+    }
+
     const getActualWeight = (item: any) => {
-      if (ignoreWeights) return 1;
-
-      const baseWeight = item.weight || 1;
-      let extraWeight = 0;
-      let finalWeight = baseWeight;
-      
-      if (state.pitySystemEnabled && !state.eliminationMode) {
-        // Increase weight for those who haven't won
-        const idx = scopedResults.findIndex((r) => 
-          r.id === item.id || r.text.trim().toLowerCase() === item.text.trim().toLowerCase()
-        );
-        extraWeight = idx === -1 ? scopedResults.length : idx;
-        finalWeight += extraWeight;
-      }
-
-      if (state.balanceWeightsByWins && !state.eliminationMode) {
-        // Decrease weight based on win count
-        const winCount = scopedResults.filter((r) => r.id === item.id || r.text.trim().toLowerCase() === item.text.trim().toLowerCase()).length;
-        if (winCount > 0) {
-           finalWeight = finalWeight / (winCount + 1);
-        }
-      }
-
-      return finalWeight;
+      const found = itemsWithFinalWeights.find(i => i.id === item.id);
+      return found ? found.weight : 1;
     };
 
     let totalWeight = currentValidItems.reduce(

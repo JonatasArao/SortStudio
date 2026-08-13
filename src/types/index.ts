@@ -93,6 +93,8 @@ export interface AppSettings {
   balanceScope?: 'all' | 'current_season';
   pitySystemEnabled?: boolean;
   showPitySystemVisually?: boolean;
+  ignoreNewItemWeight?: boolean;
+  newItemWeightMode?: 'max' | 'median' | 'average' | 'min' | 'base';
   antiRepetitionEnabled?: boolean;
   antiRepetitionCount?: number;
   eliminationSoundType?: string;

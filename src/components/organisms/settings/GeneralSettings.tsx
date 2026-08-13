@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Clock, Trash2, Skull, Crown } from 'lucide-react';
+import { Sparkles, Clock, Trash2, Skull, Crown, Settings, Gamepad2, Scale, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Toggle } from '../../atoms/Toggle';
 import { Input } from '../../atoms/Input';
@@ -35,6 +35,10 @@ export const GeneralSettings = () => {
   const setBalanceWeightsByWins = useAppStore(s => s.setBalanceWeightsByWins);
   const pitySystemEnabled = useAppStore(s => s.pitySystemEnabled);
   const setPitySystemEnabled = useAppStore(s => s.setPitySystemEnabled);
+  const ignoreNewItemWeight = useAppStore(s => s.ignoreNewItemWeight);
+  const setIgnoreNewItemWeight = useAppStore(s => s.setIgnoreNewItemWeight);
+  const newItemWeightMode = useAppStore(s => s.newItemWeightMode);
+  const setNewItemWeightMode = useAppStore(s => s.setNewItemWeightMode);
   const showPitySystemVisually = useAppStore(s => s.showPitySystemVisually);
   const setShowPitySystemVisually = useAppStore(s => s.setShowPitySystemVisually);
   const balanceScope = useAppStore(s => s.balanceScope);
@@ -43,165 +47,227 @@ export const GeneralSettings = () => {
   const penaltySaveWins = useAppStore(s => s.penaltySaveWins);
   const setPenaltySaveWins = useAppStore(s => s.setPenaltySaveWins);
 
+  const SectionCard = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
+    <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col gap-5">
+      <h4 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+        {icon} {title}
+      </h4>
+      <div className="flex flex-col gap-5">
+        {children}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
-      <div>
-        <h3 className="text-lg font-bold text-white mb-4">{t('settings.general.title')}</h3>
-        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 space-y-6 shadow-xl">
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
+      <h3 className="text-lg font-bold text-white mb-2">{t('settings.general.title')}</h3>
+
+      <SectionCard title={t('settings.general.basicInfo', 'Informações Básicas')} icon={<Settings size={18} className="text-blue-400" />}>
+        <div className="space-y-2 flex flex-col">
+          <label className="text-sm font-medium text-slate-300">{t('settings.general.drawName')}</label>
+          <Input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+        </div>
+        
+        {eliminationMode ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 flex flex-col">
+              <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Skull size={14} className="text-red-400"/> {t('settings.general.eliminationMessage')}</label>
+              <Input type="text" value={eliminationMessage} onChange={(e) => setEliminationMessage(e.target.value)} placeholder={t('settings.general.eliminationMessagePlh')} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-red-500 outline-none transition-colors" />
+            </div>
+            <div className="space-y-2 flex flex-col">
+              <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Crown size={14} className="text-yellow-400"/> {t('settings.general.winnerMessage')}</label>
+              <Input type="text" value={grandWinnerMessage} onChange={(e) => setGrandWinnerMessage(e.target.value)} placeholder={t('settings.general.winnerMessagePlh')} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none transition-colors" />
+            </div>
+          </div>
+        ) : (
           <div className="space-y-2 flex flex-col">
-            <label className="text-sm font-medium text-slate-300">{t('settings.general.drawName')}</label>
-            <Input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+            <label className="text-sm font-medium text-slate-300">{t('settings.general.winMessage')}</label>
+            <Input type="text" value={winMessage} onChange={(e) => setWinMessage(e.target.value)} placeholder={t('settings.general.winMessagePlh')} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+          </div>
+        )}
+
+        <div className="space-y-2 pt-2 border-t border-slate-800/80">
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Clock size={16} className="text-blue-400"/> {eliminationMode ? t('settings.general.spinTimeFinal') : t('settings.general.spinTime')}</label>
+            <span className="text-xs font-bold bg-blue-600/20 px-2 py-1 rounded text-blue-400 border border-blue-500/20">{spinTime} {t('settings.general.seconds')}</span>
+          </div>
+          <input type="range" min="1" max="30" value={spinTime} onChange={(e) => setSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-3" />
+        </div>
+      </SectionCard>
+
+      <SectionCard title={t('settings.general.gameModes', 'Modos de Jogo')} icon={<Gamepad2 size={18} className="text-purple-400" />}>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 pr-4">
+              <label className="text-sm font-medium text-slate-200 flex items-center gap-2">⚔️ {t('settings.general.eliminationMode')}</label>
+              <p className="text-xs text-slate-400 mt-1">{t('settings.general.eliminationModeDesc')}</p>
+            </div>
+            <Toggle enabled={eliminationMode} onChange={setEliminationMode} />
           </div>
           
-          {eliminationMode ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 flex flex-col">
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Skull size={14} /> {t('settings.general.eliminationMessage')}</label>
-                <Input type="text" value={eliminationMessage} onChange={(e) => setEliminationMessage(e.target.value)} placeholder={t('settings.general.eliminationMessagePlh')} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-red-500 outline-none transition-colors" />
-              </div>
-              <div className="space-y-2 flex flex-col">
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Crown size={14} /> {t('settings.general.winnerMessage')}</label>
-                <Input type="text" value={grandWinnerMessage} onChange={(e) => setGrandWinnerMessage(e.target.value)} placeholder={t('settings.general.winnerMessagePlh')} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none transition-colors" />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2 flex flex-col">
-              <label className="text-sm font-medium text-slate-300">{t('settings.general.winMessage')}</label>
-              <Input type="text" value={winMessage} onChange={(e) => setWinMessage(e.target.value)} placeholder={t('settings.general.winMessagePlh')} className="w-full bg-[#14151a] border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition-colors" />
-            </div>
-          )}
-
-          <div className="space-y-2 pt-2 border-t border-slate-700">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Clock size={16}/> {eliminationMode ? t('settings.general.spinTimeFinal') : t('settings.general.spinTime')}</label>
-              <span className="text-xs font-bold bg-blue-600/20 px-2 py-1 rounded text-blue-400 border border-blue-500/20">{spinTime} {t('settings.general.seconds')}</span>
-            </div>
-            <input type="range" min="1" max="30" value={spinTime} onChange={(e) => setSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-3" />
-          </div>
-
-          <div className="flex flex-col gap-4 pt-4 border-t border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">⚔️ {t('settings.general.eliminationMode')}</label>
-                <p className="text-xs text-slate-500 mt-1">{t('settings.general.eliminationModeDesc')}</p>
-              </div>
-              <Toggle enabled={eliminationMode} onChange={setEliminationMode} />
-            </div>
-            {eliminationMode && (
-              <>
-                <div className="flex items-center justify-between pl-6 py-2 border-l-2 border-slate-700 ml-2">
-                  <div>
-                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">{t('settings.general.autoContinue')}</label>
-                    <p className="text-xs text-slate-500 mt-1">{t('settings.general.autoContinueDesc')}</p>
-                  </div>
-                  <Toggle enabled={autoContinueElimination} onChange={setAutoContinueElimination} />
+          {eliminationMode && (
+            <div className="flex flex-col gap-4 pl-4 ml-2 border-l-2 border-purple-500/30">
+              <div className="flex items-center justify-between bg-slate-950/40 p-3 rounded-lg border border-slate-800/60">
+                <div className="flex-1 pr-4">
+                  <label className="text-sm font-medium text-slate-300">{t('settings.general.autoContinue')}</label>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('settings.general.autoContinueDesc')}</p>
                 </div>
-                <div className="space-y-2 pl-6 py-2 border-l-2 border-slate-700 ml-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">{t('settings.general.fastSpinTime')}</label>
-                    <span className="text-xs font-bold bg-red-600/20 px-2 py-1 rounded text-red-400 border border-red-500/20">{eliminationSpinTime} {t('settings.general.seconds')}</span>
-                  </div>
-                  <input type="range" min="0.5" max="30" step="0.5" value={eliminationSpinTime} onChange={(e) => setEliminationSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500 mt-3" />
+                <Toggle enabled={autoContinueElimination} onChange={setAutoContinueElimination} />
+              </div>
+              <div className="bg-slate-950/40 p-3 rounded-lg border border-slate-800/60 space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium text-slate-300">{t('settings.general.fastSpinTime')}</label>
+                  <span className="text-xs font-bold bg-red-600/20 px-2 py-1 rounded text-red-400 border border-red-500/20">{eliminationSpinTime} {t('settings.general.seconds')}</span>
                 </div>
-              </>
-            )}
-          </div>
-
-          {wheelType === 'penalty_shootout' && (
-            <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-              <div>
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">🧤 {t('settings.general.penaltySaveWins')}</label>
-                <p className="text-xs text-slate-500 mt-1">{t('settings.general.penaltySaveWinsDesc')}</p>
+                <input type="range" min="0.5" max="30" step="0.5" value={eliminationSpinTime} onChange={(e) => setEliminationSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500" />
               </div>
-              <Toggle enabled={penaltySaveWins} onChange={setPenaltySaveWins} />
             </div>
           )}
+        </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-            <div>
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">🔄 {t('settings.general.antiRepetition')}</label>
-              <p className="text-xs text-slate-500 mt-1">{t('settings.general.antiRepetitionDesc')}</p>
+        {wheelType === 'penalty_shootout' && (
+          <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
+            <div className="flex-1 pr-4">
+              <label className="text-sm font-medium text-slate-200 flex items-center gap-2">🧤 {t('settings.general.penaltySaveWins')}</label>
+              <p className="text-xs text-slate-400 mt-1">{t('settings.general.penaltySaveWinsDesc')}</p>
             </div>
-            <Toggle enabled={antiRepetitionEnabled} onChange={setAntiRepetitionEnabled} />
+            <Toggle enabled={penaltySaveWins} onChange={setPenaltySaveWins} />
           </div>
-          {antiRepetitionEnabled && (
-            <div className="flex items-center justify-between bg-slate-950/30 p-4 rounded-xl border border-slate-800/80 ml-4">
-              <label className="text-sm text-slate-300">{t('settings.general.avoidLastX')}</label>
-              <input 
-                type="number"
-                min="1"
-                max="20"
-                value={antiRepetitionCount}
-                onChange={(e) => setAntiRepetitionCount(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-16 bg-slate-950 text-white border border-slate-800 rounded-lg px-2 py-1 text-sm text-center focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          )}
+        )}
+      </SectionCard>
 
-          <div className="pt-4 border-t border-slate-700 space-y-4">
-            <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">⚖️ {t('settings.general.balance')}</h4>
-            
-            <div className="flex items-center justify-between ml-2">
-              <div>
-                <label className="text-sm font-medium text-slate-300">📉 {t('settings.general.reduceByWins')}</label>
-                <p className="text-xs text-slate-500 mt-1">{t('settings.general.reduceByWinsDesc')}</p>
-              </div>
-              <Toggle enabled={balanceWeightsByWins} onChange={setBalanceWeightsByWins} />
+      <SectionCard title={t('settings.general.balance')} icon={<Scale size={18} className="text-emerald-400" />}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1 pr-4">
+            <label className="text-sm font-medium text-slate-200 flex items-center gap-2">🔄 {t('settings.general.antiRepetition')}</label>
+            <p className="text-xs text-slate-400 mt-1">{t('settings.general.antiRepetitionDesc')}</p>
+          </div>
+          <Toggle enabled={antiRepetitionEnabled} onChange={setAntiRepetitionEnabled} />
+        </div>
+        {antiRepetitionEnabled && (
+          <div className="flex items-center justify-between bg-slate-950/40 p-3 rounded-lg border border-slate-800/60 ml-4">
+            <label className="text-sm text-slate-300">{t('settings.general.avoidLastX')}</label>
+            <input 
+              type="number"
+              min="1"
+              max="20"
+              value={antiRepetitionCount}
+              onChange={(e) => setAntiRepetitionCount(Math.max(1, parseInt(e.target.value) || 1))}
+              className="w-16 bg-slate-900 text-white border border-slate-700 rounded-lg px-2 py-1 text-sm text-center focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+        )}
+
+        <div className="pt-4 border-t border-slate-800/80 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 pr-4">
+              <label className="text-sm font-medium text-slate-200 flex items-center gap-2">📉 {t('settings.general.reduceByWins')}</label>
+              <p className="text-xs text-slate-400 mt-1">{t('settings.general.reduceByWinsDesc')}</p>
             </div>
-            <div className="flex items-center justify-between ml-2">
-              <div>
-                <label className="text-sm font-medium text-slate-300">📈 {t('settings.general.pitySystem')}</label>
-                <p className="text-xs text-slate-500 mt-1">{t('settings.general.pitySystemDesc')}</p>
-              </div>
-              <Toggle enabled={pitySystemEnabled} onChange={setPitySystemEnabled} />
+            <Toggle enabled={balanceWeightsByWins} onChange={setBalanceWeightsByWins} />
+          </div>
+          
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800/40">
+            <div className="flex-1 pr-4">
+              <label className="text-sm font-medium text-slate-200 flex items-center gap-2">📈 {t('settings.general.pitySystem')}</label>
+              <p className="text-xs text-slate-400 mt-1">{t('settings.general.pitySystemDesc')}</p>
             </div>
-            {(pitySystemEnabled || balanceWeightsByWins) && (
-              <>
-                <div className="flex items-center justify-between bg-slate-950/30 p-4 rounded-xl border border-slate-800/80 ml-2">
-                  <label className="text-sm text-slate-300">{t('settings.general.showPity')}</label>
+            <Toggle enabled={pitySystemEnabled} onChange={setPitySystemEnabled} />
+          </div>
+
+          {(pitySystemEnabled || balanceWeightsByWins) && (
+            <div className="flex flex-col gap-3 pl-4 ml-2 border-l-2 border-emerald-500/30">
+              <div className="flex items-center justify-between bg-slate-950/40 p-3 rounded-lg border border-slate-800/60">
+                <label className="text-sm text-slate-300">{t('settings.general.showPity')}</label>
+                <Toggle 
+                  enabled={showPitySystemVisually}
+                  onChange={setShowPitySystemVisually}
+                />
+              </div>
+              
+              <div className="flex flex-col gap-2 bg-slate-950/40 p-3 rounded-lg border border-slate-800/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-4">
+                    <label className="text-sm font-medium text-slate-300">{t('settings.general.ignoreNewItemWeight', 'Equiparar chances de novos')}</label>
+                    <p className="text-xs text-slate-500 mt-0.5">{t('settings.general.ignoreNewItemWeightDesc', 'Participantes nunca sorteados recebem peso com base nos que já participaram.')}</p>
+                  </div>
                   <Toggle 
-                    enabled={showPitySystemVisually}
-                    onChange={setShowPitySystemVisually}
+                    enabled={ignoreNewItemWeight}
+                    onChange={setIgnoreNewItemWeight}
                   />
                 </div>
-                
-                <div className="pt-2 border-t border-slate-700/30 ml-2">
-                  <div className="flex flex-col gap-2">
-                    <div>
-                      <label className="text-sm font-medium text-slate-300">{t('settings.general.balanceScope')}</label>
-                      <p className="text-xs text-slate-500 mt-0.5">{t('settings.general.balanceScopeDesc')}</p>
-                    </div>
-                    <div className="flex items-center justify-between bg-slate-950/30 p-4 rounded-xl border border-slate-800/80">
-                      <span className="text-sm text-slate-300">
-                        {balanceScope === 'current_season' ? t('settings.general.balanceScopeCurrent') : t('settings.general.balanceScopeAll')}
-                      </span>
-                      <Toggle 
-                        enabled={balanceScope === 'current_season'}
-                        onChange={(v) => setBalanceScope(v ? 'current_season' : 'all')}
-                      />
-                    </div>
+                {ignoreNewItemWeight && (
+                  <div className="pt-3 border-t border-slate-800/60 mt-1 flex flex-col gap-2">
+                    {[
+                      { id: 'max', label: t('settings.general.newItemWeightModeMax'), desc: t('settings.general.newItemWeightModeMaxDesc') },
+                      { id: 'average', label: t('settings.general.newItemWeightModeAverage'), desc: t('settings.general.newItemWeightModeAverageDesc') },
+                      { id: 'median', label: t('settings.general.newItemWeightModeMedian'), desc: t('settings.general.newItemWeightModeMedianDesc') },
+                      { id: 'min', label: t('settings.general.newItemWeightModeMin'), desc: t('settings.general.newItemWeightModeMinDesc') },
+                      { id: 'base', label: t('settings.general.newItemWeightModeBase', 'Peso original'), desc: t('settings.general.newItemWeightModeBaseDesc', 'Apenas o peso padrão (1).') },
+                    ].map((mode) => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setNewItemWeightMode(mode.id as any)}
+                        className={`text-left p-3 rounded-lg border transition-all ${
+                          newItemWeightMode === mode.id 
+                            ? 'bg-emerald-500/10 border-emerald-500/50 ring-1 ring-emerald-500/20' 
+                            : 'bg-slate-900 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-sm font-semibold ${newItemWeightMode === mode.id ? 'text-emerald-400' : 'text-slate-300'}`}>
+                            {mode.label}
+                          </span>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${newItemWeightMode === mode.id ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-600'}`}>
+                            {newItemWeightMode === mode.id && <div className="w-2 h-2 rounded-full bg-emerald-400" />}
+                          </div>
+                        </div>
+                        <p className={`text-xs mt-1 ${newItemWeightMode === mode.id ? 'text-emerald-500/80' : 'text-slate-500'}`}>
+                          {mode.desc}
+                        </p>
+                      </button>
+                    ))}
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                )}
+              </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-            <div>
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Sparkles size={16}/> {t('settings.general.confetti')}</label>
-              <p className="text-xs text-slate-500 mt-1">{t('settings.general.confettiDesc')}</p>
+              <div className="bg-slate-950/40 p-3 rounded-lg border border-slate-800/60 space-y-2">
+                <div>
+                  <label className="text-sm font-medium text-slate-300">{t('settings.general.balanceScope')}</label>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('settings.general.balanceScopeDesc')}</p>
+                </div>
+                <div className="flex items-center justify-between bg-slate-900/50 p-2 rounded-md border border-slate-800">
+                  <span className="text-sm text-slate-300 font-medium">
+                    {balanceScope === 'current_season' ? t('settings.general.balanceScopeCurrent') : t('settings.general.balanceScopeAll')}
+                  </span>
+                  <Toggle 
+                    enabled={balanceScope === 'current_season'}
+                    onChange={(v) => setBalanceScope(v ? 'current_season' : 'all')}
+                  />
+                </div>
+              </div>
             </div>
-            <Toggle enabled={showConfetti} onChange={setShowConfetti} />
-          </div>
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-            <div>
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Trash2 size={16}/> {t('settings.general.autoRemove')}</label>
-              <p className="text-xs text-slate-500 mt-1">{t('settings.general.autoRemoveDesc')}</p>
-            </div>
-            <Toggle enabled={autoRemoveWinner} onChange={setAutoRemoveWinner} />
-          </div>
+          )}
         </div>
-      </div>
+      </SectionCard>
+
+      <SectionCard title={t('settings.general.postDraw', 'Pós-Sorteio e Visuais')} icon={<Zap size={18} className="text-amber-400" />}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1 pr-4">
+            <label className="text-sm font-medium text-slate-200 flex items-center gap-2"><Sparkles size={16} className="text-amber-400"/> {t('settings.general.confetti')}</label>
+            <p className="text-xs text-slate-400 mt-1">{t('settings.general.confettiDesc')}</p>
+          </div>
+          <Toggle enabled={showConfetti} onChange={setShowConfetti} />
+        </div>
+        <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
+          <div className="flex-1 pr-4">
+            <label className="text-sm font-medium text-slate-200 flex items-center gap-2"><Trash2 size={16} className="text-red-400"/> {t('settings.general.autoRemove')}</label>
+            <p className="text-xs text-slate-400 mt-1">{t('settings.general.autoRemoveDesc')}</p>
+          </div>
+          <Toggle enabled={autoRemoveWinner} onChange={setAutoRemoveWinner} />
+        </div>
+      </SectionCard>
+
     </div>
   );
 };
