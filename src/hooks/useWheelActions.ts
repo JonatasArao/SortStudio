@@ -3,6 +3,7 @@ import { calculateWeights } from "../utils/weightUtils";
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { getSecureRandom, secureShuffle } from '../utils/cryptoRandom';
+import { getSpinTimeRanges } from '../utils/spinUtils';
 import { getAudioCtx, playTickSound, playWinSound, playFailureSound, stopWinSound, stopRaceAudio } from '../utils/audioEngine';
 import { useWheelData } from './useWheelData';
 import {
