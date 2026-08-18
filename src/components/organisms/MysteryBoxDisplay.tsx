@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { getSpinTimeRanges } from '../../utils/spinUtils';
 import { useWheelData } from '../../hooks/useWheelData';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -59,7 +60,10 @@ export const MysteryBoxDisplay = () => {
   useEffect(() => {
     if (isSpinning) {
        setSpinProgress(0);
-       const duration = (eliminationMode ? eliminationSpinTime : spinTime) * 1000;
+       let durationSec = eliminationMode ? eliminationSpinTime : spinTime;
+       const spinRange = getSpinTimeRanges('mystery_box', eliminationMode);
+       durationSec = Math.max(spinRange.min, Math.min(spinRange.max, durationSec));
+       const duration = durationSec * 1000;
        const startTime = performance.now();
        let animId: number;
        

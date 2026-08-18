@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Sparkles, Clock, Trash2, Skull, Crown, Settings, Gamepad2, Scale, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Toggle } from '../../atoms/Toggle';
 import { Input } from '../../atoms/Input';
 import { useAppStore } from '../../../store/useAppStore';
+import { getSpinTimeRanges } from '../../../utils/spinUtils';
 
 export const GeneralSettings = () => {
   const { t } = useTranslation();
@@ -46,6 +47,20 @@ export const GeneralSettings = () => {
   const wheelType = useAppStore(s => s.wheelType);
   const penaltySaveWins = useAppStore(s => s.penaltySaveWins);
   const setPenaltySaveWins = useAppStore(s => s.setPenaltySaveWins);
+
+
+
+  const spinRange = useMemo(() => getSpinTimeRanges(wheelType, false), [wheelType]);
+  const elimSpinRange = useMemo(() => getSpinTimeRanges(wheelType, true), [wheelType]);
+
+  useEffect(() => {
+    if (spinTime < spinRange.min) setSpinTime(spinRange.min);
+    else if (spinTime > spinRange.max) setSpinTime(spinRange.max);
+    
+    if (eliminationSpinTime < elimSpinRange.min) setEliminationSpinTime(elimSpinRange.min);
+    else if (eliminationSpinTime > elimSpinRange.max) setEliminationSpinTime(elimSpinRange.max);
+  }, [wheelType, spinRange, elimSpinRange, spinTime, eliminationSpinTime, setSpinTime, setEliminationSpinTime]);
+
 
   const SectionCard = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
     <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col gap-5">
@@ -91,7 +106,7 @@ export const GeneralSettings = () => {
             <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Clock size={16} className="text-blue-400"/> {eliminationMode ? t('settings.general.spinTimeFinal') : t('settings.general.spinTime')}</label>
             <span className="text-xs font-bold bg-blue-600/20 px-2 py-1 rounded text-blue-400 border border-blue-500/20">{spinTime} {t('settings.general.seconds')}</span>
           </div>
-          <input type="range" min="1" max="30" value={spinTime} onChange={(e) => setSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-3" />
+          <input type="range" min={spinRange.min} max={spinRange.max} step={spinRange.step} value={spinTime} onChange={(e) => setSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-3" />
         </div>
       </SectionCard>
 
@@ -119,7 +134,7 @@ export const GeneralSettings = () => {
                   <label className="text-sm font-medium text-slate-300">{t('settings.general.fastSpinTime')}</label>
                   <span className="text-xs font-bold bg-red-600/20 px-2 py-1 rounded text-red-400 border border-red-500/20">{eliminationSpinTime} {t('settings.general.seconds')}</span>
                 </div>
-                <input type="range" min="0.5" max="30" step="0.5" value={eliminationSpinTime} onChange={(e) => setEliminationSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500" />
+                <input type="range" min={elimSpinRange.min} max={elimSpinRange.max} step={elimSpinRange.step} value={eliminationSpinTime} onChange={(e) => setEliminationSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500 mt-3" />
               </div>
             </div>
           )}

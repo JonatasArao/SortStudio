@@ -5,6 +5,7 @@ import { Flag } from 'lucide-react';
 import * as THREE from 'three';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
+import { getSpinTimeRanges } from '../../utils/spinUtils';
 import { useWheelData } from '../../hooks/useWheelData';
 import { useWheelActions, playRaceDefinedAudio } from '../../hooks/useWheelActions';
 import { playStartLightBeep, playLightsOutGoSound, playEngineRevBeep, playWinSound, updateRaceEngineAudio, updateTireSquealAudio, playKerbImpactSound, stopRaceAudio } from '../../utils/audioEngine';
@@ -1497,7 +1498,9 @@ const RaceScene = ({
 
   const activeWinnerId = (isSpinning || winner) ? expectedWinnerId : undefined;
 
-  const actualSpinTime = isFinalRound ? spinTime : (eliminationMode ? eliminationSpinTime : spinTime);
+  let actualSpinTime = isFinalRound ? spinTime : (eliminationMode ? eliminationSpinTime : spinTime);
+  const spinRange = getSpinTimeRanges('race', !isFinalRound && eliminationMode);
+  actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
   const spinDurationMs = actualSpinTime * 1000;
   const durationSeconds = spinDurationMs / 1000;
 
@@ -1598,7 +1601,7 @@ const RaceScene = ({
         setCameraMode={setCameraMode}
       />
 
-      <Environment preset="sunset" background blur={0.8} />
+      <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr" background blur={0.8} />
       <ambientLight intensity={0.4} />
       <directionalLight
         position={[40, 60, -40]}

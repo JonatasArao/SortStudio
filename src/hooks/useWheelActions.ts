@@ -55,7 +55,12 @@ export const playRaceDefinedAudio = () => {
   } else {
     let delay = TICK_BASE_DELAY_MS;
     let currentTime = 0;
-    const actualSpinTime = state.spinTime;
+    let actualSpinTime = state.spinTime;
+    const isFinalRound = state.eliminationMode && state.items.filter(i => i.enabled && !i.isEliminated).length === 2;
+    const isElimFast = !isFinalRound && state.eliminationMode;
+    const spinRangeAudio = getSpinTimeRanges(state.wheelType, isElimFast);
+    actualSpinTime = isElimFast ? state.eliminationSpinTime : state.spinTime;
+    actualSpinTime = Math.max(spinRangeAudio.min, Math.min(spinRangeAudio.max, actualSpinTime));
     const spinDurationMs = actualSpinTime * 1000;
 
     const playNextTickTimer = () => {
@@ -331,9 +336,12 @@ export const useWheelActions = () => {
     const targetAngle = FULL_CIRCLE_DEG + WHEEL_TOP_OFFSET_DEG - sliceCenter + randomOffset;
 
     const isFinalRound = state.eliminationMode && currentValidItems.length === 2;
-    const actualSpinTime = isFinalRound 
+    let actualSpinTime = isFinalRound 
       ? state.spinTime 
       : (state.eliminationMode ? state.eliminationSpinTime : state.spinTime);
+
+    const spinRange = getSpinTimeRanges(state.wheelType, !isFinalRound && state.eliminationMode);
+    actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
 
     const isMysteryBox = state.wheelType === 'mystery_box';
     const isInstantSpin = isMysteryBox && fastSpin;

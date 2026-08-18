@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { getSpinTimeRanges } from '../../utils/spinUtils';
 import { useWheelData } from '../../hooks/useWheelData';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -32,9 +33,11 @@ export const HorizonDisplay = () => {
   const { spinWheel, handleRemoveItem, stopWinSound } = useWheelActions();
 
   const isFinalRound = eliminationMode && validItems.length === 2;
-  const actualSpinTime = isFinalRound 
+  let actualSpinTime = isFinalRound 
     ? spinTime 
     : (eliminationMode ? eliminationSpinTime : spinTime);
+  const spinRange = getSpinTimeRanges('classic', !isFinalRound && eliminationMode);
+  actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
 
   const [currentRotation, setCurrentRotation] = useState(rotation);
   const animationRef = useRef<number | null>(null);

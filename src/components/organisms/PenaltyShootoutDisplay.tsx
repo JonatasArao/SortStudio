@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { getSpinTimeRanges } from '../../utils/spinUtils';
 import { useWheelData } from '../../hooks/useWheelData';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -65,7 +66,9 @@ export const PenaltyShootoutDisplay = () => {
   const goalRef = useRef<HTMLDivElement>(null);
   const targetsRef = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const actualSpinTime = eliminationMode ? eliminationSpinTime : spinTime;
+  let actualSpinTime = eliminationMode ? eliminationSpinTime : spinTime;
+  const spinRange = getSpinTimeRanges('penalty_shootout', eliminationMode);
+  actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
 
   const scoreGoals = useMemo(() => {
     return Object.values(kickerResults).filter(r => r === 'goal').length;
