@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useAppActions } from '../../../hooks/useAppActions';
 import { useAppStore } from '../../../store/useAppStore';
 import { Button } from '../../atoms/Button';
-import { ExportModal } from './ExportModal';
 
 export const SystemSettings = () => {
   const { t, i18n } = useTranslation();
@@ -32,7 +31,6 @@ export const SystemSettings = () => {
 
   return (
     <div className="flex flex-col gap-8">
-      <ExportModal />
       <div>
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1">{t('settings.system.language')}</h3>
         <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 shadow-xl">

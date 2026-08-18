@@ -32,7 +32,7 @@ export const ExportModal = () => {
   const isAnySelected = Object.values(options).some(val => val);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -104,8 +104,8 @@ export const ExportModal = () => {
               <div className="flex items-center gap-3">
                 <History size={18} className="text-amber-400" />
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-200">{t('settings.system.exportResults', 'Resultados da Sessão')}</h4>
-                  <p className="text-xs text-slate-400">Registro de sorteios, pódios e penalidades atuais</p>
+                  <h4 className="text-sm font-semibold text-slate-200">{t('settings.system.exportResults', 'Resultados e Sorteios')}</h4>
+                  <p className="text-xs text-slate-400">Histórico bruto de ganhadores e eliminações (alimenta o placar)</p>
                 </div>
               </div>
               <Toggle enabled={options.results} onChange={(v) => setOptions(o => ({ ...o, results: v }))} />
@@ -115,8 +115,8 @@ export const ExportModal = () => {
               <div className="flex items-center gap-3">
                 <Trophy size={18} className="text-yellow-500" />
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-200">{t('settings.system.exportSeasons', 'Temporadas e Placares')}</h4>
-                  <p className="text-xs text-slate-400">Placares acumulados das temporadas passadas</p>
+                  <h4 className="text-sm font-semibold text-slate-200">{t('settings.system.exportSeasons', 'Temporadas e Períodos')}</h4>
+                  <p className="text-xs text-slate-400">Marcos temporais e divisões para filtrar e agrupar o placar</p>
                 </div>
               </div>
               <Toggle enabled={options.seasons} onChange={(v) => setOptions(o => ({ ...o, seasons: v }))} />

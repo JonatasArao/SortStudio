@@ -152,7 +152,7 @@ export const EntrySettingsModal = () => {
   const hasCustomAudio = customWinAudios && customWinAudios.length > 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
       <div className="bg-[#1a1b23] border border-slate-700 w-[600px] max-w-full rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#22242f]">
           <div className="flex items-center gap-2 text-white font-semibold">
