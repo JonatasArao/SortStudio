@@ -5,7 +5,6 @@ import {
   Settings, 
   Maximize, 
   Minimize, 
-  Trophy, 
   Disc, 
   Layers, 
   Package, 
@@ -22,6 +21,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
 import { useAppActions } from '../../hooks/useAppActions';
+import { Top3Navbar } from '../molecules/Top3Navbar';
 
 export const Header = () => {
   const { t } = useTranslation();
@@ -249,8 +249,15 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Control Actions Section */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      {/* Truly Centered Top 3 & Winners Hub (Mathematically Centered) */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center justify-center max-w-[calc(100%-240px)] xs:max-w-[calc(100%-290px)] sm:max-w-[calc(100%-380px)] md:max-w-[45vw] lg:max-w-[50vw]">
+        <div className="pointer-events-auto">
+          <Top3Navbar />
+        </div>
+      </div>
+
+      {/* Control Actions Section (Icon-only buttons for a sleek, clean navbar) */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 z-10">
         {/* Hidden File Input for Import */}
         <input 
           type="file" 
@@ -293,41 +300,28 @@ export const Header = () => {
         {/* Import Button (Desktop & Tablet sm+) */}
         <button 
           onClick={handleImportClick}
-          className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-400 transition-all duration-200 active:scale-95 group font-medium"
+          className="hidden sm:flex p-2 sm:p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-400 transition-all duration-200 active:scale-95 items-center justify-center group"
           title={t('settings.system.import', 'Importar Roleta (.wheel)')}
         >
-          <Upload size={16} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:text-sky-400" />
-          <span className="text-xs font-semibold hidden xl:inline">{t('settings.system.importBtn', 'Importar')}</span>
+          <Upload size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:text-sky-400" />
         </button>
 
         {/* Export Button (Desktop & Tablet sm+) */}
         <button 
           onClick={() => setIsExportModalOpen(true)}
-          className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 active:scale-95 group font-medium"
+          className="hidden sm:flex p-2 sm:p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 active:scale-95 items-center justify-center group"
           title={t('settings.system.export', 'Exportar Roleta (.wheel)')}
         >
-          <Download size={16} className="transition-transform duration-200 group-hover:translate-y-0.5 group-hover:text-emerald-400" />
-          <span className="text-xs font-semibold hidden xl:inline">{t('settings.system.exportBtn', 'Exportar')}</span>
-        </button>
-        
-        {/* Winners / Podium Trophy Button */}
-        <button 
-          onClick={() => useAppStore.getState().setIsResultsModalOpen(true)}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-200 active:scale-95 group font-medium"
-          title={t("header.history")}
-        >
-          <Trophy size={17} className="text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
-          <span className="text-xs font-semibold hidden md:block">{t('sidebar.results.winners')}</span>
+          <Download size={17} className="transition-transform duration-200 group-hover:translate-y-0.5 group-hover:text-emerald-400" />
         </button>
         
         {/* Settings Button */}
         <button 
           onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-200 active:scale-95 group font-medium"
+          className="flex p-2 sm:p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-200 active:scale-95 items-center justify-center group"
           title={t('settings.title')}
         >
           <Settings size={17} className="text-indigo-400 transition-transform duration-300 group-hover:rotate-45" />
-          <span className="text-xs font-semibold hidden md:block">{t('settings.title')}</span>
         </button>
 
         {/* Mobile More Actions Menu (Visible only on < sm) */}
