@@ -2,11 +2,14 @@ import React, { useRef } from 'react';
 import { Download, Upload, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppActions } from '../../../hooks/useAppActions';
+import { useAppStore } from '../../../store/useAppStore';
 import { Button } from '../../atoms/Button';
+import { ExportModal } from './ExportModal';
 
 export const SystemSettings = () => {
   const { t, i18n } = useTranslation();
-  const { exportWheel, importWheel } = useAppActions();
+  const { importWheel } = useAppActions();
+  const setIsExportModalOpen = useAppStore(s => s.setIsExportModalOpen);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportClick = () => {
@@ -29,6 +32,7 @@ export const SystemSettings = () => {
 
   return (
     <div className="flex flex-col gap-8">
+      <ExportModal />
       <div>
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1">{t('settings.system.language')}</h3>
         <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 shadow-xl">
@@ -65,7 +69,7 @@ export const SystemSettings = () => {
               </label>
               <p className="text-xs text-slate-500 mt-1">{t('settings.system.exportDesc')}</p>
             </div>
-            <Button onClick={exportWheel} variant="secondary" className="gap-2">
+            <Button onClick={() => setIsExportModalOpen(true)} variant="secondary" className="gap-2">
               <Download size={16} /> {t('settings.system.exportBtn')}
             </Button>
           </div>

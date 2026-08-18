@@ -85,8 +85,18 @@ export const useAudioActions = () => {
   return { addCustomAudio, removeCustomAudio, updateCustomAudio };
 };
 
+export interface ExportOptions {
+  configVisual: boolean;
+  configRules: boolean;
+  configGeneral: boolean;
+  entries: boolean;
+  results: boolean;
+  seasons: boolean;
+  audio: boolean;
+}
+
 export const useAppActions = () => {
-  const exportWheel = async () => {
+  const exportWheel = async (options: ExportOptions = { configVisual: true, configRules: true, configGeneral: true, entries: true, results: true, seasons: true, audio: true }) => {
     const state = useAppStore.getState();
 
     const blobUrlToBase64 = async (blobUrl: string): Promise<string> => {
@@ -169,44 +179,60 @@ export const useAppActions = () => {
         },
       ],
       sortStudioState: {
-        title: state.title,
-        winMessage: state.winMessage,
-        eliminationMessage: state.eliminationMessage,
-        grandWinnerMessage: state.grandWinnerMessage,
-        wheelTheme: state.wheelTheme,
-        eliminationSpinTime: state.eliminationSpinTime,
-        spinTime: state.spinTime,
-        showConfetti: state.showConfetti,
-        autoRemoveWinner: state.autoRemoveWinner,
-        eliminationMode: state.eliminationMode,
-        penaltySaveWins: state.penaltySaveWins,
-        autoContinueElimination: state.autoContinueElimination,
-        balanceWeightsByWins: state.balanceWeightsByWins,
-        balanceScope: state.balanceScope,
-        seasons: state.seasons,
-        pitySystemEnabled: state.pitySystemEnabled,
-        showPitySystemVisually: state.showPitySystemVisually,
-        antiRepetitionEnabled: state.antiRepetitionEnabled,
-        antiRepetitionCount: state.antiRepetitionCount,
-        pityWeights: state.pityWeights,
-        items: state.items,
-        isAdvancedEntries: state.isAdvancedEntries,
-        wheelType: state.wheelType,
-        colors: state.colors,
-        centerImage: state.centerImage,
-        textSize: state.textSize,
-        centerSize: state.centerSize,
-        soundEnabled: state.soundEnabled,
-        masterVolume: state.masterVolume,
-        tickSoundType: state.tickSoundType,
-        spinSoundMode: state.spinSoundMode,
-        winSoundType: state.winSoundType,
-        eliminationSoundType: state.eliminationSoundType,
-        customTickAudios,
-        customWinAudios,
-        results: state.results,
-        racePodium: state.racePodium,
-        penaltySequence: state.penaltySequence,
+        ...(options.configGeneral ? {
+          title: state.title,
+          winMessage: state.winMessage,
+          eliminationMessage: state.eliminationMessage,
+          grandWinnerMessage: state.grandWinnerMessage,
+          eliminationSpinTime: state.eliminationSpinTime,
+          spinTime: state.spinTime,
+          showConfetti: state.showConfetti,
+          autoRemoveWinner: state.autoRemoveWinner,
+        } : {}),
+        ...(options.configRules ? {
+          eliminationMode: state.eliminationMode,
+          penaltySaveWins: state.penaltySaveWins,
+          autoContinueElimination: state.autoContinueElimination,
+          balanceWeightsByWins: state.balanceWeightsByWins,
+          balanceScope: state.balanceScope,
+          pitySystemEnabled: state.pitySystemEnabled,
+          showPitySystemVisually: state.showPitySystemVisually,
+          ignoreNewItemWeight: state.ignoreNewItemWeight,
+          newItemWeightMode: state.newItemWeightMode,
+          antiRepetitionEnabled: state.antiRepetitionEnabled,
+          antiRepetitionCount: state.antiRepetitionCount,
+          pityWeights: state.pityWeights,
+          wheelType: state.wheelType,
+        } : {}),
+        ...(options.configVisual ? {
+          wheelTheme: state.wheelTheme,
+          colors: state.colors,
+          centerImage: state.centerImage,
+          textSize: state.textSize,
+          centerSize: state.centerSize,
+        } : {}),
+        ...(options.entries ? {
+          items: state.items,
+          isAdvancedEntries: state.isAdvancedEntries,
+        } : {}),
+        ...(options.results ? {
+          results: state.results,
+          racePodium: state.racePodium,
+          penaltySequence: state.penaltySequence,
+        } : {}),
+        ...(options.seasons ? {
+          seasons: state.seasons,
+        } : {}),
+        ...(options.audio ? {
+          soundEnabled: state.soundEnabled,
+          masterVolume: state.masterVolume,
+          tickSoundType: state.tickSoundType,
+          spinSoundMode: state.spinSoundMode,
+          winSoundType: state.winSoundType,
+          eliminationSoundType: state.eliminationSoundType,
+          customTickAudios,
+          customWinAudios,
+        } : {})
       }
     };
 

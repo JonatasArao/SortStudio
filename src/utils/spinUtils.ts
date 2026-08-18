@@ -1,7 +1,7 @@
 export const getSpinTimeRanges = (type: string, isEliminationFast = false) => {
   switch (type) {
     case 'race':
-      return { min: isEliminationFast ? 15 : 20, max: 60, step: 5 };
+      return { min: isEliminationFast ? 15 : 20, max: 60, step: 1 };
     case 'penalty_shootout':
       return { min: isEliminationFast ? 3 : 5, max: 30, step: 1 };
     case 'mystery_box':

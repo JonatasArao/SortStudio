@@ -141,6 +141,8 @@ interface AppState {
   setIsLeftSidebarOpen: (isOpen: boolean) => void;
   isAddAudioModalOpen: boolean;
   setIsAddAudioModalOpen: (isOpen: boolean) => void;
+  isExportModalOpen: boolean;
+  setIsExportModalOpen: (isOpen: boolean) => void;
   editingAudio: CustomAudio | null;
   setEditingAudio: (audio: CustomAudio | null) => void;
 
@@ -294,6 +296,8 @@ export const useAppStore = create<AppState>((set) => ({
   setIsLeftSidebarOpen: (isLeftSidebarOpen) => set({ isLeftSidebarOpen }),
   isAddAudioModalOpen: false,
   setIsAddAudioModalOpen: (isAddAudioModalOpen) => set({ isAddAudioModalOpen }),
+  isExportModalOpen: false,
+  setIsExportModalOpen: (isExportModalOpen) => set({ isExportModalOpen }),
   editingAudio: null,
   setEditingAudio: (editingAudio) => set({ editingAudio }),
 

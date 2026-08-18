@@ -6,6 +6,17 @@ import { Input } from '../../atoms/Input';
 import { useAppStore } from '../../../store/useAppStore';
 import { getSpinTimeRanges } from '../../../utils/spinUtils';
 
+const SectionCard = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
+  <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col gap-5">
+    <h4 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+      {icon} {title}
+    </h4>
+    <div className="flex flex-col gap-5">
+      {children}
+    </div>
+  </div>
+);
+
 export const GeneralSettings = () => {
   const { t } = useTranslation();
   const title = useAppStore(s => s.title);
@@ -61,18 +72,6 @@ export const GeneralSettings = () => {
     else if (eliminationSpinTime > elimSpinRange.max) setEliminationSpinTime(elimSpinRange.max);
   }, [wheelType, spinRange, elimSpinRange, spinTime, eliminationSpinTime, setSpinTime, setEliminationSpinTime]);
 
-
-  const SectionCard = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
-    <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 shadow-lg flex flex-col gap-5">
-      <h4 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-        {icon} {title}
-      </h4>
-      <div className="flex flex-col gap-5">
-        {children}
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
       <h3 className="text-lg font-bold text-white mb-2">{t('settings.general.title')}</h3>
@@ -106,7 +105,15 @@ export const GeneralSettings = () => {
             <label className="text-sm font-medium text-slate-300 flex items-center gap-2"><Clock size={16} className="text-blue-400"/> {eliminationMode ? t('settings.general.spinTimeFinal') : t('settings.general.spinTime')}</label>
             <span className="text-xs font-bold bg-blue-600/20 px-2 py-1 rounded text-blue-400 border border-blue-500/20">{spinTime} {t('settings.general.seconds')}</span>
           </div>
-          <input type="range" min={spinRange.min} max={spinRange.max} step={spinRange.step} value={spinTime} onChange={(e) => setSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-3" />
+          <input 
+            type="range" 
+            min={spinRange.min} 
+            max={spinRange.max} 
+            step={spinRange.step} 
+            value={spinTime} 
+            onChange={(e) => setSpinTime(Number(e.target.value))} 
+            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-3" 
+          />
         </div>
       </SectionCard>
 
@@ -134,7 +141,15 @@ export const GeneralSettings = () => {
                   <label className="text-sm font-medium text-slate-300">{t('settings.general.fastSpinTime')}</label>
                   <span className="text-xs font-bold bg-red-600/20 px-2 py-1 rounded text-red-400 border border-red-500/20">{eliminationSpinTime} {t('settings.general.seconds')}</span>
                 </div>
-                <input type="range" min={elimSpinRange.min} max={elimSpinRange.max} step={elimSpinRange.step} value={eliminationSpinTime} onChange={(e) => setEliminationSpinTime(Number(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500 mt-3" />
+                <input 
+                  type="range" 
+                  min={elimSpinRange.min} 
+                  max={elimSpinRange.max} 
+                  step={elimSpinRange.step} 
+                  value={eliminationSpinTime} 
+                  onChange={(e) => setEliminationSpinTime(Number(e.target.value))} 
+                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500 mt-3" 
+                />
               </div>
             </div>
           )}
