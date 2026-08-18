@@ -20,20 +20,21 @@ export const Sidebar = () => {
       <div className={`
         absolute lg:relative right-0 top-0 h-full z-40 shrink-0
         transition-[transform,width] duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0 w-[85vw] sm:w-[400px]' : 'translate-x-full lg:translate-x-0 w-[85vw] sm:w-[400px] lg:w-0'}
+        ${isSidebarOpen ? 'translate-x-0 w-[88vw] max-w-[390px] sm:w-[400px]' : 'translate-x-full lg:translate-x-0 w-[88vw] max-w-[390px] sm:w-[400px] lg:w-0'}
       `}>
-        <div className="absolute top-0 left-0 w-[85vw] sm:w-[400px] h-full bg-slate-950/75 backdrop-blur-xl lg:border-l border-slate-800/60 shadow-2xl flex flex-col">
+        <div className="absolute top-0 left-0 w-[88vw] max-w-[390px] sm:w-[400px] h-full bg-slate-950/85 backdrop-blur-xl lg:border-l border-slate-800/60 shadow-2xl flex flex-col">
           
           <button 
+            type="button"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`absolute top-4 ${isSidebarOpen ? '-left-5' : '-left-12'} w-10 h-10 bg-gradient-to-r from-slate-900/95 to-slate-800/95 hover:from-slate-800 hover:to-slate-700 border border-slate-700/60 hover:border-slate-500 rounded-full flex items-center justify-center text-slate-300 hover:text-white z-50 shadow-xl transition-all duration-300 hover:scale-105 active:scale-95`}
+            className={`absolute top-4 ${isSidebarOpen ? '-left-5' : '-left-11'} w-10 h-10 bg-gradient-to-r from-slate-900/95 to-slate-800/95 hover:from-slate-800 hover:to-slate-700 border border-slate-700/60 hover:border-slate-500 rounded-full flex items-center justify-center text-slate-300 hover:text-white z-50 shadow-xl transition-all duration-300 hover:scale-105 active:scale-95`}
             title={isSidebarOpen ? t("sidebar.hidePanel") : t("sidebar.showPanel")}
           >
             <ChevronRight size={20} className={`transform transition-transform duration-300 ${isSidebarOpen ? '' : 'rotate-180'}`} />
           </button>
 
           <div className="w-full h-full flex flex-col overflow-hidden">
-            <div className="px-6 pl-10 pt-8 pb-4 flex-1 flex flex-col overflow-hidden min-h-0">
+            <div className="px-3 sm:px-6 pl-8 sm:pl-10 pt-6 sm:pt-8 pb-4 flex-1 flex flex-col overflow-hidden min-h-0">
               <EntriesTab />
             </div>
           </div>

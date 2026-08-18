@@ -17,7 +17,6 @@ export const EliminationFeed = () => {
         text: winner.text,
         eliminatedAt: Date.now(),
       };
-      // Insert at front so new ones are at the bottom since we use flex-col on the container
       setFeed(prev => [...prev, newEntry]);
       
       const timeoutId = setTimeout(() => {
@@ -29,7 +28,7 @@ export const EliminationFeed = () => {
   }, [winner]);
   
   return (
-    <div className="absolute bottom-6 left-6 w-72 flex flex-col gap-2 justify-end pointer-events-none z-50 overflow-hidden" style={{ height: '400px' }}>
+    <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 w-60 xs:w-68 sm:w-72 flex flex-col gap-1.5 sm:gap-2 justify-end pointer-events-none z-50 overflow-hidden" style={{ maxHeight: '320px' }}>
       <AnimatePresence>
         {feed.map(item => (
           <motion.div
@@ -38,13 +37,13 @@ export const EliminationFeed = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
             layout
-            className="bg-slate-950/85 text-white px-4 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.15)] border border-red-500/35 backdrop-blur-md self-start shrink-0 min-w-[220px]"
+            className="bg-slate-950/90 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.15)] border border-red-500/35 backdrop-blur-md self-start shrink-0 max-w-full"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">💀</span>
-              <div className="flex flex-col">
-                <span className="font-extrabold truncate text-[15px] drop-shadow-md" style={{ maxWidth: '160px' }}>{item.text}</span>
-                <span className="text-[10px] text-red-400 font-bold tracking-wider uppercase mt-0.5">{eliminationMessage}</span>
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <span className="text-xl sm:text-2xl drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">💀</span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-extrabold truncate text-xs sm:text-sm drop-shadow-md max-w-[140px] sm:max-w-[180px]">{item.text}</span>
+                <span className="text-[9px] sm:text-[10px] text-red-400 font-bold tracking-wider uppercase mt-0.5">{eliminationMessage}</span>
               </div>
             </div>
           </motion.div>

@@ -250,7 +250,7 @@ export const Header = () => {
       </div>
 
       {/* Truly Centered Top 3 & Winners Hub (Mathematically Centered) */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center justify-center max-w-[calc(100%-240px)] xs:max-w-[calc(100%-290px)] sm:max-w-[calc(100%-380px)] md:max-w-[45vw] lg:max-w-[50vw]">
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center justify-center max-w-[46vw] xs:max-w-[50vw] sm:max-w-[55vw] md:max-w-none">
         <div className="pointer-events-auto">
           <Top3Navbar />
         </div>
