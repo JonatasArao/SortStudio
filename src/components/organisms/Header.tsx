@@ -15,7 +15,9 @@ import {
   Dices,
   Download,
   Upload,
-  ChevronDown
+  ChevronDown,
+  MoreVertical,
+  LucideIcon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
@@ -34,7 +36,9 @@ export const Header = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleImportClick = () => {
@@ -54,14 +58,17 @@ export const Header = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsModeDropdownOpen(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
     };
-    if (isModeDropdownOpen) {
+    if (isModeDropdownOpen || isMobileMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isModeDropdownOpen]);
+  }, [isModeDropdownOpen, isMobileMenuOpen]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -84,7 +91,16 @@ export const Header = () => {
     }
   };
 
-  const MODES = [
+  const MODES: Array<{
+    id: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo';
+    label: string;
+    description: string;
+    icon: LucideIcon;
+    iconColor: string;
+    activeBg: string;
+    iconActiveBg: string;
+    dotColor: string;
+  }> = [
     {
       id: 'classic',
       label: t('visualSettings.classic') || 'Roleta Clássica',
@@ -151,18 +167,18 @@ export const Header = () => {
   const CurrentIcon = currentMode.icon;
 
   return (
-    <header className="px-6 py-3 bg-slate-950/50 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between shadow-xl z-40 shrink-0 sticky top-0 transition-all duration-300">
+    <header className="px-3 sm:px-6 py-2.5 sm:py-3 bg-slate-950/60 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between shadow-xl z-40 shrink-0 sticky top-0 transition-all duration-300 gap-2">
       {/* Brand Logo, App Title & Game Mode Dropdown */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-950/80 border border-slate-800 shadow-inner hover:border-blue-500/40 transition-colors duration-500 overflow-hidden shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800 shadow-inner hover:border-blue-500/40 transition-colors duration-500 overflow-hidden shrink-0">
           <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 via-purple-600/10 to-pink-600/10 hover:scale-110 transition-transform duration-500" />
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur-md opacity-20 hover:opacity-45 transition-opacity duration-500 animate-[pulse_3s_ease-in-out_infinite]" />
-          <CurrentIcon className={`w-5 h-5 ${currentMode.iconColor} relative z-10 transition-transform duration-300`} />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl sm:rounded-2xl blur-md opacity-20 hover:opacity-45 transition-opacity duration-500 animate-[pulse_3s_ease-in-out_infinite]" />
+          <CurrentIcon className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${currentMode.iconColor} relative z-10 transition-transform duration-300`} />
         </div>
 
-        <div className="flex flex-col relative" ref={dropdownRef}>
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm md:text-base font-extrabold text-white tracking-tight leading-tight truncate max-w-[150px] sm:max-w-[240px]">
+        <div className="flex flex-col relative min-w-0" ref={dropdownRef}>
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <h1 className="text-xs sm:text-base font-extrabold text-white tracking-tight leading-tight truncate max-w-[100px] xs:max-w-[150px] sm:max-w-[240px]">
               {title || "SortStudio"}
             </h1>
           </div>
@@ -172,20 +188,20 @@ export const Header = () => {
             <button
               type="button"
               onClick={() => setIsModeDropdownOpen(prev => !prev)}
-              className="flex items-center gap-1.5 px-2 py-0.5 -ml-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800/90 hover:border-slate-700 text-slate-300 hover:text-white text-[11px] font-medium transition-all group active:scale-95 shadow-sm"
+              className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 -ml-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800/90 hover:border-slate-700 text-slate-300 hover:text-white text-[10px] sm:text-[11px] font-medium transition-all group active:scale-95 shadow-sm"
               title="Alterar modo de sorteio"
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${currentMode.dotColor} animate-pulse`} />
-              <span className="font-semibold text-slate-200">{currentMode.label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${currentMode.dotColor} animate-pulse shrink-0`} />
+              <span className="font-semibold text-slate-200 truncate max-w-[70px] xs:max-w-[120px] sm:max-w-none">{currentMode.label}</span>
               <ChevronDown 
-                size={12} 
-                className={`text-slate-400 group-hover:text-slate-200 transition-transform duration-200 ${isModeDropdownOpen ? 'rotate-180 text-blue-400' : ''}`} 
+                size={11} 
+                className={`text-slate-400 group-hover:text-slate-200 transition-transform duration-200 shrink-0 ${isModeDropdownOpen ? 'rotate-180 text-blue-400' : ''}`} 
               />
             </button>
 
             {/* Dropdown Menu */}
             {isModeDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 w-64 p-1.5 bg-slate-950/95 backdrop-blur-xl border border-slate-800/90 rounded-2xl shadow-2xl z-[100] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1 ring-1 ring-white/10">
+              <div className="absolute left-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-24px)] p-1.5 bg-slate-950/95 backdrop-blur-xl border border-slate-800/90 rounded-2xl shadow-2xl z-[100] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1 ring-1 ring-white/10">
                 <div className="px-2.5 py-1.5 flex items-center justify-between border-b border-slate-800/80 mb-0.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={11} className="text-blue-400" />
@@ -207,14 +223,14 @@ export const Header = () => {
                         setWheelType(mode.id);
                         setIsModeDropdownOpen(false);
                       }}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all duration-150 ${
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all duration-150 active:scale-[0.98] ${
                         isSelected
                           ? `${mode.activeBg} shadow-sm`
                           : 'text-slate-300 hover:text-white hover:bg-slate-900/90 border border-transparent'
                       }`}
                     >
                       <div className={`p-1.5 rounded-lg shrink-0 ${isSelected ? mode.iconActiveBg : 'bg-slate-900 border border-slate-800 text-slate-400'}`}>
-                        <Icon size={15} className={isSelected ? mode.iconColor : ''} />
+                        <Icon size={16} className={isSelected ? mode.iconColor : ''} />
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-semibold leading-tight truncate">
@@ -234,7 +250,7 @@ export const Header = () => {
       </div>
 
       {/* Control Actions Section */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Hidden File Input for Import */}
         <input 
           type="file" 
@@ -244,23 +260,23 @@ export const Header = () => {
           onChange={handleFileChange} 
         />
 
-        {/* Fullscreen Button */}
+        {/* Fullscreen Button (Desktop & Tablet md+) */}
         <button 
           onClick={toggleFullscreen}
-          className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 hover:border-slate-700/80 hover:bg-slate-800/80 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center group"
+          className="hidden md:flex p-2 sm:p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 hover:border-slate-700/80 hover:bg-slate-800/80 hover:text-white transition-all duration-200 active:scale-95 items-center justify-center group"
           title={isFullscreen ? t('header.exitFullscreen') : t('header.fullscreen')}
         >
           {isFullscreen ? (
-            <Minimize size={18} className="transition-transform duration-200 group-hover:scale-110" />
+            <Minimize size={17} className="transition-transform duration-200 group-hover:scale-110" />
           ) : (
-            <Maximize size={18} className="transition-transform duration-200 group-hover:scale-110" />
+            <Maximize size={17} className="transition-transform duration-200 group-hover:scale-110" />
           )}
         </button>
 
         {/* Sound Toggle Button */}
         <button 
           onClick={() => setSoundEnabled(!soundEnabled)}
-          className={`relative p-2.5 rounded-xl border transition-all duration-200 active:scale-95 group flex items-center justify-center ${
+          className={`p-2 sm:p-2.5 rounded-xl border transition-all duration-200 active:scale-95 group flex items-center justify-center ${
             soundEnabled 
               ? 'bg-blue-500/10 border-blue-500/20 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.1)]' 
               : 'bg-slate-900/60 border-slate-800 text-slate-500 hover:border-slate-700/80 hover:bg-slate-800/80 hover:text-white'
@@ -268,53 +284,121 @@ export const Header = () => {
           title={soundEnabled ? t("header.mute") : t("header.unmute")}
         >
           {soundEnabled ? (
-            <Volume2 size={18} className="transition-transform duration-200 group-hover:scale-110" />
+            <Volume2 size={17} className="transition-transform duration-200 group-hover:scale-110" />
           ) : (
-            <VolumeX size={18} className="transition-transform duration-200 group-hover:scale-110" />
+            <VolumeX size={17} className="transition-transform duration-200 group-hover:scale-110" />
           )}
         </button>
 
-        {/* Import Button */}
+        {/* Import Button (Desktop & Tablet sm+) */}
         <button 
           onClick={handleImportClick}
-          className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-400 transition-all duration-200 active:scale-95 group font-medium"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-400 transition-all duration-200 active:scale-95 group font-medium"
           title={t('settings.system.import', 'Importar Roleta (.wheel)')}
         >
-          <Upload size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:text-sky-400" />
+          <Upload size={16} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:text-sky-400" />
           <span className="text-xs font-semibold hidden xl:inline">{t('settings.system.importBtn', 'Importar')}</span>
         </button>
 
-        {/* Export Button */}
+        {/* Export Button (Desktop & Tablet sm+) */}
         <button 
           onClick={() => setIsExportModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 active:scale-95 group font-medium"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 active:scale-95 group font-medium"
           title={t('settings.system.export', 'Exportar Roleta (.wheel)')}
         >
-          <Download size={17} className="transition-transform duration-200 group-hover:translate-y-0.5 group-hover:text-emerald-400" />
+          <Download size={16} className="transition-transform duration-200 group-hover:translate-y-0.5 group-hover:text-emerald-400" />
           <span className="text-xs font-semibold hidden xl:inline">{t('settings.system.exportBtn', 'Exportar')}</span>
         </button>
         
         {/* Winners / Podium Trophy Button */}
         <button 
           onClick={() => useAppStore.getState().setIsResultsModalOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-200 active:scale-95 group font-medium"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-200 active:scale-95 group font-medium"
           title={t("header.history")}
         >
-          <Trophy size={18} className="text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
+          <Trophy size={17} className="text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6" />
           <span className="text-xs font-semibold hidden md:block">{t('sidebar.results.winners')}</span>
         </button>
         
         {/* Settings Button */}
         <button 
           onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-200 active:scale-95 group font-medium"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-200 active:scale-95 group font-medium"
+          title={t('settings.title')}
         >
-          <Settings size={18} className="text-indigo-400 transition-transform duration-300 group-hover:rotate-45" />
+          <Settings size={17} className="text-indigo-400 transition-transform duration-300 group-hover:rotate-45" />
           <span className="text-xs font-semibold hidden md:block">{t('settings.title')}</span>
         </button>
+
+        {/* Mobile More Actions Menu (Visible only on < sm) */}
+        <div className="relative sm:hidden" ref={mobileMenuRef}>
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(prev => !prev)}
+            className={`p-2 rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center ${
+              isMobileMenuOpen 
+                ? 'bg-slate-800 border-slate-700 text-white' 
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+            title="Mais opções"
+          >
+            <MoreVertical size={17} />
+          </button>
+
+          {/* Mobile Menu Dropdown */}
+          {isMobileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 p-1.5 bg-slate-950/95 backdrop-blur-xl border border-slate-800/90 rounded-2xl shadow-2xl z-[100] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1 ring-1 ring-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  handleImportClick();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 active:bg-slate-800 transition-colors"
+              >
+                <Upload size={16} className="text-sky-400" />
+                <span>{t('settings.system.importBtn', 'Importar Roleta')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExportModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 active:bg-slate-800 transition-colors"
+              >
+                <Download size={16} className="text-emerald-400" />
+                <span>{t('settings.system.exportBtn', 'Exportar Roleta')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  toggleFullscreen();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 active:bg-slate-800 transition-colors"
+              >
+                {isFullscreen ? (
+                  <>
+                    <Minimize size={16} className="text-amber-400" />
+                    <span>{t('header.exitFullscreen', 'Sair da Tela Cheia')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize size={16} className="text-amber-400" />
+                    <span>{t('header.fullscreen', 'Tela Cheia')}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
 };
+
 
 
