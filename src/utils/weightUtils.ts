@@ -6,7 +6,7 @@ export const calculateWeights = (
   pitySystemEnabled: boolean,
   balanceWeightsByWins: boolean,
   ignoreNewItemWeight: boolean,
-  newItemWeightMode: 'max' | 'median' | 'average' | 'min' | 'base',
+  newItemWeightMode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base',
   eliminationMode: boolean,
   wheelType: string,
   applyPityAndBalance: boolean
@@ -75,6 +75,10 @@ export const calculateWeights = (
     const averageDrawnWeight = sumDrawnWeight / drawnWeights.length;
 
     switch (newItemWeightMode) {
+      case 'boosted':
+        // A bump of ~30% over the highest weight plus a flat +1 to guarantee an edge even at low weights
+        matchedWeight = Math.ceil(maxDrawnWeight * 1.3) + 1;
+        break;
       case 'median':
         matchedWeight = medianDrawnWeight;
         break;

@@ -94,7 +94,7 @@ export interface AppSettings {
   pitySystemEnabled?: boolean;
   showPitySystemVisually?: boolean;
   ignoreNewItemWeight?: boolean;
-  newItemWeightMode?: 'max' | 'median' | 'average' | 'min' | 'base';
+  newItemWeightMode?: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base';
   antiRepetitionEnabled?: boolean;
   antiRepetitionCount?: number;
   eliminationSoundType?: string;

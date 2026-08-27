@@ -86,6 +86,8 @@
       "balanceScopeAll": "Resultados Gerais (Tudo)",
       "ignoreNewItemWeight": "Equiparar chances de novos",
       "ignoreNewItemWeightDesc": "Participantes nunca sorteados recebem peso com base nos que já participaram.",
+      "newItemWeightModeBoosted": "Acelerado (Recomendado)",
+      "newItemWeightModeBoostedDesc": "Leve vantagem sobre o participante mais azarado (Maior peso + 30%).",
       "newItemWeightModeMax": "Maior peso",
       "newItemWeightModeMaxDesc": "Igual ao participante com maior chance.",
       "newItemWeightModeMedian": "Mediana",

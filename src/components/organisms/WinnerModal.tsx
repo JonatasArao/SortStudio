@@ -271,16 +271,18 @@ export const WinnerModal = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 transition-all animate-in fade-in duration-300">
-      <div className="bg-slate-950/90 px-5 sm:px-10 py-7 sm:py-10 rounded-3xl max-w-sm sm:max-w-lg w-full shadow-[0_0_100px_rgba(245,158,11,0.25)] border border-slate-800/80 text-center animate-in zoom-in-95 duration-500 relative overflow-hidden group">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-24 sm:h-32 bg-amber-500/5 blur-[50px] pointer-events-none" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-24 sm:h-32 bg-fuchsia-500/5 blur-[50px] pointer-events-none" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-all animate-in fade-in duration-300">
+      <div className="bg-slate-900/95 px-6 sm:px-10 py-8 sm:py-12 rounded-[2rem] max-w-[90vw] sm:max-w-lg w-full shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-slate-700/50 text-center relative overflow-hidden group">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-40 bg-amber-500/10 blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] h-40 bg-emerald-500/10 blur-[80px] pointer-events-none" />
         
-        <Icon className={`mx-auto ${iconColor} mb-3 sm:mb-5 drop-shadow-[0_0_25px_${dropShadowColor}] relative z-10 animate-[bounce_2s_infinite] w-14 h-14 sm:w-20 sm:h-20`} />
-        <p className="text-xs sm:text-sm text-amber-500/90 font-black uppercase tracking-[0.25em] sm:tracking-[0.4em] mb-2 sm:mb-3 relative z-10 drop-shadow-md">{customMessage}</p>
-        <h2 className="text-3xl sm:text-5xl font-black text-white mb-6 sm:mb-10 break-words relative z-10 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] leading-tight">{winner.text}</h2>
+        <Icon className={`mx-auto ${iconColor} mb-4 sm:mb-6 drop-shadow-[0_0_30px_${dropShadowColor}] relative z-10 animate-bounce w-16 h-16 sm:w-20 sm:h-20`} />
         
-        <div className="flex flex-col xs:flex-row gap-2.5 sm:gap-4 w-full justify-center relative z-10">
+        <p className="text-xs sm:text-sm text-amber-400 font-extrabold uppercase tracking-widest mb-2 sm:mb-3 relative z-10">{customMessage}</p>
+        
+        <h2 className="text-4xl sm:text-5xl font-black text-white mb-8 sm:mb-10 break-words relative z-10 drop-shadow-md leading-tight">{winner.text}</h2>
+        
+        <div className="flex flex-row gap-3 sm:gap-4 w-full justify-center relative z-10">
           <button 
             onClick={() => {
               stopWinSound();
@@ -290,7 +292,7 @@ export const WinnerModal = () => {
               }
               setWinner(null);
             }}
-            className="flex-1 bg-gradient-to-br from-slate-900 to-slate-950 hover:from-red-600 hover:to-rose-700 text-slate-300 hover:text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base transition-all duration-300 hover:-translate-y-0.5 shadow-lg border border-slate-800 hover:border-red-500/50"
+            className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-2 sm:px-6 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 border border-red-500/30 hover:border-red-500/50"
           >
             {t('horizonDisplay.reject').toUpperCase()}
           </button>
@@ -309,7 +311,7 @@ export const WinnerModal = () => {
                   setWinner(null);
               }
             }}
-            className="flex-1 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.5)] text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base transition-all duration-300 hover:-translate-y-0.5 border-b-2 sm:border-b-4 border-orange-700 hover:border-orange-600 active:translate-y-0.5 active:border-b-0"
+            className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-2 sm:px-6 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-400 hover:border-emerald-300"
           >
             {t('horizonDisplay.accept').toUpperCase()}
           </button>

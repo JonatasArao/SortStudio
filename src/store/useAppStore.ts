@@ -48,8 +48,8 @@ interface AppState {
   setPitySystemEnabled: (pitySystemEnabled: boolean) => void;
   ignoreNewItemWeight: boolean;
   setIgnoreNewItemWeight: (val: boolean) => void;
-  newItemWeightMode: 'max' | 'median' | 'average' | 'min' | 'base';
-  setNewItemWeightMode: (mode: 'max' | 'median' | 'average' | 'min' | 'base') => void;
+  newItemWeightMode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base';
+  setNewItemWeightMode: (mode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base') => void;
   showPitySystemVisually: boolean;
   setShowPitySystemVisually: (show: boolean) => void;
   antiRepetitionEnabled: boolean;
@@ -191,7 +191,7 @@ export const useAppStore = create<AppState>((set) => ({
   setPitySystemEnabled: (pitySystemEnabled) => set({ pitySystemEnabled }),
   ignoreNewItemWeight: false,
   setIgnoreNewItemWeight: (ignoreNewItemWeight) => set({ ignoreNewItemWeight }),
-  newItemWeightMode: 'max',
+  newItemWeightMode: 'boosted',
   setNewItemWeightMode: (newItemWeightMode) => set({ newItemWeightMode }),
   showPitySystemVisually: true,
   setShowPitySystemVisually: (show) => set({ showPitySystemVisually: show }),
