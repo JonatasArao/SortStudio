@@ -5,6 +5,7 @@ export const calculateWeights = (
   scopedResults: Result[],
   pitySystemEnabled: boolean,
   balanceWeightsByWins: boolean,
+  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic',
   ignoreNewItemWeight: boolean,
   newItemWeightMode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base',
   eliminationMode: boolean,
@@ -39,7 +40,13 @@ export const calculateWeights = (
     if (balanceWeightsByWins) {
       const winCount = scopedResults.filter((r) => r.id === item.id || r.text.trim().toLowerCase() === item.text.trim().toLowerCase()).length;
       if (winCount > 0) {
-        finalWeight = finalWeight / (winCount + 1);
+        if (balanceWeightsMode === 'linear') {
+          finalWeight = finalWeight / (winCount + 1);
+        } else if (balanceWeightsMode === 'cubic') {
+          finalWeight = finalWeight / Math.pow(winCount + 1, 3);
+        } else {
+          finalWeight = finalWeight / Math.pow(winCount + 1, 2);
+        }
       }
     }
 

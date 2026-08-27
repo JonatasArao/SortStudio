@@ -44,6 +44,8 @@ export const GeneralSettings = () => {
   const antiRepetitionCount = useAppStore(s => s.antiRepetitionCount);
   const setAntiRepetitionCount = useAppStore(s => s.setAntiRepetitionCount);
   const balanceWeightsByWins = useAppStore(s => s.balanceWeightsByWins);
+  const balanceWeightsMode = useAppStore(s => s.balanceWeightsMode);
+  const setBalanceWeightsMode = useAppStore(s => s.setBalanceWeightsMode);
   const setBalanceWeightsByWins = useAppStore(s => s.setBalanceWeightsByWins);
   const pitySystemEnabled = useAppStore(s => s.pitySystemEnabled);
   const setPitySystemEnabled = useAppStore(s => s.setPitySystemEnabled);
@@ -189,12 +191,45 @@ export const GeneralSettings = () => {
         )}
 
         <div className="pt-4 border-t border-slate-800/80 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1 pr-4">
-              <label className="text-sm font-medium text-slate-200 flex items-center gap-2">📉 {t('settings.general.reduceByWins')}</label>
-              <p className="text-xs text-slate-400 mt-1">{t('settings.general.reduceByWinsDesc')}</p>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 pr-4">
+                <label className="text-sm font-medium text-slate-200 flex items-center gap-2">📉 {t('settings.general.reduceByWins')}</label>
+                <p className="text-xs text-slate-400 mt-1">{t('settings.general.reduceByWinsDesc')}</p>
+              </div>
+              <Toggle enabled={balanceWeightsByWins} onChange={setBalanceWeightsByWins} />
             </div>
-            <Toggle enabled={balanceWeightsByWins} onChange={setBalanceWeightsByWins} />
+            {balanceWeightsByWins && (
+              <div className="pl-4 ml-2 border-l-2 border-slate-800/60 mt-1 flex flex-col gap-2">
+                {[
+                  { id: 'linear', label: t('settings.general.balanceWeightsModeLinear', 'Suave (Linear)'), desc: t('settings.general.balanceWeightsModeLinearDesc', 'chances = peso / (vitórias + 1)') },
+                  { id: 'quadratic', label: t('settings.general.balanceWeightsModeQuadratic', 'Moderado (Quadrático)'), desc: t('settings.general.balanceWeightsModeQuadraticDesc', 'chances = peso / (vitórias + 1)²') },
+                  { id: 'cubic', label: t('settings.general.balanceWeightsModeCubic', 'Agressivo (Cúbico)'), desc: t('settings.general.balanceWeightsModeCubicDesc', 'chances = peso / (vitórias + 1)³') },
+                ].map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => setBalanceWeightsMode(mode.id as any)}
+                    className={`text-left p-3 rounded-lg border transition-all ${
+                      balanceWeightsMode === mode.id 
+                        ? 'bg-emerald-500/10 border-emerald-500/50 ring-1 ring-emerald-500/20' 
+                        : 'bg-slate-950/40 border-slate-800/60 hover:bg-slate-900 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-semibold ${balanceWeightsMode === mode.id ? 'text-emerald-400' : 'text-slate-300'}`}>
+                        {mode.label}
+                      </span>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${balanceWeightsMode === mode.id ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-600'}`}>
+                        {balanceWeightsMode === mode.id && <div className="w-2 h-2 rounded-full bg-emerald-400" />}
+                      </div>
+                    </div>
+                    <p className={`text-xs mt-1 ${balanceWeightsMode === mode.id ? 'text-emerald-500/80' : 'text-slate-500'}`}>
+                      {mode.desc}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="flex items-center justify-between pt-2 border-t border-slate-800/40">

@@ -8,6 +8,7 @@ export const useWheelData = () => {
   const items = useAppStore(state => state.items);
   const colors = useAppStore(state => state.colors);
   const balanceWeightsByWins = useAppStore(state => state.balanceWeightsByWins);
+  const balanceWeightsMode = useAppStore(state => state.balanceWeightsMode);
   const balanceScope = useAppStore(state => state.balanceScope);
   const seasons = useAppStore(state => state.seasons);
   const pitySystemEnabled = useAppStore(state => state.pitySystemEnabled);
@@ -28,6 +29,7 @@ export const useWheelData = () => {
         scopedResults,
         pitySystemEnabled,
         balanceWeightsByWins,
+        balanceWeightsMode,
         ignoreNewItemWeight,
         newItemWeightMode,
         eliminationMode,
@@ -35,7 +37,8 @@ export const useWheelData = () => {
         showPitySystemVisually
       );
     },
-    [items, pitySystemEnabled, balanceWeightsByWins, showPitySystemVisually, eliminationMode, scopedResults, wheelType, ignoreNewItemWeight, newItemWeightMode],
+    [items, pitySystemEnabled, balanceWeightsByWins,
+        balanceWeightsMode, showPitySystemVisually, eliminationMode, scopedResults, wheelType, ignoreNewItemWeight, newItemWeightMode],
   );
 
   const { conicGradient, slices } = useMemo(() => {

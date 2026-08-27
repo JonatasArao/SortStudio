@@ -90,6 +90,7 @@ export interface AppSettings {
   eliminationMode?: boolean;
   autoContinueElimination?: boolean;
   balanceWeightsByWins?: boolean;
+  balanceWeightsMode?: 'linear' | 'quadratic' | 'cubic';
   balanceScope?: 'all' | 'current_season';
   pitySystemEnabled?: boolean;
   showPitySystemVisually?: boolean;

@@ -38,6 +38,8 @@ interface AppState {
   autoContinueElimination: boolean;
   setAutoContinueElimination: (autoContinueElimination: boolean) => void;
   balanceWeightsByWins: boolean;
+  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic';
+  setBalanceWeightsMode: (mode: 'linear' | 'quadratic' | 'cubic') => void;
   setBalanceWeightsByWins: (balanceWeightsByWins: boolean) => void;
   balanceScope: 'all' | 'current_season';
   setBalanceScope: (scope: 'all' | 'current_season') => void;
@@ -182,6 +184,8 @@ export const useAppStore = create<AppState>((set) => ({
   autoContinueElimination: true,
   setAutoContinueElimination: (autoContinueElimination) => set({ autoContinueElimination }),
   balanceWeightsByWins: false,
+  balanceWeightsMode: 'quadratic',
+  setBalanceWeightsMode: (balanceWeightsMode) => set({ balanceWeightsMode }),
   setBalanceWeightsByWins: (balanceWeightsByWins) => set({ balanceWeightsByWins }),
   balanceScope: 'all',
   setBalanceScope: (balanceScope) => set({ balanceScope }),
