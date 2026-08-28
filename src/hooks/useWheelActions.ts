@@ -217,6 +217,7 @@ export const useWheelActions = () => {
         scopedResults,
         state.pitySystemEnabled,
         state.balanceWeightsByWins,
+        state.balanceWeightsMode,
         state.ignoreNewItemWeight,
         state.newItemWeightMode,
         state.eliminationMode,
