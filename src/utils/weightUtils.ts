@@ -8,6 +8,8 @@ export const calculateWeights = (
   balanceWeightsMode: 'linear' | 'quadratic' | 'cubic',
   ignoreNewItemWeight: boolean,
   newItemWeightMode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base',
+  antiRepetitionEnabled: boolean,
+  antiRepetitionCount: number,
   eliminationMode: boolean,
   wheelType: string,
   applyPityAndBalance: boolean
@@ -102,6 +104,12 @@ export const calculateWeights = (
     }
   }
 
+  let recentWinnersTexts: string[] = [];
+  if (antiRepetitionEnabled && !eliminationMode && items.length > 2) {
+    const numRecentToCheck = Math.min(antiRepetitionCount, Math.max(1, items.length - 2));
+    recentWinnersTexts = scopedResults.slice(0, numRecentToCheck).map((r) => r.text.trim().toLowerCase());
+  }
+
   return intermediateItems.map(({ item, finalWeight, hasBeenDrawn }) => {
     let weightToApply = finalWeight;
 
@@ -117,6 +125,10 @@ export const calculateWeights = (
           weightToApply = (item.weight || 1) + scopedResults.length;
         }
       }
+    }
+
+    if (recentWinnersTexts.includes(item.text.trim().toLowerCase())) {
+      weightToApply = 0;
     }
 
     return {

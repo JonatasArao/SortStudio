@@ -82,6 +82,7 @@
       "pitySystem": "Acumulação por Derrotas",
       "pitySystemDesc": "Acumula chances a cada rodada não sorteado (Pity System).",
       "showPity": "Mostrar mudança de pesos na roleta",
+      "showPityDesc": "Reflete visualmente na roleta os pesos e participantes baseados nestas regras.",
       "confetti": "Efeito de Confetes",
       "confettiDesc": "Disparar chuva de confetes no ecrã quando houver um vencedor.",
       "autoRemove": "Auto-remover Vencedor",

@@ -14,6 +14,8 @@ export const useWheelData = () => {
   const pitySystemEnabled = useAppStore(state => state.pitySystemEnabled);
   const ignoreNewItemWeight = useAppStore(state => state.ignoreNewItemWeight);
   const newItemWeightMode = useAppStore(state => state.newItemWeightMode);
+  const antiRepetitionEnabled = useAppStore(state => state.antiRepetitionEnabled);
+  const antiRepetitionCount = useAppStore(state => state.antiRepetitionCount);
   const showPitySystemVisually = useAppStore(state => state.showPitySystemVisually);
   const eliminationMode = useAppStore(state => state.eliminationMode);
   const results = useAppStore(state => state.results);
@@ -32,28 +34,31 @@ export const useWheelData = () => {
         balanceWeightsMode,
         ignoreNewItemWeight,
         newItemWeightMode,
+        antiRepetitionEnabled,
+        antiRepetitionCount,
         eliminationMode,
         wheelType,
         showPitySystemVisually
       );
     },
     [items, pitySystemEnabled, balanceWeightsByWins,
-        balanceWeightsMode, showPitySystemVisually, eliminationMode, scopedResults, wheelType, ignoreNewItemWeight, newItemWeightMode],
+        balanceWeightsMode, showPitySystemVisually, eliminationMode, scopedResults, wheelType, ignoreNewItemWeight, newItemWeightMode, antiRepetitionEnabled, antiRepetitionCount],
   );
 
   const { conicGradient, slices } = useMemo(() => {
-    const total = validItems.length;
+    const drawableItems = validItems.filter(i => (i.weight || 1) > 0);
+    const total = drawableItems.length;
     if (total === 0 || colors.length === 0)
       return { conicGradient: "#1e293b", slices: [] };
 
-    let totalWeight = validItems.reduce(
+    let totalWeight = drawableItems.reduce(
       (acc, item) => acc + (item.weight || 1),
       0,
     );
     if (totalWeight <= 0) totalWeight = 1;
 
     let currentAngle = 0;
-    const newSlices = validItems.map((item, i) => {
+    const newSlices = drawableItems.map((item, i) => {
       const weight = item.weight || 1;
       const angle = (weight / totalWeight) * FULL_CIRCLE_DEG;
       const startAngle = currentAngle;

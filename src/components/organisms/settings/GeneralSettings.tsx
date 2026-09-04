@@ -169,6 +169,14 @@ export const GeneralSettings = () => {
       </SectionCard>
 
       <SectionCard title={t('settings.general.balance')} icon={<Scale size={18} className="text-emerald-400" />}>
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+          <div className="flex-1 pr-4">
+            <label className="text-sm font-medium text-slate-200 flex items-center gap-2">👁️ {t('settings.general.showPity')}</label>
+            <p className="text-xs text-slate-400 mt-1">{t('settings.general.showPityDesc', 'Reflete visualmente na roleta os pesos e participantes baseados nestas regras.')}</p>
+          </div>
+          <Toggle enabled={showPitySystemVisually} onChange={setShowPitySystemVisually} />
+        </div>
+        
         <div className="flex items-center justify-between">
           <div className="flex-1 pr-4">
             <label className="text-sm font-medium text-slate-200 flex items-center gap-2">🔄 {t('settings.general.antiRepetition')}</label>
@@ -242,14 +250,6 @@ export const GeneralSettings = () => {
 
           {(pitySystemEnabled || balanceWeightsByWins) && (
             <div className="flex flex-col gap-3 pl-4 ml-2 border-l-2 border-emerald-500/30">
-              <div className="flex items-center justify-between bg-slate-950/40 p-3 rounded-lg border border-slate-800/60">
-                <label className="text-sm text-slate-300">{t('settings.general.showPity')}</label>
-                <Toggle 
-                  enabled={showPitySystemVisually}
-                  onChange={setShowPitySystemVisually}
-                />
-              </div>
-              
               <div className="flex flex-col gap-2 bg-slate-950/40 p-3 rounded-lg border border-slate-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-4">

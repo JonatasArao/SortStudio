@@ -82,6 +82,7 @@
       "pitySystem": "Pity System",
       "pitySystemDesc": "Accumulates chances each round not drawn (Pity System).",
       "showPity": "Show weight changes on the wheel",
+      "showPityDesc": "Visually reflects the weights and participants on the wheel based on these rules.",
       "confetti": "Confetti Effect",
       "confettiDesc": "Trigger a rain of confetti on the screen when there is a winner.",
       "autoRemove": "Auto-remove Winner",

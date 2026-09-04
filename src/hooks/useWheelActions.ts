@@ -220,6 +220,8 @@ export const useWheelActions = () => {
         state.balanceWeightsMode,
         state.ignoreNewItemWeight,
         state.newItemWeightMode,
+        state.antiRepetitionEnabled,
+        state.antiRepetitionCount,
         state.eliminationMode,
         state.wheelType,
         true // applyPityAndBalance is always true during actual spin
@@ -258,28 +260,17 @@ export const useWheelActions = () => {
     } else {
       winIndex = pickWinnerIndex();
 
-      if (state.antiRepetitionEnabled && !state.eliminationMode && currentValidItems.length > 2) {
-        // Use configured count, but cap it safely so we don't get stuck in a loop if the pool is small compared to the count
-        const numRecentToCheck = Math.min(state.antiRepetitionCount, Math.max(1, currentValidItems.length - 2));
-        const recentWinnersTexts = scopedResults.slice(0, numRecentToCheck).map((r) => r.text.trim().toLowerCase());
-        
-        let rerolls = 0;
-        // Re-roll up to 10 times to try to find a non-recent winner
-        while (recentWinnersTexts.includes(currentValidItems[winIndex].text.trim().toLowerCase()) && rerolls < 10) {
-          winIndex = pickWinnerIndex();
-          rerolls++;
-        }
-      }
     }
 
-    const winSlice = slices[winIndex];
+    const winnerId = currentValidItems[winIndex].id;
+    const winSlice = slices.find(s => s.item.id === winnerId);
     if (!winSlice) {
       state.setIsSpinning(false);
       state.setExpectedWinnerId(undefined);
       return;
     }
 
-    state.setExpectedWinnerId(currentValidItems[winIndex].id);
+    state.setExpectedWinnerId(winnerId);
 
     // If it's a 3D race, generate the complete podium sequence
     if (state.wheelType === 'race') {
@@ -300,7 +291,7 @@ export const useWheelActions = () => {
         {
           id: winnerId,
           text: currentValidItems[winIndex].text,
-          color: slices[winIndex].color,
+          color: winSlice.color,
           rank: 1
         },
         ...remainingSlices.map((item, index) => ({
