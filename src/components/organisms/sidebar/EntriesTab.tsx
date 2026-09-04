@@ -33,7 +33,7 @@ export const EntriesTab = () => {
     handleUpdateItem, handleRemoveItem, handleAddEmptyItem, handleMoveItem
   } = useWheelActions();
 
-  const totalWeight = validItems.reduce((acc, item) => acc + (item.weight || 1), 0) || 1;
+  const totalWeight = validItems.reduce((acc, item) => acc + (item.weight !== undefined ? item.weight : 1), 0) || 1;
   const allSelected = items.length > 0 && items.every(i => i.enabled !== false);
 
   const filteredResults = useMemo(() => {
@@ -192,7 +192,7 @@ export const EntriesTab = () => {
           data={items}
           itemContent={(index, item) => {
             const validItem = validItems.find(vi => vi.id === item.id);
-            const effectiveWeight = validItem ? validItem.weight : item.weight || 1;
+            const effectiveWeight = validItem ? validItem.weight : item.weight !== undefined ? item.weight : 1;
             
             return (
               <div className="pb-3">

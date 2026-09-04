@@ -15,7 +15,7 @@ export const calculateWeights = (
   applyPityAndBalance: boolean
 ): (Item & { weight: number })[] => {
   if (eliminationMode || wheelType === 'horizon' || !applyPityAndBalance) {
-    return items.map(i => ({ ...i, weight: wheelType === 'horizon' ? 1 : (i.weight || 1) }));
+    return items.map(i => ({ ...i, weight: wheelType === 'horizon' ? 1 : (i.weight !== undefined ? i.weight : 1) }));
   }
 
   let maxDrawnWeight = 0;
@@ -23,7 +23,7 @@ export const calculateWeights = (
   const drawnWeights: number[] = [];
 
   const intermediateItems = items.map(item => {
-    let finalWeight = item.weight || 1;
+    let finalWeight = item.weight !== undefined ? item.weight : 1;
     let extraWeight = 0;
     
     const idx = scopedResults.findIndex((r) => 
@@ -117,12 +117,12 @@ export const calculateWeights = (
       if (pitySystemEnabled) {
         if (ignoreNewItemWeight) {
           if (newItemWeightMode === 'base') {
-            weightToApply = item.weight || 1;
+            weightToApply = item.weight !== undefined ? item.weight : 1;
           } else {
-            weightToApply = hasDrawnItems ? matchedWeight : (item.weight || 1);
+            weightToApply = hasDrawnItems ? matchedWeight : (item.weight !== undefined ? item.weight : 1);
           }
         } else {
-          weightToApply = (item.weight || 1) + scopedResults.length;
+          weightToApply = (item.weight !== undefined ? item.weight : 1) + scopedResults.length;
         }
       }
     }

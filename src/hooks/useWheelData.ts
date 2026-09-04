@@ -46,20 +46,20 @@ export const useWheelData = () => {
   );
 
   const { conicGradient, slices } = useMemo(() => {
-    const drawableItems = validItems.filter(i => (i.weight || 1) > 0);
+    const drawableItems = validItems.filter(i => (i.weight !== undefined ? i.weight : 1) > 0);
     const total = drawableItems.length;
     if (total === 0 || colors.length === 0)
       return { conicGradient: "#1e293b", slices: [] };
 
     let totalWeight = drawableItems.reduce(
-      (acc, item) => acc + (item.weight || 1),
+      (acc, item) => acc + (item.weight !== undefined ? item.weight : 1),
       0,
     );
     if (totalWeight <= 0) totalWeight = 1;
 
     let currentAngle = 0;
     const newSlices = drawableItems.map((item, i) => {
-      const weight = item.weight || 1;
+      const weight = item.weight !== undefined ? item.weight : 1;
       const angle = (weight / totalWeight) * FULL_CIRCLE_DEG;
       const startAngle = currentAngle;
       const endAngle = currentAngle + angle;

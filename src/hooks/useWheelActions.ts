@@ -210,7 +210,7 @@ export const useWheelActions = () => {
     }
     clearTimeouts();
 
-    let itemsWithFinalWeights = currentValidItems.map(i => ({ ...i, weight: ignoreWeights ? 1 : (i.weight || 1) }));
+    let itemsWithFinalWeights = currentValidItems.map(i => ({ ...i, weight: ignoreWeights ? 1 : (i.weight !== undefined ? i.weight : 1) }));
     if (!ignoreWeights) {
       itemsWithFinalWeights = calculateWeights(
         currentValidItems,
@@ -282,7 +282,7 @@ export const useWheelActions = () => {
           id: s.item.id,
           text: s.item.text,
           color: s.color,
-          score: (s.item.weight || 1) * 0.5 + getSecureRandom() * 5
+          score: (s.item.weight !== undefined ? item.weight : 1) * 0.5 + getSecureRandom() * 5
         }));
 
       remainingSlices.sort((a, b) => b.score - a.score);

@@ -47,16 +47,16 @@ export const EntrySettingsModal = () => {
   if (!editingEntryId || !tempItem) return null;
 
   const itemIndex = items.findIndex((i) => i.id === editingEntryId);
-  const totalWeight = validItems.reduce((acc, i) => acc + (i.weight || 1), 0);
+  const totalWeight = validItems.reduce((acc, i) => acc + (i.weight !== undefined ? i.weight : 1), 0);
   const weightPercentage =
     tempItem.enabled !== false
       ? Math.round(
-          ((tempItem.weight || 1) /
+          ((tempItem.weight !== undefined ? tempItem.weight : 1) /
             (totalWeight -
               (items[itemIndex]?.enabled !== false
                 ? items[itemIndex]?.weight || 1
                 : 0) +
-              (tempItem.weight || 1))) *
+              (tempItem.weight !== undefined ? tempItem.weight : 1))) *
             100,
         )
       : 0;
@@ -264,7 +264,7 @@ export const EntrySettingsModal = () => {
                     onClick={() =>
                       setTempItem({
                         ...tempItem,
-                        weight: Math.max(0.1, Number((tempItem.weight || 1)) - 1),
+                        weight: Math.max(0.1, Number((tempItem.weight !== undefined ? tempItem.weight : 1)) - 1),
                       })
                     }
                     className="w-10 h-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
@@ -276,7 +276,7 @@ export const EntrySettingsModal = () => {
                     min="0.1"
                     step="0.1"
                     className="flex-1 bg-transparent text-center text-white font-medium border-none focus:outline-none focus:ring-0"
-                    value={tempItem.weight || 1}
+                    value={tempItem.weight !== undefined ? tempItem.weight : 1}
                     onChange={(e) =>
                       setTempItem({
                         ...tempItem,
@@ -288,7 +288,7 @@ export const EntrySettingsModal = () => {
                     onClick={() =>
                       setTempItem({
                         ...tempItem,
-                        weight: Number((tempItem.weight || 1)) + 1,
+                        weight: Number((tempItem.weight !== undefined ? tempItem.weight : 1)) + 1,
                       })
                     }
                     className="w-10 h-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"

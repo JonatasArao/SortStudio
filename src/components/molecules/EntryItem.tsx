@@ -49,7 +49,7 @@ export const EntryItem: React.FC<EntryItemProps> = ({
   onEditSettings,
 }) => {
   const { t } = useTranslation();
-  const currentWeight = effectiveWeight !== undefined ? effectiveWeight : (item.weight || 1);
+  const currentWeight = effectiveWeight !== undefined ? effectiveWeight : (item.weight !== undefined ? item.weight : 1);
   const weightPercentage = item.enabled !== false ? Math.round((currentWeight / totalWeight) * 100) : 0;
   const itemColor = item.color || color || '#cccccc';
 
@@ -98,8 +98,8 @@ export const EntryItem: React.FC<EntryItemProps> = ({
 
         <div className="flex items-center gap-1">
           <span 
-            className={`text-xs font-semibold px-2 py-1 rounded-md min-w-[3rem] text-center border ${currentWeight !== (item.weight || 1) ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-slate-400 bg-slate-800/60 border-slate-700/50'}`}
-            title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(1)}${currentWeight !== (item.weight || 1) ? ` (${t('entryItem.adjustedByBalance')})` : ''}`}
+            className={`text-xs font-semibold px-2 py-1 rounded-md min-w-[3rem] text-center border ${currentWeight !== (item.weight !== undefined ? item.weight : 1) ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-slate-400 bg-slate-800/60 border-slate-700/50'}`}
+            title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(1)}${currentWeight !== (item.weight !== undefined ? item.weight : 1) ? ` (${t('entryItem.adjustedByBalance')})` : ''}`}
           >
             {weightPercentage}%
           </span>
@@ -205,16 +205,16 @@ export const EntryItem: React.FC<EntryItemProps> = ({
               min="0.1" 
               step="0.1"
               disabled={isSpinning}
-              value={item.weight || 1} 
+              value={item.weight !== undefined ? item.weight : 1} 
               onChange={(e) => onUpdate(item.id, { weight: Number(e.target.value) })}
               className="flex-1 w-full min-w-[1rem] bg-transparent text-white border-none focus:outline-none px-1 py-1 text-sm disabled:cursor-not-allowed text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            {currentWeight !== (item.weight || 1) && (
+            {currentWeight !== (item.weight !== undefined ? item.weight : 1) && (
               <div 
                 className="px-1.5 text-[10px] font-bold text-amber-400 h-full flex items-center justify-center border-l border-slate-700/80 bg-amber-500/10 shrink-0" 
-                title={`${t('entryItem.adjustedByBalance')}: ${item.weight || 1}\n${t('entryItem.current')}: ${currentWeight.toFixed(1)}`}
+                title={`${t('entryItem.adjustedByBalance')}: ${item.weight !== undefined ? item.weight : 1}\n${t('entryItem.current')}: ${currentWeight.toFixed(1)}`}
               >
-                {currentWeight > (item.weight || 1) ? '▲' : '▼'}{currentWeight.toFixed(1)}
+                {currentWeight > (item.weight !== undefined ? item.weight : 1) ? '▲' : '▼'}{currentWeight.toFixed(1)}
               </div>
             )}
             <div 
