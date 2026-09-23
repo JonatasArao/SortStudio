@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Trophy, Crown } from 'lucide-react';
+import { Trophy, Crown, Car } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +47,18 @@ export const WinnerModal = () => {
             <div className="absolute top-0 left-0 right-0 h-1 bg-[repeating-linear-gradient(45deg,#fff,#fff_10px,#000_10px,#000_20px)] opacity-50"></div>
             
             <div className="flex items-center gap-3 sm:gap-4 text-left">
-               <Icon className={`${iconColor} drop-shadow-[0_0_15px_${dropShadowColor}] animate-bounce shrink-0`} size={32} />
+               <div className="relative shrink-0 flex items-center justify-center">
+                 <Icon className={`${iconColor} drop-shadow-[0_0_15px_${dropShadowColor}] animate-bounce`} size={28} />
+                 {winner.color && (
+                   <div 
+                     className="w-8 h-8 rounded-xl flex items-center justify-center border border-white/30 shadow-md shrink-0 ml-1.5"
+                     style={{ backgroundColor: winner.color }}
+                     title={winner.text}
+                   >
+                     <Car className="w-4 h-4 text-white drop-shadow" />
+                   </div>
+                 )}
+               </div>
                <div className="flex-1 min-w-0">
                  <p className="text-[9px] sm:text-[10px] text-amber-400 font-black uppercase tracking-[0.2em]">{customMessage}</p>
                  <h2 className="text-lg sm:text-xl font-black text-white drop-shadow-lg leading-tight uppercase italic truncate">{winner.text}</h2>

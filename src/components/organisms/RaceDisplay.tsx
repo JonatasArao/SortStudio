@@ -404,6 +404,7 @@ const CameraController = ({
   isSpinning,
   expectedWinnerId,
   leaderPosRef,
+  winnerPosRef,
   positionsRef,
   onModeChange,
   startPhase,
@@ -415,6 +416,7 @@ const CameraController = ({
   isSpinning: boolean;
   expectedWinnerId?: string;
   leaderPosRef: React.MutableRefObject<any>;
+  winnerPosRef?: React.MutableRefObject<any>;
   positionsRef: React.MutableRefObject<any[]>;
   onModeChange?: (mode: string) => void;
   startPhase: string;
@@ -898,11 +900,16 @@ const CameraController = ({
       }
     } else {
       stopRaceAudio();
-      if (expectedWinnerId && leaderPosRef.current) {
-        const leader = leaderPosRef.current;
-        const t = state.clock.elapsedTime * 0.2;
-        camera.position.lerp(new THREE.Vector3(leader.x + Math.sin(t) * 15, 8, leader.z + Math.cos(t) * 15), 0.05);
-        lookAtTarget.current.lerp(new THREE.Vector3(leader.x, 1, leader.z), 0.1);
+      // Celebration focus: prioritize winner's exact position
+      const celebratePos = (winnerPosRef && winnerPosRef.current && winnerPosRef.current.totalDistance > 0)
+        ? winnerPosRef.current
+        : (leaderPosRef.current && leaderPosRef.current.totalDistance > 0 ? leaderPosRef.current : null);
+
+      if (expectedWinnerId && celebratePos) {
+        const target = celebratePos;
+        const t = state.clock.elapsedTime * 0.25;
+        camera.position.lerp(new THREE.Vector3(target.x + Math.sin(t) * 14, 6, target.z + Math.cos(t) * 14), 0.05);
+        lookAtTarget.current.lerp(new THREE.Vector3(target.x, 1.2, target.z), 0.1);
         camera.lookAt(lookAtTarget.current);
       } else {
         const t = state.clock.elapsedTime * 0.1;
@@ -1007,7 +1014,7 @@ const Racer = ({
   isSpinning: boolean;
   spinDurationSeconds: number;
   expectedWinnerId?: string;
-  onUpdatePosition?: (index: number, pos: any) => void;
+  onUpdatePosition?: (index: number, pos: any, racerId?: string) => void;
   simProfile: any;
   isWinner: boolean;
   startPhase: string;
@@ -1089,7 +1096,7 @@ const Racer = ({
         raceData.finalPos = pos;
 
         if (onUpdatePosition) {
-          onUpdatePosition(index, pos);
+          onUpdatePosition(index, pos, item.id);
         }
       } else {
         // Countdown / Pre-start grid state
@@ -1105,19 +1112,22 @@ const Racer = ({
         meshRef.current.rotation.y = 0;
 
         if (onUpdatePosition) {
-          onUpdatePosition(index, gridPos);
+          onUpdatePosition(index, gridPos, item.id);
         }
       }
     } else {
       raceData.startTime = 0;
       setIsLaunching(false);
-      const resetPos = expectedWinnerId ? raceData.finalPos : gridPos;
+      // In post-race celebration, keep cars at their finish positions; otherwise grid
+      const resetPos = (expectedWinnerId || isWinner) && raceData.finalPos.totalDistance > 0 
+        ? raceData.finalPos 
+        : gridPos;
 
-      groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, resetPos.x, 0.1);
-      groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, resetPos.z, 0.1);
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, resetPos.angle, 0.1);
+      groupRef.current.position.x = resetPos.x;
+      groupRef.current.position.z = resetPos.z;
+      groupRef.current.rotation.y = resetPos.angle;
 
-      if (isWinner && expectedWinnerId) {
+      if (isWinner) {
         // Post-race donuts celebration
         meshRef.current.position.y = 0.05; // Squat slightly
         meshRef.current.rotation.y -= 0.12; // Spin rapidly for donuts
@@ -1136,7 +1146,7 @@ const Racer = ({
     <group ref={groupRef} position={[gridPos.x, 0, gridPos.z]}>
       <group ref={meshRef} scale={[2.2, 2.2, 2.2]}>
         <CarModel color={color} />
-        {(isLaunching || (isWinner && expectedWinnerId && !isSpinning)) && <TyreSmoke />}
+        {(isLaunching || (isWinner && !isSpinning)) && <TyreSmoke />}
       </group>
 
       <Billboard position={[0, 2.5, 0]}>
@@ -1443,6 +1453,8 @@ const Scenery = () => {
 };
 
 const RaceScene = ({
+  slices,
+  validItems,
   onModeChange,
   startPhase,
   lightsCount,
@@ -1452,6 +1464,8 @@ const RaceScene = ({
   cameraMode,
   setCameraMode,
 }: {
+  slices: any[];
+  validItems: any[];
   onModeChange: (mode: string) => void;
   startPhase: string;
   lightsCount: number;
@@ -1485,7 +1499,6 @@ const RaceScene = ({
     return tex;
   }, [kerbTex]);
 
-  const { slices, validItems } = useWheelData();
   const isSpinning = useAppStore(state => state.isSpinning);
   const expectedWinnerId = useAppStore(state => state.expectedWinnerId);
   const winner = useAppStore(state => state.winner);
@@ -1495,7 +1508,7 @@ const RaceScene = ({
   const eliminationSpinTime = useAppStore(state => state.eliminationSpinTime);
   const racePodium = useAppStore(state => state.racePodium);
 
-  const activeWinnerId = (isSpinning || winner) ? expectedWinnerId : undefined;
+  const activeWinnerId = (isSpinning || winner) ? (winner?.id || expectedWinnerId) : undefined;
 
   let actualSpinTime = isFinalRound ? spinTime : (eliminationMode ? eliminationSpinTime : spinTime);
   const spinRange = getSpinTimeRanges('race', !isFinalRound && eliminationMode);
@@ -1507,6 +1520,7 @@ const RaceScene = ({
     new Array(slices.length).fill({ x: 0, z: TRACK_R, angle: 0, totalDistance: 0 })
   );
   const leaderPosRef = useRef({ x: 0, z: TRACK_R, angle: 0, totalDistance: 0 });
+  const winnerPosRef = useRef<any>(null);
 
   const [simData, setSimData] = useState<any[] | null>(null);
 
@@ -1529,8 +1543,11 @@ const RaceScene = ({
 
   const FINISH_LINE_DIST = TOTAL_LAPS * TRACK_P;
 
-  const handleUpdatePosition = (index: number, pos: any) => {
+  const handleUpdatePosition = (index: number, pos: any, racerId?: string) => {
     racerPositions.current[index] = pos;
+    if (racerId && activeWinnerId && racerId === activeWinnerId) {
+      winnerPosRef.current = pos;
+    }
     if (isSpinning) {
       let leaderIndex = 0;
       let maxDist = -9999;
@@ -1591,6 +1608,7 @@ const RaceScene = ({
         isSpinning={isSpinning}
         expectedWinnerId={activeWinnerId}
         leaderPosRef={leaderPosRef}
+        winnerPosRef={winnerPosRef}
         positionsRef={racerPositions}
         onModeChange={onModeChange}
         startPhase={startPhase}
@@ -1723,12 +1741,22 @@ const RaceScene = ({
 };
 
 export const RaceDisplay = () => {
-  const { slices } = useWheelData();
+  const { slices: liveSlices, validItems } = useWheelData();
   const { t } = useTranslation();
   const isSpinning = useAppStore(state => state.isSpinning);
+  const winner = useAppStore(state => state.winner);
   const masterVolume = useAppStore(state => state.masterVolume);
   const soundEnabled = useAppStore(state => state.soundEnabled);
   const { spinWheel: handleSpinClick } = useWheelActions();
+
+  // Preserve the racing slices during spin AND celebration so winning/eliminated cars don't disappear
+  const raceSlicesRef = useRef(liveSlices);
+  if (!isSpinning && !winner) {
+    raceSlicesRef.current = liveSlices;
+  }
+  const slices = (isSpinning || winner) && raceSlicesRef.current.length > 0
+    ? raceSlicesRef.current
+    : liveSlices;
 
   const [cameraMode, setCameraMode] = useState('idle');
   const [targetRank, setTargetRank] = useState<number>(0);
@@ -2003,6 +2031,8 @@ export const RaceDisplay = () => {
       >
         <React.Suspense fallback={null}>
           <RaceScene
+            slices={slices}
+            validItems={validItems}
             onModeChange={setCameraMode}
             startPhase={startPhase}
             lightsCount={lightsCount}
