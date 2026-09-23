@@ -504,9 +504,11 @@ const CameraController = ({
       if (cameraMode !== 'grid') {
         setCameraMode('grid');
         if (onModeChange) onModeChange('grid');
+        currentCamPos.current.set(targetCamX, targetCamY, targetCamZ);
+        lookAtTarget.current.set(-2, 2.0, TRACK_R);
       }
 
-      currentCamPos.current.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.08);
+      currentCamPos.current.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.1);
       camera.position.copy(currentCamPos.current);
       lookAtTarget.current.lerp(new THREE.Vector3(lookTargetX, lookTargetY, lookTargetZ), 0.12);
       camera.lookAt(lookAtTarget.current);
@@ -724,9 +726,9 @@ const CameraController = ({
       let lerpSpeed = 0.08;
       let lookLerpSpeed = 0.15;
 
-      const shakeAmount = (cameraMode === 'bumper' || cameraMode === 'action') ? 0.018 : 0.003;
-      const shakeX = (Math.random() - 0.5) * shakeAmount;
-      const shakeY = (Math.random() - 0.5) * shakeAmount;
+      const shakeAmount = (cameraMode === 'bumper' || cameraMode === 'action') ? 0.015 : 0;
+      const shakeX = shakeAmount > 0 ? (Math.random() - 0.5) * shakeAmount : 0;
+      const shakeY = shakeAmount > 0 ? (Math.random() - 0.5) * shakeAmount : 0;
 
       switch (cameraMode) {
         case 'finish':
@@ -1097,12 +1099,9 @@ const Racer = ({
         groupRef.current.position.z = gridPos.z;
         groupRef.current.rotation.y = gridPos.angle;
 
-        // Pre-start engine revving vibration on grid lights
-        const lights = parseInt(startPhase.replace('lights_', '')) || 0;
-        const revIntensity = startPhase.startsWith('lights') ? (0.004 + lights * 0.003) : 0.003;
-        meshRef.current.position.y = Math.abs(Math.sin(state.clock.elapsedTime * (35 + lights * 10) + index)) * revIntensity;
-        // Lean slightly forward against clutch launch control
-        meshRef.current.rotation.z = startPhase.startsWith('lights') ? 0.012 : 0;
+        // Pre-start grid state: stable and grounded
+        meshRef.current.position.y = 0;
+        meshRef.current.rotation.z = 0;
         meshRef.current.rotation.y = 0;
 
         if (onUpdatePosition) {
@@ -1996,7 +1995,12 @@ export const RaceDisplay = () => {
         </div>
       )}
 
-      <Canvas shadows="percentage" camera={{ position: [-40, 30, 40], fov: 50 }}>
+      <Canvas 
+        shadows="percentage" 
+        dpr={[1, 2]} 
+        gl={{ powerPreference: "high-performance", antialias: true }}
+        camera={{ position: [-40, 30, 40], fov: 50 }}
+      >
         <React.Suspense fallback={null}>
           <RaceScene
             onModeChange={setCameraMode}

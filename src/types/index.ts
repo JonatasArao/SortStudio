@@ -13,7 +13,6 @@ export interface Item {
   color?: string;
   message?: string;
   sound?: string;
-  image?: string;
   isEliminated?: boolean;
   type?: "winner" | "eliminated" | "grand_winner";
   drawId?: string;

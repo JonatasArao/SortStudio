@@ -492,9 +492,6 @@ export const MysteryBoxDisplay = () => {
                               
                               {mappedItem && (
                                  <div className="relative z-10 w-full flex flex-col items-center justify-center">
-                                    {mappedItem.image && (
-                                       <img src={mappedItem.image} alt="" className="w-10 h-10 md:w-14 md:h-14 object-contain mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
-                                    )}
                                     <span 
                                        className="font-black text-xs sm:text-sm md:text-base uppercase tracking-wider break-words w-full px-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] leading-tight line-clamp-2"
                                        style={{ color: textColor }}

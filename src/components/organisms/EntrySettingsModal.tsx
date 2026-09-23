@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   ArrowLeft,
@@ -8,8 +8,6 @@ import {
   Trash,
   Settings2,
   PlayCircle,
-  Upload,
-  Image as ImageIcon,
   Music2
 } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
@@ -30,7 +28,6 @@ export const EntrySettingsModal = () => {
   
   const { validItems } = useWheelData();
   const { removeCustomAudio } = useAudioActions();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [tempItem, setTempItem] = useState<Item | null>(null);
 
@@ -47,18 +44,12 @@ export const EntrySettingsModal = () => {
   if (!editingEntryId || !tempItem) return null;
 
   const itemIndex = items.findIndex((i) => i.id === editingEntryId);
+  const currentValidItem = validItems.find(vi => vi.id === editingEntryId);
   const totalWeight = validItems.reduce((acc, i) => acc + (i.weight !== undefined ? i.weight : 1), 0);
+  const effectiveWeight = currentValidItem ? currentValidItem.weight : (tempItem.weight !== undefined ? tempItem.weight : 1);
   const weightPercentage =
-    tempItem.enabled !== false
-      ? Math.round(
-          ((tempItem.weight !== undefined ? tempItem.weight : 1) /
-            (totalWeight -
-              (items[itemIndex]?.enabled !== false
-                ? items[itemIndex]?.weight || 1
-                : 0) +
-              (tempItem.weight !== undefined ? tempItem.weight : 1))) *
-            100,
-        )
+    tempItem.enabled !== false && totalWeight > 0
+      ? Math.round((effectiveWeight / totalWeight) * 100)
       : 0;
 
   const handleSave = () => {
@@ -120,19 +111,6 @@ export const EntrySettingsModal = () => {
   const handleDelete = () => {
     setItems((prev) => prev.filter((i) => i.id !== editingEntryId));
     setEditingEntryId(null);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setTempItem((prev) =>
-          prev ? { ...prev, image: ev.target?.result as string } : null,
-        );
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const winSoundOptions = [
@@ -258,6 +236,17 @@ export const EntrySettingsModal = () => {
                       </span>
                     )}
                   </label>
+                  {currentValidItem && currentValidItem.weight !== (tempItem.weight !== undefined ? tempItem.weight : 1) && (
+                    <span 
+                      className={`text-xs font-semibold px-2 py-0.5 rounded border ${
+                        currentValidItem.weight === 0
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      }`}
+                    >
+                      {t('entryItem.effectiveWeight')}: {currentValidItem.weight.toFixed(2)}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center bg-[#252733] border border-slate-700 rounded-xl overflow-hidden h-[42px]">
                   <button
@@ -299,91 +288,27 @@ export const EntrySettingsModal = () => {
               </div>
             </div>
 
-            {/* Fundo da Fatia (Cor ou Imagem) */}
+            {/* Cor da Fatia */}
             <div className="space-y-3 bg-[#252733] p-4 rounded-xl border border-slate-700/50">
               <label className="text-sm font-medium text-slate-300">
-                {t('entrySettings.sliceBackground')}
+                {t('entrySettings.sliceColor', 'Cor da Fatia')}
               </label>
-              <p className="text-xs text-slate-500 mb-2">{t('entrySettings.appearanceDesc')}</p>
+              <p className="text-xs text-slate-500 mb-2">{t('entrySettings.appearanceDesc', 'Personalize a cor da fatia na roleta.')}</p>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Image Uploader takes precedence */}
-                <div className="flex-1">
-                  {!tempItem.image ? (
-                    <div
-                      className="bg-[#1e2029] rounded-lg p-4 h-[80px] flex items-center justify-center border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-slate-800 transition-colors cursor-pointer"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        ref={fileInputRef}
-                        className="hidden"
-                      />
-                      <div className="flex flex-col items-center gap-1">
-                        <ImageIcon size={20} className="text-slate-400" />
-                        <span className="text-slate-400 font-medium text-xs">
-                          {t('entrySettings.addImage')}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative bg-[#1e2029] border border-slate-700 rounded-lg flex items-center justify-center h-[80px] overflow-hidden group">
-                      <img
-                        src={tempItem.image}
-                        alt={t('entrySettings.sliceBackground')}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            fileInputRef.current?.click();
-                          }}
-                          className="p-2 text-white hover:text-blue-400 transition-colors"
-                          title={t('entrySettings.changeImage')}
-                        >
-                          <Upload size={18} />
-                        </button>
-                        <button
-                          onClick={() =>
-                            setTempItem({ ...tempItem, image: undefined })
-                          }
-                          className="p-2 text-white hover:text-red-400 transition-colors"
-                          title={t('entrySettings.removeImage')}
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        ref={fileInputRef}
-                        className="hidden"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Color Picker (disabled visually if image is present) */}
-                <div className={`relative w-[120px] shrink-0 h-[80px] rounded-lg overflow-hidden border-2 transition-colors ${tempItem.image ? 'border-slate-800 opacity-30 cursor-not-allowed' : 'border-slate-700 hover:border-blue-500 group'}`}>
-                  {!tempItem.image && (
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none z-10">
-                       <span className="text-xs font-medium text-white drop-shadow-md">{t('entrySettings.cropColor')}</span>
-                     </div>
-                  )}
+              <div className="flex items-center gap-4">
+                <div className="relative w-28 h-12 rounded-lg overflow-hidden border-2 border-slate-700 hover:border-blue-500 transition-colors group cursor-pointer">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none z-10">
+                    <span className="text-xs font-medium text-white drop-shadow-md">{t('entrySettings.cropColor', 'Escolher')}</span>
+                  </div>
                   <input
                     type="color"
-                    disabled={!!tempItem.image}
-                    className="absolute inset-0 w-full h-[150%] -translate-y-1/4 cursor-pointer disabled:cursor-not-allowed"
+                    className="absolute inset-0 w-full h-[150%] -translate-y-1/4 cursor-pointer"
                     value={tempItem.color || "#cccccc"}
                     onChange={(e) =>
                       setTempItem({ ...tempItem, color: e.target.value })
                     }
                   />
-                  {tempItem.color && !tempItem.image && (
+                  {tempItem.color && (
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -391,13 +316,15 @@ export const EntrySettingsModal = () => {
                         setTempItem({ ...tempItem, color: undefined });
                       }}
                       className="absolute top-1 right-1 bg-black/60 text-white p-1 rounded hover:bg-red-500 transition-colors z-20"
-                      title={t('entrySettings.removeColor')}
+                      title={t('entrySettings.removeColor', 'Remover Cor')}
                     >
                       <X size={12} />
                     </button>
                   )}
                 </div>
-
+                <span className="text-xs font-mono text-slate-400">
+                  {tempItem.color || t('entrySettings.defaultColor', 'Cor padrão')}
+                </span>
               </div>
             </div>
 

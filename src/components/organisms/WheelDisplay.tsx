@@ -8,7 +8,8 @@ import {
   WHEEL_CANVAS_RESOLUTION, 
   WHEEL_REFERENCE_SIZE, 
   YIQ_CONTRAST_THRESHOLD,
-  WHEEL_TOP_OFFSET_DEG
+  WHEEL_TOP_OFFSET_DEG,
+  DEFAULT_CENTER_IMAGE
 } from '../../constants';
 
 function getContrastYIQ(hexcolor: string) {
@@ -468,10 +469,10 @@ export const WheelDisplay = () => {
         >
             <div className="absolute inset-0 rounded-full shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] pointer-events-none z-10"></div>
             <img 
-              src={centerImage || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"} 
+              src={centerImage || DEFAULT_CENTER_IMAGE} 
               alt="Logo Central" 
               className="w-[85%] h-[85%] object-contain rounded-full drop-shadow-md z-0"
-              onError={(e) => { (e.target as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=fallback" }}
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_CENTER_IMAGE }}
             />
         </div>
       </div>

@@ -264,7 +264,7 @@ export const GeneralSettings = () => {
                 {ignoreNewItemWeight && (
                   <div className="pt-3 border-t border-slate-800/60 mt-1 flex flex-col gap-2">
                     {[
-                      { id: 'boosted', label: t('settings.general.newItemWeightModeBoosted', 'Acelerado (Recomendado)'), desc: t('settings.general.newItemWeightModeBoostedDesc', 'Leve vantagem sobre o participante mais azarado (Maior peso + 30%).') },
+                      { id: 'boosted', label: t('settings.general.newItemWeightModeBoosted', 'Acelerado (Recomendado)'), desc: t('settings.general.newItemWeightModeBoostedDesc', 'Leve vantagem sobre o participante mais azarado (Maior peso + 20%, máx. 50% de chance).') },
                       { id: 'max', label: t('settings.general.newItemWeightModeMax'), desc: t('settings.general.newItemWeightModeMaxDesc') },
                       { id: 'average', label: t('settings.general.newItemWeightModeAverage'), desc: t('settings.general.newItemWeightModeAverageDesc') },
                       { id: 'median', label: t('settings.general.newItemWeightModeMedian'), desc: t('settings.general.newItemWeightModeMedianDesc') },

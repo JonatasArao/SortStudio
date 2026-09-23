@@ -243,12 +243,14 @@ export const useWheelActions = () => {
       let randomWeight = getSecureRandom() * totalWeight;
       let currentWeight = 0;
       for (let i = 0; i < currentValidItems.length; i++) {
-        currentWeight += getActualWeight(currentValidItems[i]);
-        if (randomWeight < currentWeight) {
+        const w = getActualWeight(currentValidItems[i]);
+        currentWeight += w;
+        if (randomWeight <= currentWeight && w > 0) {
           return i;
         }
       }
-      return 0;
+      const firstValid = currentValidItems.findIndex(i => getActualWeight(i) > 0);
+      return firstValid !== -1 ? firstValid : 0;
     };
 
     let winIndex = 0;
@@ -282,7 +284,7 @@ export const useWheelActions = () => {
           id: s.item.id,
           text: s.item.text,
           color: s.color,
-          score: (s.item.weight !== undefined ? item.weight : 1) * 0.5 + getSecureRandom() * 5
+          score: (s.item.weight !== undefined ? s.item.weight : 1) * 0.5 + getSecureRandom() * 5
         }));
 
       remainingSlices.sort((a, b) => b.score - a.score);

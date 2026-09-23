@@ -94,7 +94,7 @@
       "ignoreNewItemWeight": "Match chances for new items",
       "ignoreNewItemWeightDesc": "Participants never drawn receive a weight based on those already drawn.",
       "newItemWeightModeBoosted": "Boosted (Recommended)",
-      "newItemWeightModeBoostedDesc": "Slight advantage over the unluckiest participant (Highest weight + 30%).",
+      "newItemWeightModeBoostedDesc": "Slight advantage over the unluckiest participant (Highest weight + 20%, max 50% chance).",
       "newItemWeightModeMax": "Highest",
       "newItemWeightModeMaxDesc": "Equal to the participant with the highest chance.",
       "newItemWeightModeMedian": "Median",

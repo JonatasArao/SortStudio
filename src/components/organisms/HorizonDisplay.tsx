@@ -222,11 +222,6 @@ export const HorizonDisplay = () => {
                             {/* Inner gradient to give cylindrical shading on items */}
                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/10 pointer-events-none"></div>
                             
-                            {slice.item.image && (
-                              <div className="h-full min-w-[80px] md:min-w-[120px] bg-white/10 flex items-center justify-center p-2 border-r-[3px] border-black/20 z-10">
-                                <img src={slice.item.image} className="h-full w-full object-contain drop-shadow-lg" alt="" />
-                              </div>
-                            )}
                             <div className="flex-1 flex flex-col justify-center px-6 relative z-10">
                                 <span className={`font-black uppercase tracking-widest truncate drop-shadow-md ${isTiny ? 'text-sm' : 'text-3xl md:text-5xl'}`} style={{ color: textColor }}>
                                   {slice.item.text}

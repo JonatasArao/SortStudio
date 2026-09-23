@@ -154,8 +154,7 @@ export const useAppInitialization = () => {
         enabled: i.enabled,
         color: i.color,
         message: i.message,
-        sound: i.sound,
-        image: i.image
+        sound: i.sound
       })),
       colorSettings: colors.map(color => ({ color, enabled: true })),
       customPictureDataUri: centerImage,

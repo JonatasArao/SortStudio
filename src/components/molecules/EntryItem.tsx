@@ -97,9 +97,29 @@ export const EntryItem: React.FC<EntryItemProps> = ({
         </div>
 
         <div className="flex items-center gap-1">
+          {currentWeight !== (item.weight !== undefined ? item.weight : 1) && (
+            <span 
+              className={`text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${
+                currentWeight === 0 
+                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+                  : currentWeight > (item.weight !== undefined ? item.weight : 1)
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+              }`}
+              title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
+            >
+              {currentWeight === 0 ? '0' : `${currentWeight > (item.weight !== undefined ? item.weight : 1) ? '▲' : '▼'}${currentWeight.toFixed(1)}`}
+            </span>
+          )}
           <span 
-            className={`text-xs font-semibold px-2 py-1 rounded-md min-w-[3rem] text-center border ${currentWeight !== (item.weight !== undefined ? item.weight : 1) ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-slate-400 bg-slate-800/60 border-slate-700/50'}`}
-            title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(1)}${currentWeight !== (item.weight !== undefined ? item.weight : 1) ? ` (${t('entryItem.adjustedByBalance')})` : ''}`}
+            className={`text-xs font-semibold px-2 py-1 rounded-md min-w-[3rem] text-center border ${
+              currentWeight === 0
+                ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                : currentWeight !== (item.weight !== undefined ? item.weight : 1) 
+                ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' 
+                : 'text-slate-400 bg-slate-800/60 border-slate-700/50'
+            }`}
+            title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}${currentWeight !== (item.weight !== undefined ? item.weight : 1) ? ` (${t('entryItem.adjustedByBalance')})` : ''}`}
           >
             {weightPercentage}%
           </span>
@@ -211,15 +231,25 @@ export const EntryItem: React.FC<EntryItemProps> = ({
             />
             {currentWeight !== (item.weight !== undefined ? item.weight : 1) && (
               <div 
-                className="px-1.5 text-[10px] font-bold text-amber-400 h-full flex items-center justify-center border-l border-slate-700/80 bg-amber-500/10 shrink-0" 
-                title={`${t('entryItem.adjustedByBalance')}: ${item.weight !== undefined ? item.weight : 1}\n${t('entryItem.current')}: ${currentWeight.toFixed(1)}`}
+                className={`px-1.5 text-[10px] font-bold h-full flex items-center justify-center border-l border-slate-700/80 shrink-0 ${
+                  currentWeight === 0
+                    ? 'text-rose-400 bg-rose-500/10'
+                    : currentWeight > (item.weight !== undefined ? item.weight : 1)
+                    ? 'text-emerald-400 bg-emerald-500/10'
+                    : 'text-amber-400 bg-amber-500/10'
+                }`} 
+                title={`${t('entryItem.adjustedByBalance')}: ${item.weight !== undefined ? item.weight : 1}\n${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
               >
-                {currentWeight > (item.weight !== undefined ? item.weight : 1) ? '▲' : '▼'}{currentWeight.toFixed(1)}
+                {currentWeight === 0 ? '🚫 0' : `${currentWeight > (item.weight !== undefined ? item.weight : 1) ? '▲' : '▼'}${currentWeight.toFixed(1)}`}
               </div>
             )}
             <div 
-              className="px-2 text-xs font-bold text-blue-400 bg-blue-500/10 border-l border-blue-500/20 h-full flex items-center min-w-[3rem] justify-center shrink-0"
-              title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(1)}`}
+              className={`px-2 text-xs font-bold border-l h-full flex items-center min-w-[3rem] justify-center shrink-0 ${
+                currentWeight === 0
+                  ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                  : 'text-blue-400 bg-blue-500/10 border-blue-500/20'
+              }`}
+              title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
             >
               {weightPercentage}%
             </div>

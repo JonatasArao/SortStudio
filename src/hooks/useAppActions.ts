@@ -145,7 +145,6 @@ export const useAppActions = () => {
               color: item.color,
               message: item.message,
               sound: item.sound,
-              image: item.image,
             })),
             colorSettings: state.colors.map((color) => ({ color, enabled: true })),
             spinTime: state.spinTime,
@@ -300,7 +299,6 @@ export const useAppActions = () => {
                 color: ent.color,
                 message: ent.message,
                 sound: ent.sound,
-                image: ent.image,
               })),
             );
           }

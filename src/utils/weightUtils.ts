@@ -18,29 +18,53 @@ export const calculateWeights = (
     return items.map(i => ({ ...i, weight: wheelType === 'horizon' ? 1 : (i.weight !== undefined ? i.weight : 1) }));
   }
 
-  let maxDrawnWeight = 0;
-  let hasDrawnItems = false;
-  const drawnWeights: number[] = [];
+  // 1. Identify participants excluded by the anti-repetition system.
+  // CRITICAL: Weights of hidden participants (anti-repetition) MUST NOT be included
+  // in comparisons or equalization of new participants.
+  let recentWinnersSlice: Result[] = [];
+  if (antiRepetitionEnabled && !eliminationMode && items.length > 2) {
+    const numRecentToCheck = Math.min(antiRepetitionCount, Math.max(1, items.length - 2));
+    recentWinnersSlice = scopedResults.slice(0, numRecentToCheck);
+  }
+
+  const isAntiRepetitionExcluded = (item: Item) => {
+    if (recentWinnersSlice.length === 0) return false;
+    const itemText = item.text.trim().toLowerCase();
+    return recentWinnersSlice.some(
+      (r) => r.id === item.id || r.text.trim().toLowerCase() === itemText
+    );
+  };
+
+  // 2. Separate items into valid drawn vs new, computing weights for valid drawn items only.
+  const validDrawnWeights: number[] = [];
 
   const intermediateItems = items.map(item => {
+    const isExcluded = isAntiRepetitionExcluded(item);
+    if (isExcluded) {
+      return {
+        item,
+        isExcluded: true,
+        hasBeenDrawn: false,
+        finalWeight: 0
+      };
+    }
+
     let finalWeight = item.weight !== undefined ? item.weight : 1;
-    let extraWeight = 0;
-    
+    const itemText = item.text.trim().toLowerCase();
     const idx = scopedResults.findIndex((r) => 
-      r.id === item.id || r.text.trim().toLowerCase() === item.text.trim().toLowerCase()
+      r.id === item.id || r.text.trim().toLowerCase() === itemText
     );
 
     const hasBeenDrawn = idx !== -1;
 
     if (pitySystemEnabled) {
       if (hasBeenDrawn) {
-        extraWeight = idx;
+        finalWeight += idx;
       }
-      finalWeight += extraWeight;
     }
 
     if (balanceWeightsByWins) {
-      const winCount = scopedResults.filter((r) => r.id === item.id || r.text.trim().toLowerCase() === item.text.trim().toLowerCase()).length;
+      const winCount = scopedResults.filter((r) => r.id === item.id || r.text.trim().toLowerCase() === itemText).length;
       if (winCount > 0) {
         if (balanceWeightsMode === 'linear') {
           finalWeight = finalWeight / (winCount + 1);
@@ -52,88 +76,119 @@ export const calculateWeights = (
       }
     }
 
-    if (hasBeenDrawn) {
-      hasDrawnItems = true;
-      drawnWeights.push(finalWeight);
-      if (finalWeight > maxDrawnWeight) {
-        maxDrawnWeight = finalWeight;
-      }
+    finalWeight = Number(finalWeight.toFixed(2));
+
+    // Only active, valid (non-excluded) participants are considered in drawn weights
+    if (hasBeenDrawn && finalWeight > 0) {
+      validDrawnWeights.push(finalWeight);
     }
 
     return {
       item,
-      finalWeight,
-      hasBeenDrawn
+      isExcluded: false,
+      hasBeenDrawn,
+      finalWeight
     };
   });
 
+  // 3. Calculate matched weight using ONLY valid drawn items (excluding anti-repetition hidden participants)
   let matchedWeight = 0;
-  if (hasDrawnItems && drawnWeights.length > 0) {
-    drawnWeights.sort((a, b) => a - b);
-    const minDrawnWeight = drawnWeights[0];
+  const hasValidDrawnItems = validDrawnWeights.length > 0;
+
+  if (hasValidDrawnItems) {
+    validDrawnWeights.sort((a, b) => a - b);
+    const minDrawnWeight = validDrawnWeights[0];
+    const maxDrawnWeight = validDrawnWeights[validDrawnWeights.length - 1];
     
     let medianDrawnWeight = 0;
-    const mid = Math.floor(drawnWeights.length / 2);
-    if (drawnWeights.length % 2 === 0) {
-      medianDrawnWeight = (drawnWeights[mid - 1] + drawnWeights[mid]) / 2;
+    const mid = Math.floor(validDrawnWeights.length / 2);
+    if (validDrawnWeights.length % 2 === 0) {
+      medianDrawnWeight = (validDrawnWeights[mid - 1] + validDrawnWeights[mid]) / 2;
     } else {
-      medianDrawnWeight = drawnWeights[mid];
+      medianDrawnWeight = validDrawnWeights[mid];
     }
     
-    const sumDrawnWeight = drawnWeights.reduce((acc, w) => acc + w, 0);
-    const averageDrawnWeight = sumDrawnWeight / drawnWeights.length;
+    const sumDrawnWeight = validDrawnWeights.reduce((acc, w) => acc + w, 0);
+    const averageDrawnWeight = sumDrawnWeight / validDrawnWeights.length;
 
     switch (newItemWeightMode) {
       case 'boosted':
-        // A bump of ~30% over the highest weight plus a flat +1 to guarantee an edge even at low weights
-        matchedWeight = Math.ceil(maxDrawnWeight * 1.3) + 1;
+        // Boost: +20% over the highest valid drawn participant (no flat +1)
+        matchedWeight = Number((maxDrawnWeight * 1.20).toFixed(2));
         break;
       case 'median':
-        matchedWeight = medianDrawnWeight;
+        matchedWeight = Number(medianDrawnWeight.toFixed(2));
         break;
       case 'average':
-        matchedWeight = averageDrawnWeight;
+        matchedWeight = Number(averageDrawnWeight.toFixed(2));
         break;
       case 'min':
-        matchedWeight = minDrawnWeight;
+        matchedWeight = Number(minDrawnWeight.toFixed(2));
+        break;
+      case 'base':
+        matchedWeight = 1;
         break;
       case 'max':
       default:
-        matchedWeight = maxDrawnWeight;
+        matchedWeight = Number(maxDrawnWeight.toFixed(2));
         break;
     }
   }
 
-  let recentWinnersTexts: string[] = [];
-  if (antiRepetitionEnabled && !eliminationMode && items.length > 2) {
-    const numRecentToCheck = Math.min(antiRepetitionCount, Math.max(1, items.length - 2));
-    recentWinnersTexts = scopedResults.slice(0, numRecentToCheck).map((r) => r.text.trim().toLowerCase());
-  }
+  // 4. Assign tentative weights to new participants
+  const intermediateWithWeights = intermediateItems.map(entry => {
+    if (entry.isExcluded) {
+      return { ...entry, tentativeWeight: 0 };
+    }
 
-  return intermediateItems.map(({ item, finalWeight, hasBeenDrawn }) => {
-    let weightToApply = finalWeight;
-
-    if (!hasBeenDrawn) {
+    if (!entry.hasBeenDrawn) {
+      let weightToApply = entry.item.weight !== undefined ? entry.item.weight : 1;
       if (pitySystemEnabled) {
         if (ignoreNewItemWeight) {
           if (newItemWeightMode === 'base') {
-            weightToApply = item.weight !== undefined ? item.weight : 1;
+            weightToApply = entry.item.weight !== undefined ? entry.item.weight : 1;
           } else {
-            weightToApply = hasDrawnItems ? matchedWeight : (item.weight !== undefined ? item.weight : 1);
+            weightToApply = hasValidDrawnItems ? matchedWeight : (entry.item.weight !== undefined ? entry.item.weight : 1);
           }
         } else {
-          weightToApply = (item.weight !== undefined ? item.weight : 1) + scopedResults.length;
+          weightToApply = (entry.item.weight !== undefined ? entry.item.weight : 1) + scopedResults.length;
         }
+      }
+      return { ...entry, tentativeWeight: Number(weightToApply.toFixed(2)) };
+    }
+
+    return { ...entry, tentativeWeight: entry.finalWeight };
+  });
+
+  // 5. Enforce that newly equalized participants cannot exceed 50% of the total chances
+  // compared to all valid active participants (excluding anti-repetition hidden participants).
+  return intermediateWithWeights.map((curr, idx, all) => {
+    if (curr.isExcluded) {
+      return {
+        ...curr.item,
+        weight: 0
+      };
+    }
+
+    let finalWeight = curr.tentativeWeight;
+
+    // Apply the 50% maximum chance cap on new participants equalized by pity
+    if (!curr.hasBeenDrawn && pitySystemEnabled) {
+      const otherValidWeightsSum = all.reduce((sum, other, j) => {
+        if (idx === j || other.isExcluded) return sum;
+        return sum + other.tentativeWeight;
+      }, 0);
+
+      // If weight exceeds the sum of all other valid participants, chance would exceed 50%.
+      // We cap the weight at otherValidWeightsSum so chance is at most 50%.
+      if (otherValidWeightsSum > 0 && finalWeight > otherValidWeightsSum) {
+        finalWeight = Number(otherValidWeightsSum.toFixed(2));
       }
     }
 
-    if (recentWinnersTexts.includes(item.text.trim().toLowerCase())) {
-      weightToApply = 0;
-    }
-
     return {
-      ...item,
-      weight: weightToApply
+      ...curr.item,
+      weight: finalWeight
     };
   });
 };
