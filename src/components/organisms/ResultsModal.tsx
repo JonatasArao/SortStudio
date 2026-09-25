@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { ResultItem } from '../molecules/ResultItem';
 import { Button } from '../atoms/Button';
 import { getParticipantStats, ParticipantStat } from '../../utils/statsUtils';
+import { SeasonPosterModal } from './SeasonPosterModal';
 
 const formatTimeDiff = (ms: number) => {
   const days = Math.floor(ms / (1000 * 60 * 60 * 24));
@@ -217,8 +218,10 @@ export const ResultsModal = () => {
 
   const setResults = useAppStore(s => s.setResults);
   const items = useAppStore(s => s.items);
+  const appTitle = useAppStore(s => s.title);
 
   const [activeTab, setActiveTab] = useState<'historico' | 'ranking' | 'importar'>('historico');
+  const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
   const filteredBySeason = useMemo(() => {
     if (selectedSeasonId === "all") return results;
     const season = seasons.find(s => s.id === selectedSeasonId);
@@ -624,20 +627,33 @@ export const ResultsModal = () => {
           </button>
         </div>
 
-        <div className="px-4 py-2 border-b border-slate-800/60 flex justify-between items-center bg-slate-900/20 shrink-0">
-    <div className="text-sm font-semibold text-slate-300">Temporada:</div>
-    <select
-      value={selectedSeasonId}
-      onChange={(e) => setSelectedSeasonId(e.target.value)}
-      className="bg-[#0f1015] border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 w-full sm:max-w-[250px]"
-    >
-      <option value="all">Resultados Gerais (Tudo)</option>
-      {seasons.map(s => (
-        <option key={s.id} value={s.id}>{s.name} {!s.endDate ? '(Ativa)' : ''}</option>
-      )).reverse()}
-    </select>
-  </div>
-  <div className="flex w-full bg-slate-950/40 border-b border-slate-800/60 shrink-0 overflow-x-auto no-scrollbar">
+        <div className="px-4 py-2 border-b border-slate-800/60 flex flex-wrap gap-2 justify-between items-center bg-slate-900/20 shrink-0">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <div className="text-sm font-semibold text-slate-300 shrink-0">Temporada:</div>
+            <select
+              value={selectedSeasonId}
+              onChange={(e) => setSelectedSeasonId(e.target.value)}
+              className="bg-[#0f1015] border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 w-full sm:max-w-[240px]"
+            >
+              <option value="all">Resultados Gerais (Tudo)</option>
+              {seasons.map(s => (
+                <option key={s.id} value={s.id}>{s.name} {!s.endDate ? '(Ativa)' : ''}</option>
+              )).reverse()}
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsPosterModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-300 border border-emerald-500/35 hover:border-emerald-500/50 text-xs font-bold transition-all shadow-sm active:scale-95 group shrink-0"
+            title="Escolha as opções e baixe a imagem oficial de resultados"
+          >
+            <Sparkles size={14} className="text-emerald-400 transition-transform group-hover:scale-110" />
+            <span>Exportar Pôster</span>
+          </button>
+        </div>
+
+        <div className="flex w-full bg-slate-950/40 border-b border-slate-800/60 shrink-0 overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveTab('historico')}
             className={`flex-1 min-w-[120px] text-xs sm:text-sm font-semibold py-3 transition-all border-b-2 ${activeTab === 'historico' ? 'text-white border-blue-500 bg-blue-500/5 shadow-[inset_0_-2px_10px_rgba(59,130,246,0.05)]' : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/20'}`}
@@ -1086,6 +1102,16 @@ export const ResultsModal = () => {
         </div>
 
       </div>
+
+      <SeasonPosterModal
+        isOpen={isPosterModalOpen}
+        onClose={() => setIsPosterModalOpen(false)}
+        season={currentSeason}
+        allSeasons={seasons}
+        results={filteredBySeason}
+        items={items}
+        appTitle={appTitle}
+      />
     </div>
   );
 };

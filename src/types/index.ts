@@ -11,6 +11,7 @@ export interface Item {
   weight: number;
   enabled: boolean;
   color?: string;
+  image?: string;
   message?: string;
   sound?: string;
   isEliminated?: boolean;
