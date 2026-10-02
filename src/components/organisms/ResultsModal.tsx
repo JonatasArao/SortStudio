@@ -67,11 +67,7 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
             <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
               <span>
                 {st.hasWon && st.lastWinTimestamp 
-                  ? (
-                      st.winsCount > 1 && st.firstWinTimestamp && st.firstWinTimestamp !== st.lastWinTimestamp
-                        ? `${t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })} • ${t('resultsModal.drySpell.firstWinDate', { date: new Date(st.firstWinTimestamp).toLocaleDateString(i18n.language) })}`
-                        : t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })
-                    )
+                  ? t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })
                   : st.firstSeenTimestamp 
                   ? t('resultsModal.drySpell.firstSeen', { date: new Date(st.firstSeenTimestamp).toLocaleDateString(i18n.language) })
                   : t('resultsModal.drySpell.neverWon')}
@@ -1017,14 +1013,6 @@ export const ResultsModal = () => {
                         {drySpellOrder === 'asc' ? <SortAsc size={14} /> : <SortDesc size={14} />}
                       </button>
                     </div>
-                    {drySpellSort === 'wins' && (
-                      <span 
-                        className="text-[10px] text-amber-400/90 font-medium hidden md:inline ml-1 select-none"
-                        title={i18n.language === 'en' ? 'Tiebreaker: participants who won earlier are placed higher' : 'Critério de desempate: quem venceu primeiro fica melhor colocado'}
-                      >
-                        {t('resultsModal.drySpell.tiebreakNote')}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

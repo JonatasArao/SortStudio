@@ -238,8 +238,6 @@
       "daysWithoutWin": "{{count}} day(s) without win",
       "neverWon": "Never won",
       "lastWinDate": "Last win: {{date}}",
-      "firstWinDate": "1st win: {{date}}",
-      "tiebreakNote": "✦ Tiebreaker: earlier win placed first",
       "firstSeen": "Registered/Seen on: {{date}}",
       "drawsCount": "{{count}} draw(s) ago",
       "activeOnWheel": "On Wheel",

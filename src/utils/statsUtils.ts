@@ -21,7 +21,8 @@ export interface ParticipantStat {
 /**
  * Compares two participants when classifying/ranking by victories.
  * Rule: More victories is better ranked.
- * Tiebreaker: Whoever won first ("quem venceu primeiro") is better ranked (earlier timestamp).
+ * Tiebreaker: Whoever has the oldest last win ("quem tem a última vitória mais antiga",
+ * meaning who reached that number of victories first) is better ranked.
  * Returns:
  * < 0 if participant A is ranked better than B (A comes first)
  * > 0 if participant B is ranked better than A (B comes first)
@@ -33,18 +34,10 @@ export function compareParticipantsByWins(a: ParticipantStat, b: ParticipantStat
     return b.winsCount - a.winsCount;
   }
 
-  // 2. Tiebreaker: if both have wins, whoever won first is better placed
+  // 2. Tiebreaker: quem tem a última vitória mais antiga (quem chegou primeiro naquele número de vitórias)
   if (a.winsCount > 0 && b.winsCount > 0) {
-    // Chronological order (oldest/first win first)
-    const aWinsAsc = [...a.winTimestamps].sort((x, y) => x - y);
-    const bWinsAsc = [...b.winTimestamps].sort((x, y) => x - y);
-
-    const len = Math.min(aWinsAsc.length, bWinsAsc.length);
-    for (let i = 0; i < len; i++) {
-      if (aWinsAsc[i] !== bWinsAsc[i]) {
-        // Earlier timestamp comes first (better placed)
-        return aWinsAsc[i] - bWinsAsc[i];
-      }
+    if (a.lastWinTimestamp && b.lastWinTimestamp && a.lastWinTimestamp !== b.lastWinTimestamp) {
+      return a.lastWinTimestamp - b.lastWinTimestamp;
     }
   }
 
