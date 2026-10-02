@@ -16,6 +16,25 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'zustand',
+        'lucide-react',
+        'three',
+        '@react-three/fiber',
+        '@react-three/drei',
+        'motion/react',
+        'html-to-image',
+        'idb-keyval',
+        'react-virtuoso',
+        'i18next',
+        'react-i18next',
+        'youtube-player',
+      ],
+    },
     build: {
       chunkSizeWarningLimit: 3000,
       rollupOptions: {
