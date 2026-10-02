@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { toPng, toJpeg, toBlob } from 'html-to-image';
 import { Season, Item, Result } from '../../types';
-import { getParticipantStats } from '../../utils/statsUtils';
+import { getParticipantStats, compareParticipantsByWins } from '../../utils/statsUtils';
 import { Button } from '../atoms/Button';
 
 interface SeasonPosterModalProps {
@@ -51,11 +51,7 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
   // Scoped stats
   const stats = useMemo(() => {
     return getParticipantStats(items, results)
-      .sort((a, b) => {
-        if (b.winsCount !== a.winsCount) return b.winsCount - a.winsCount;
-        if (a.lastWinTimestamp && b.lastWinTimestamp) return b.lastWinTimestamp - a.lastWinTimestamp;
-        return a.name.localeCompare(b.name);
-      });
+      .sort(compareParticipantsByWins);
   }, [items, results]);
 
   const winnersStats = useMemo(() => stats.filter(s => s.winsCount > 0), [stats]);

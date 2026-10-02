@@ -3,6 +3,7 @@ import { Item, Result } from "../types";
 export interface ParticipantStat {
   name: string;
   winsCount: number;
+  firstWinTimestamp: number | null;
   lastWinTimestamp: number | null;
   firstSeenTimestamp: number | null;
   daysWithoutWin: number;
@@ -15,6 +16,45 @@ export interface ParticipantStat {
   hasWon: boolean;
   isOnWheel: boolean;
   winTimestamps: number[];
+}
+
+/**
+ * Compares two participants when classifying/ranking by victories.
+ * Rule: More victories is better ranked.
+ * Tiebreaker: Whoever won first ("quem venceu primeiro") is better ranked (earlier timestamp).
+ * Returns:
+ * < 0 if participant A is ranked better than B (A comes first)
+ * > 0 if participant B is ranked better than A (B comes first)
+ * 0 if completely tied
+ */
+export function compareParticipantsByWins(a: ParticipantStat, b: ParticipantStat): number {
+  // 1. More wins is better
+  if (b.winsCount !== a.winsCount) {
+    return b.winsCount - a.winsCount;
+  }
+
+  // 2. Tiebreaker: if both have wins, whoever won first is better placed
+  if (a.winsCount > 0 && b.winsCount > 0) {
+    // Chronological order (oldest/first win first)
+    const aWinsAsc = [...a.winTimestamps].sort((x, y) => x - y);
+    const bWinsAsc = [...b.winTimestamps].sort((x, y) => x - y);
+
+    const len = Math.min(aWinsAsc.length, bWinsAsc.length);
+    for (let i = 0; i < len; i++) {
+      if (aWinsAsc[i] !== bWinsAsc[i]) {
+        // Earlier timestamp comes first (better placed)
+        return aWinsAsc[i] - bWinsAsc[i];
+      }
+    }
+  }
+
+  // 3. If neither has won: tiebreak by who was seen first
+  if (a.firstSeenTimestamp && b.firstSeenTimestamp && a.firstSeenTimestamp !== b.firstSeenTimestamp) {
+    return a.firstSeenTimestamp - b.firstSeenTimestamp;
+  }
+
+  // 4. Alphabetical fallback
+  return a.name.localeCompare(b.name);
 }
 
 export function getParticipantStats(
@@ -39,6 +79,7 @@ export function getParticipantStats(
     {
       displayName: string;
       winsCount: number;
+      firstWinTimestamp: number | null;
       lastWinTimestamp: number | null;
       firstSeenTimestamp: number | null;
       hasWon: boolean;
@@ -56,6 +97,7 @@ export function getParticipantStats(
       map.set(key, {
         displayName: name,
         winsCount: 0,
+        firstWinTimestamp: null,
         lastWinTimestamp: null,
         firstSeenTimestamp: null,
         hasWon: false,
@@ -78,6 +120,7 @@ export function getParticipantStats(
       map.set(key, {
         displayName: name,
         winsCount: 0,
+        firstWinTimestamp: null,
         lastWinTimestamp: null,
         firstSeenTimestamp: null,
         hasWon: false,
@@ -103,6 +146,9 @@ export function getParticipantStats(
       }
       if (stat.lastWinTimestamp === null || ts > stat.lastWinTimestamp) {
         stat.lastWinTimestamp = ts;
+      }
+      if (stat.firstWinTimestamp === null || ts < stat.firstWinTimestamp) {
+        stat.firstWinTimestamp = ts;
       }
     }
   });
@@ -247,6 +293,7 @@ export function getParticipantStats(
     return {
       name: stat.displayName,
       winsCount: stat.winsCount,
+      firstWinTimestamp: stat.firstWinTimestamp,
       lastWinTimestamp: stat.lastWinTimestamp,
       firstSeenTimestamp: stat.firstSeenTimestamp,
       daysWithoutWin,

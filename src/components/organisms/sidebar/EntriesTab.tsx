@@ -7,7 +7,7 @@ import { useWheelData } from '../../../hooks/useWheelData';
 import { useWheelActions } from '../../../hooks/useWheelActions';
 import { Button } from '../../atoms/Button';
 import { EntryItem } from '../../molecules/EntryItem';
-import { getParticipantStats, ParticipantStat } from '../../../utils/statsUtils';
+import { getParticipantStats, ParticipantStat, compareParticipantsByWins } from '../../../utils/statsUtils';
 
 export const EntriesTab = () => {
   const { t } = useTranslation();
@@ -67,13 +67,23 @@ export const EntriesTab = () => {
         const statA = participantStatsMap.get(nameA);
         const statB = participantStatsMap.get(nameB);
         
+        if (sortCriteria === 'wins') {
+          if (statA && statB) {
+            const cmp = compareParticipantsByWins(statA, statB);
+            return sortOrder === 'asc' ? -cmp : cmp;
+          }
+          const winsA = statA ? statA.winsCount : 0;
+          const winsB = statB ? statB.winsCount : 0;
+          if (winsA !== winsB) {
+            return sortOrder === 'asc' ? winsA - winsB : winsB - winsA;
+          }
+          return nameA.localeCompare(nameB);
+        }
+
         let valA: any = nameA;
         let valB: any = nameB;
         
-        if (sortCriteria === 'wins') {
-           valA = statA ? statA.winsCount : 0;
-           valB = statB ? statB.winsCount : 0;
-        } else if (sortCriteria === 'current_spell') {
+        if (sortCriteria === 'current_spell') {
            valA = statA ? statA.daysWithoutWin : 0;
            valB = statB ? statB.daysWithoutWin : 0;
         } else if (sortCriteria === 'record_spell') {

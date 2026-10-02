@@ -20,35 +20,47 @@ export const useAppInitialization = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setIsLoaded(true);
+      }
+    }, 600);
+
     const loadAppData = async () => {
       try {
-        const wheel = await getWheelConfig();
+        const wheel = await getWheelConfig().catch(() => undefined);
         const state = useAppStore.getState();
 
         if (wheel) {
-          state.setTitle(wheel.title || "Grande Sorteio da Equipe");
+          if (wheel.title) state.setTitle(wheel.title);
           const usedIds = new Set<string>();
-          const cleanedItems = wheel.entries.map((entry: any) => {
-            let id = entry.id;
-            if (!id || usedIds.has(id)) {
-              id = crypto.randomUUID();
-            }
-            usedIds.add(id);
-            return {
-              ...entry,
-              id,
-              weight: entry.weight || 1,
-              enabled: entry.enabled !== false,
-              text: entry.text || "",
-            };
-          });
-          state.setItems(cleanedItems);
-          state.setColors(wheel.colorSettings ? wheel.colorSettings.map((c: any) => c.color) : []);
+          const rawEntries = Array.isArray(wheel.entries) ? wheel.entries : [];
+          if (rawEntries.length > 0) {
+            const cleanedItems = rawEntries.map((entry: any) => {
+              let id = entry?.id;
+              if (!id || usedIds.has(id)) {
+                id = crypto.randomUUID();
+              }
+              usedIds.add(id);
+              return {
+                ...entry,
+                id,
+                weight: typeof entry?.weight === 'number' ? entry.weight : 1,
+                enabled: entry?.enabled !== false,
+                text: typeof entry?.text === 'string' ? entry.text : (entry?.name || ""),
+              };
+            });
+            state.setItems(cleanedItems);
+          }
+          if (Array.isArray(wheel.colorSettings)) {
+            state.setColors(wheel.colorSettings.map((c: any) => c.color));
+          }
           if (wheel.customPictureDataUri) state.setCenterImage(wheel.customPictureDataUri);
           if (wheel.winnerMessage) state.setWinMessage(wheel.winnerMessage);
         }
 
-        const settings = await getSettings();
+        const settings = await getSettings().catch(() => undefined);
         if (settings) {
           if (settings.spinTime !== undefined) state.setSpinTime(settings.spinTime);
           if (settings.showConfetti !== undefined) state.setShowConfetti(settings.showConfetti);
@@ -79,8 +91,8 @@ export const useAppInitialization = () => {
           if (settings.penaltySaveWins !== undefined) state.setPenaltySaveWins(settings.penaltySaveWins);
         }
 
-        const dbAudios = await getAudios();
-        if (dbAudios) {
+        const dbAudios = await getAudios().catch(() => undefined);
+        if (dbAudios && Array.isArray(dbAudios)) {
           const ticks: CustomAudio[] = [];
           const wins: CustomAudio[] = [];
 
@@ -110,30 +122,38 @@ export const useAppInitialization = () => {
               endTime: item.endTime,
               volume: item.volume
             };
-            if (item.categories.includes("tick")) ticks.push(customAudio);
-            if (item.categories.includes("win")) wins.push(customAudio);
+            if (item.categories && item.categories.includes("tick")) ticks.push(customAudio);
+            if (item.categories && item.categories.includes("win")) wins.push(customAudio);
           });
           state.setCustomTickAudios(ticks);
           state.setCustomWinAudios(wins);
         }
 
-        const dbResults = await getResults();
-        if (dbResults) {
+        const dbResults = await getResults().catch(() => undefined);
+        if (dbResults && Array.isArray(dbResults)) {
           state.setResults(dbResults);
         }
         
-        const dbSeasons = await getSeasons();
-        if (dbSeasons) {
+        const dbSeasons = await getSeasons().catch(() => undefined);
+        if (dbSeasons && Array.isArray(dbSeasons)) {
           state.setSeasons(dbSeasons);
         }
       } catch (err) {
         console.error("Failed to load generic data from indexedDB", err);
       } finally {
-        setIsLoaded(true);
+        clearTimeout(fallbackTimer);
+        if (isMounted) {
+          setIsLoaded(true);
+        }
       }
     };
 
     loadAppData();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   // Save Wheel Config

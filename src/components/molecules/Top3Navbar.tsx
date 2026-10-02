@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Crown, ChevronRight, Calendar, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
-import { getParticipantStats } from '../../utils/statsUtils';
+import { getParticipantStats, compareParticipantsByWins } from '../../utils/statsUtils';
 import { getCurrentSeason, filterResultsByScope } from '../../utils/seasonUtils';
 
 export const Top3Navbar: React.FC = () => {
@@ -26,11 +26,7 @@ export const Top3Navbar: React.FC = () => {
     const stats = getParticipantStats(items, seasonResults);
     return stats
       .filter(st => st.winsCount > 0)
-      .sort((a, b) => {
-        if (b.winsCount !== a.winsCount) return b.winsCount - a.winsCount;
-        if (a.lastWinTimestamp && b.lastWinTimestamp) return b.lastWinTimestamp - a.lastWinTimestamp;
-        return a.name.localeCompare(b.name);
-      })
+      .sort(compareParticipantsByWins)
       .slice(0, 3);
   }, [items, seasonResults]);
 

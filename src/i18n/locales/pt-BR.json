@@ -238,6 +238,8 @@
       "daysWithoutWin": "{{count}} dia(s) sem ganhar",
       "neverWon": "Nunca ganhou",
       "lastWinDate": "Última vitória: {{date}}",
+      "firstWinDate": "1ª vitória: {{date}}",
+      "tiebreakNote": "✦ Desempate: quem venceu primeiro",
       "firstSeen": "Cadastrado/Visto em: {{date}}",
       "drawsCount": "{{count}} sorteio(s) atrás",
       "activeOnWheel": "Na Roleta",

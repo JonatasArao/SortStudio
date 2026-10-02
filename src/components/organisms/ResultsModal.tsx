@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
 import { ResultItem } from '../molecules/ResultItem';
 import { Button } from '../atoms/Button';
-import { getParticipantStats, ParticipantStat } from '../../utils/statsUtils';
+import { getParticipantStats, ParticipantStat, compareParticipantsByWins } from '../../utils/statsUtils';
 import { SeasonPosterModal } from './SeasonPosterModal';
 
 const formatTimeDiff = (ms: number) => {
@@ -67,7 +67,11 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
             <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
               <span>
                 {st.hasWon && st.lastWinTimestamp 
-                  ? t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })
+                  ? (
+                      st.winsCount > 1 && st.firstWinTimestamp && st.firstWinTimestamp !== st.lastWinTimestamp
+                        ? `${t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })} • ${t('resultsModal.drySpell.firstWinDate', { date: new Date(st.firstWinTimestamp).toLocaleDateString(i18n.language) })}`
+                        : t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })
+                    )
                   : st.firstSeenTimestamp 
                   ? t('resultsModal.drySpell.firstSeen', { date: new Date(st.firstSeenTimestamp).toLocaleDateString(i18n.language) })
                   : t('resultsModal.drySpell.neverWon')}
@@ -355,11 +359,13 @@ export const ResultsModal = () => {
     }
 
     list.sort((a, b) => {
-      let comp = 0;
       if (drySpellSort === 'wins') {
-        comp = a.winsCount - b.winsCount;
-        if (comp === 0) comp = b.daysWithoutWin - a.daysWithoutWin;
-      } else if (drySpellSort === 'current_spell') {
+        const res = compareParticipantsByWins(a, b);
+        return drySpellOrder === 'desc' ? res : -res;
+      }
+
+      let comp = 0;
+      if (drySpellSort === 'current_spell') {
         comp = a.daysWithoutWin - b.daysWithoutWin;
         if (comp === 0) comp = a.drawsWithoutWin - b.drawsWithoutWin;
       } else if (drySpellSort === 'record_spell') {
@@ -1011,6 +1017,14 @@ export const ResultsModal = () => {
                         {drySpellOrder === 'asc' ? <SortAsc size={14} /> : <SortDesc size={14} />}
                       </button>
                     </div>
+                    {drySpellSort === 'wins' && (
+                      <span 
+                        className="text-[10px] text-amber-400/90 font-medium hidden md:inline ml-1 select-none"
+                        title={i18n.language === 'en' ? 'Tiebreaker: participants who won earlier are placed higher' : 'Critério de desempate: quem venceu primeiro fica melhor colocado'}
+                      >
+                        {t('resultsModal.drySpell.tiebreakNote')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -25,7 +25,7 @@ export const useWheelData = () => {
 
   const validItems = useMemo(
     () => {
-      const filtered = items.filter((i) => i.text.trim() !== "" && i.enabled);
+      const filtered = items.filter((i) => i && typeof i.text === 'string' && i.text.trim() !== "" && i.enabled);
       return calculateWeights(
         filtered,
         scopedResults,
