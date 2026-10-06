@@ -232,6 +232,7 @@ export const GeneralSettings = () => {
                   { id: 'linear', label: t('settings.general.balanceWeightsModeLinear', 'Suave (Linear)'), desc: t('settings.general.balanceWeightsModeLinearDesc', 'chances = peso / (vitórias + 1)') },
                   { id: 'quadratic', label: t('settings.general.balanceWeightsModeQuadratic', 'Moderado (Quadrático)'), desc: t('settings.general.balanceWeightsModeQuadraticDesc', 'chances = peso / (vitórias + 1)²') },
                   { id: 'cubic', label: t('settings.general.balanceWeightsModeCubic', 'Agressivo (Cúbico)'), desc: t('settings.general.balanceWeightsModeCubicDesc', 'chances = peso / (vitórias + 1)³') },
+                  { id: 'relative', label: t('settings.general.balanceWeightsModeRelative', 'Relativo Dinâmico (Normalizado)'), desc: t('settings.general.balanceWeightsModeRelativeDesc', 'chances = peso × ((mín. vitórias + 1) / (vitórias + 1))³') },
                 ].map((mode) => (
                   <button
                     key={mode.id}

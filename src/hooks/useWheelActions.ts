@@ -2,6 +2,7 @@ import { filterResultsByScope } from "../utils/seasonUtils";
 import { calculateWeights } from "../utils/weightUtils";
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { Result } from '../types';
 import { getSecureRandom, secureShuffle } from '../utils/cryptoRandom';
 import { getSpinTimeRanges } from '../utils/spinUtils';
 import { getAudioCtx, playTickSound, playWinSound, playFailureSound, stopWinSound, stopRaceAudio } from '../utils/audioEngine';
@@ -233,24 +234,43 @@ export const useWheelActions = () => {
       return found ? found.weight : 1;
     };
 
-    let totalWeight = currentValidItems.reduce(
-      (acc, item) => acc + getActualWeight(item),
+    let recentWinnersSlice: Result[] = [];
+    if (state.antiRepetitionEnabled && !state.eliminationMode && currentValidItems.length > 2) {
+      const numRecentToCheck = Math.min(state.antiRepetitionCount, Math.max(1, currentValidItems.length - 2));
+      recentWinnersSlice = scopedResults.slice(0, numRecentToCheck);
+    }
+
+    const isAntiRepetitionExcluded = (item: any) => {
+      if (recentWinnersSlice.length === 0) return false;
+      const itemText = (item.text || '').trim().toLowerCase();
+      return recentWinnersSlice.some(
+        (r) => r.id === item.id || r.text.trim().toLowerCase() === itemText
+      );
+    };
+
+    const eligibleItems = itemsWithFinalWeights.filter(i => !isAntiRepetitionExcluded(i));
+    const candidateItems = eligibleItems.length > 0 ? eligibleItems : itemsWithFinalWeights;
+
+    let totalWeight = candidateItems.reduce(
+      (acc, item) => acc + (item.weight > 0 ? item.weight : 0),
       0,
     );
-    if (totalWeight <= 0) totalWeight = currentValidItems.length;
+    if (totalWeight <= 0) totalWeight = candidateItems.length;
 
     const pickWinnerIndex = () => {
       let randomWeight = getSecureRandom() * totalWeight;
       let currentWeight = 0;
-      for (let i = 0; i < currentValidItems.length; i++) {
-        const w = getActualWeight(currentValidItems[i]);
+      for (let i = 0; i < candidateItems.length; i++) {
+        const w = candidateItems[i].weight > 0 ? candidateItems[i].weight : 1;
         currentWeight += w;
         if (randomWeight <= currentWeight && w > 0) {
-          return i;
+          const originalIdx = currentValidItems.findIndex(item => item.id === candidateItems[i].id);
+          return originalIdx !== -1 ? originalIdx : 0;
         }
       }
-      const firstValid = currentValidItems.findIndex(i => getActualWeight(i) > 0);
-      return firstValid !== -1 ? firstValid : 0;
+      const firstValidCandidate = candidateItems.find(i => i.weight > 0) || candidateItems[0];
+      const fallbackIdx = currentValidItems.findIndex(i => i.id === firstValidCandidate?.id);
+      return fallbackIdx !== -1 ? fallbackIdx : 0;
     };
 
     let winIndex = 0;

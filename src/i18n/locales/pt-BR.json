@@ -81,6 +81,8 @@
       "balanceWeightsModeQuadraticDesc": "chances = peso / (vitórias + 1)²",
       "balanceWeightsModeCubic": "Agressivo (Cúbico)",
       "balanceWeightsModeCubicDesc": "chances = peso / (vitórias + 1)³",
+      "balanceWeightsModeRelative": "Relativo Dinâmico (Normalizado)",
+      "balanceWeightsModeRelativeDesc": "chances = peso × ((mín. vitórias + 1) / (vitórias + 1))³",
       "pitySystem": "Acumulação por Derrotas",
       "pitySystemDesc": "Acumula chances a cada rodada não sorteado (Pity System).",
       "showPity": "Mostrar mudança de pesos na roleta",

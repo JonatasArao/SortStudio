@@ -5,7 +5,7 @@ export const calculateWeights = (
   scopedResults: Result[],
   pitySystemEnabled: boolean,
   balanceWeightsByWins: boolean,
-  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic',
+  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic' | 'relative',
   ignoreNewItemWeight: boolean,
   newItemWeightMode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base',
   antiRepetitionEnabled: boolean,
@@ -18,9 +18,7 @@ export const calculateWeights = (
     return items.map(i => ({ ...i, weight: wheelType === 'horizon' ? 1 : (i.weight !== undefined ? i.weight : 1) }));
   }
 
-  // 1. Identify participants excluded by the anti-repetition system.
-  // CRITICAL: Weights of hidden participants (anti-repetition) MUST NOT be included
-  // in comparisons or equalization of new participants.
+  // 1. Identify participants excluded by the anti-repetition system (Two-Stage hard constraint)
   let recentWinnersSlice: Result[] = [];
   if (antiRepetitionEnabled && !eliminationMode && items.length > 2) {
     const numRecentToCheck = Math.min(antiRepetitionCount, Math.max(1, items.length - 2));
@@ -34,6 +32,30 @@ export const calculateWeights = (
       (r) => r.id === item.id || r.text.trim().toLowerCase() === itemText
     );
   };
+
+  // Precompute win counts for all items if balanceWeightsByWins is true
+  const itemWinCounts = new Map<string, number>();
+  if (balanceWeightsByWins) {
+    items.forEach(item => {
+      const itemText = item.text.trim().toLowerCase();
+      const count = scopedResults.filter(r => r.id === item.id || r.text.trim().toLowerCase() === itemText).length;
+      itemWinCounts.set(item.id, count);
+    });
+  }
+
+  // If using relative mode, calculate minimum wins among non-excluded active participants
+  let minWinCount = 0;
+  if (balanceWeightsByWins && balanceWeightsMode === 'relative') {
+    const nonExcludedWins: number[] = [];
+    items.forEach(item => {
+      if (!isAntiRepetitionExcluded(item)) {
+        nonExcludedWins.push(itemWinCounts.get(item.id) || 0);
+      }
+    });
+    if (nonExcludedWins.length > 0) {
+      minWinCount = Math.min(...nonExcludedWins);
+    }
+  }
 
   // 2. Separate items into valid drawn vs new, computing weights for valid drawn items only.
   const validDrawnWeights: number[] = [];
@@ -64,8 +86,11 @@ export const calculateWeights = (
     }
 
     if (balanceWeightsByWins) {
-      const winCount = scopedResults.filter((r) => r.id === item.id || r.text.trim().toLowerCase() === itemText).length;
-      if (winCount > 0) {
+      const winCount = itemWinCounts.get(item.id) || 0;
+      if (balanceWeightsMode === 'relative') {
+        const factor = Math.pow((minWinCount + 1) / (winCount + 1), 3);
+        finalWeight = finalWeight * factor;
+      } else if (winCount > 0) {
         if (balanceWeightsMode === 'linear') {
           finalWeight = finalWeight / (winCount + 1);
         } else if (balanceWeightsMode === 'cubic') {

@@ -11,7 +11,7 @@ export interface TestSimulationConfig {
   historyScope?: 'current_season' | 'all' | 'none';
   pitySystemEnabled: boolean;
   balanceWeightsByWins: boolean;
-  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic';
+  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic' | 'relative';
   ignoreNewItemWeight: boolean;
   newItemWeightMode: 'boosted' | 'max' | 'median' | 'average' | 'min' | 'base';
   antiRepetitionEnabled: boolean;
@@ -357,23 +357,37 @@ export const runTestSimulation = (
         recentWinnersSlice = simulatedAlgorithmHistory.slice(0, numRecentToCheck);
       }
 
-      let totalWeight = weightedItems.reduce(
+      const isAntiRepetitionExcluded = (item: Item) => {
+        if (recentWinnersSlice.length === 0) return false;
+        const itemText = item.text.trim().toLowerCase();
+        return recentWinnersSlice.some(
+          (r) => r.id === item.id || r.text.trim().toLowerCase() === itemText
+        );
+      };
+
+      // Stage 1: Filter out anti-repetition excluded participants (Hard Constraint)
+      const eligibleItems = weightedItems.filter((item) => !isAntiRepetitionExcluded(item));
+      const candidates = eligibleItems.length > 0 ? eligibleItems : weightedItems;
+
+      // Stage 2: Weighted selection or uniform fallback within eligible pool
+      let totalWeight = candidates.reduce(
         (sum, item) => sum + (item.weight > 0 ? item.weight : 0),
         0
       );
 
       let winnerItem: Item;
       if (totalWeight <= 0) {
-        winnerItem = validItems[Math.floor(getSecureRandom() * validItems.length)];
+        // Fallback strictly selects among eligible non-excluded candidates
+        winnerItem = candidates[Math.floor(getSecureRandom() * candidates.length)];
       } else {
         const rand = getSecureRandom() * totalWeight;
         let cumulative = 0;
-        let picked = weightedItems[0];
-        for (let i = 0; i < weightedItems.length; i++) {
-          const w = weightedItems[i].weight > 0 ? weightedItems[i].weight : 0;
+        let picked = candidates[0];
+        for (let i = 0; i < candidates.length; i++) {
+          const w = candidates[i].weight > 0 ? candidates[i].weight : 0;
           cumulative += w;
           if (rand <= cumulative && w > 0) {
-            picked = weightedItems[i];
+            picked = candidates[i];
             break;
           }
         }

@@ -80,7 +80,7 @@ export const TestDisplay: React.FC = () => {
   // Test-specific algorithm configurations (defaults to live settings)
   const [pityEnabled, setPityEnabled] = useState<boolean>(appPitySystemEnabled);
   const [balanceByWins, setBalanceByWins] = useState<boolean>(appBalanceWeightsByWins);
-  const [balanceMode, setBalanceMode] = useState<'linear' | 'quadratic' | 'cubic'>(appBalanceWeightsMode);
+  const [balanceMode, setBalanceMode] = useState<'linear' | 'quadratic' | 'cubic' | 'relative'>(appBalanceWeightsMode);
   const [ignoreNewItem, setIgnoreNewItem] = useState<boolean>(appIgnoreNewItemWeight);
   const [newItemMode, setNewItemMode] = useState<'boosted' | 'max' | 'median' | 'average' | 'min' | 'base'>(appNewItemWeightMode);
   const [antiRepetition, setAntiRepetition] = useState<boolean>(appAntiRepetitionEnabled);
@@ -645,6 +645,7 @@ export const TestDisplay: React.FC = () => {
                   <option value="linear">Linear: peso / (V + 1)</option>
                   <option value="quadratic">Quadrático: peso / (V + 1)²</option>
                   <option value="cubic">Cúbico: peso / (V + 1)³</option>
+                  <option value="relative">Relativo: peso × ((min + 1) / (V + 1))³</option>
                 </select>
               )}
             </div>

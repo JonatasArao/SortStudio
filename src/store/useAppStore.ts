@@ -40,8 +40,8 @@ interface AppState {
   autoContinueElimination: boolean;
   setAutoContinueElimination: (autoContinueElimination: boolean) => void;
   balanceWeightsByWins: boolean;
-  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic';
-  setBalanceWeightsMode: (mode: 'linear' | 'quadratic' | 'cubic') => void;
+  balanceWeightsMode: 'linear' | 'quadratic' | 'cubic' | 'relative';
+  setBalanceWeightsMode: (mode: 'linear' | 'quadratic' | 'cubic' | 'relative') => void;
   setBalanceWeightsByWins: (balanceWeightsByWins: boolean) => void;
   balanceScope: 'all' | 'current_season';
   setBalanceScope: (scope: 'all' | 'current_season') => void;

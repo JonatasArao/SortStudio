@@ -81,6 +81,8 @@
       "balanceWeightsModeQuadraticDesc": "chances = weight / (wins + 1)²",
       "balanceWeightsModeCubic": "Aggressive (Cubic)",
       "balanceWeightsModeCubicDesc": "chances = weight / (wins + 1)³",
+      "balanceWeightsModeRelative": "Dynamic Relative (Normalized)",
+      "balanceWeightsModeRelativeDesc": "chances = weight × ((min wins + 1) / (wins + 1))³",
       "pitySystem": "Pity System",
       "pitySystemDesc": "Accumulates chances each round not drawn (Pity System).",
       "showPity": "Show weight changes on the wheel",
