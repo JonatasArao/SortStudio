@@ -15,6 +15,7 @@ import { EntrySettingsModal } from '../organisms/EntrySettingsModal';
 import { AddAudioModal } from '../organisms/settings/AddAudioModal';
 import { ResultsModal } from '../organisms/ResultsModal';
 import { ExportModal } from '../organisms/settings/ExportModal';
+import { TestDisplay } from '../organisms/TestDisplay';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { EliminationFeed } from '../organisms/EliminationFeed';
 
@@ -31,7 +32,7 @@ export const HomePage = () => {
     <div className="h-[100dvh] w-full bg-[#14151a] text-slate-200 flex flex-col font-sans overflow-hidden">
       <Header />
       <main className="flex flex-1 flex-row overflow-hidden min-h-0 relative">
-        {wheelType === 'horizon' ? <HorizonDisplay /> : wheelType === 'mystery_box' ? <MysteryBoxDisplay /> : wheelType === 'race' ? <RaceDisplay /> : wheelType === 'penalty_shootout' ? <PenaltyShootoutDisplay /> : wheelType === 'bingo' ? <BingoDisplay /> : <WheelDisplay />}
+        {wheelType === 'horizon' ? <HorizonDisplay /> : wheelType === 'mystery_box' ? <MysteryBoxDisplay /> : wheelType === 'race' ? <RaceDisplay /> : wheelType === 'penalty_shootout' ? <PenaltyShootoutDisplay /> : wheelType === 'bingo' ? <BingoDisplay /> : wheelType === 'test' ? <TestDisplay /> : <WheelDisplay />}
         <Sidebar />
         <EliminationFeed />
       </main>

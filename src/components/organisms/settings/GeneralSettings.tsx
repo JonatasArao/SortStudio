@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Sparkles, Clock, Trash2, Skull, Crown, Settings, Gamepad2, Scale, Zap } from 'lucide-react';
+import { Sparkles, Clock, Trash2, Skull, Crown, Settings, Gamepad2, Scale, Zap, FlaskConical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Toggle } from '../../atoms/Toggle';
 import { Input } from '../../atoms/Input';
@@ -58,8 +58,11 @@ export const GeneralSettings = () => {
   const balanceScope = useAppStore(s => s.balanceScope);
   const setBalanceScope = useAppStore(s => s.setBalanceScope);
   const wheelType = useAppStore(s => s.wheelType);
+  const setWheelType = useAppStore(s => s.setWheelType);
   const penaltySaveWins = useAppStore(s => s.penaltySaveWins);
   const setPenaltySaveWins = useAppStore(s => s.setPenaltySaveWins);
+  const testModeEnabled = useAppStore(s => s.testModeEnabled);
+  const setTestModeEnabled = useAppStore(s => s.setTestModeEnabled);
 
 
 
@@ -166,6 +169,22 @@ export const GeneralSettings = () => {
             <Toggle enabled={penaltySaveWins} onChange={setPenaltySaveWins} />
           </div>
         )}
+
+        <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
+          <div className="flex-1 pr-4">
+            <label className="text-sm font-medium text-slate-200 flex items-center gap-2">🧪 {t('testMode.button', 'Modo de Teste')}</label>
+            <p className="text-xs text-slate-400 mt-1">Exibe o Modo de Teste no seletor de formatos de sorteio para simulações instantâneas que não salvam dados nem contam na temporada.</p>
+          </div>
+          <Toggle 
+            enabled={testModeEnabled} 
+            onChange={(val) => {
+              setTestModeEnabled(val);
+              if (!val && wheelType === 'test') {
+                setWheelType('classic');
+              }
+            }} 
+          />
+        </div>
       </SectionCard>
 
       <SectionCard title={t('settings.general.balance')} icon={<Scale size={18} className="text-emerald-400" />}>

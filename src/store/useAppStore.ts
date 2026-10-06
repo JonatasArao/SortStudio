@@ -35,6 +35,8 @@ interface AppState {
   setEliminationMode: (eliminationMode: boolean) => void;
   penaltySaveWins: boolean;
   setPenaltySaveWins: (penaltySaveWins: boolean) => void;
+  testModeEnabled: boolean;
+  setTestModeEnabled: (enabled: boolean) => void;
   autoContinueElimination: boolean;
   setAutoContinueElimination: (autoContinueElimination: boolean) => void;
   balanceWeightsByWins: boolean;
@@ -68,8 +70,8 @@ interface AppState {
   setIsAdvancedEntries: (isAdvancedEntries: boolean) => void;
   
   // Visual/Colors
-  wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo';
-  setWheelType: (wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo') => void;
+  wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test';
+  setWheelType: (wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test') => void;
   colors: string[];
   setColors: (colors: string[] | ((prev: string[]) => string[])) => void;
   newColor: string;
@@ -181,6 +183,8 @@ export const useAppStore = create<AppState>((set) => ({
   setEliminationMode: (eliminationMode) => set({ eliminationMode }),
   penaltySaveWins: false,
   setPenaltySaveWins: (penaltySaveWins) => set({ penaltySaveWins }),
+  testModeEnabled: false,
+  setTestModeEnabled: (testModeEnabled) => set({ testModeEnabled }),
   autoContinueElimination: true,
   setAutoContinueElimination: (autoContinueElimination) => set({ autoContinueElimination }),
   balanceWeightsByWins: false,

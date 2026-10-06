@@ -102,4 +102,5 @@ export interface AppSettings {
   eliminationSpinTime?: number;
   wheelTheme?: string;
   penaltySaveWins?: boolean;
+  testModeEnabled?: boolean;
 }

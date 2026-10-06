@@ -180,6 +180,42 @@ export const SeasonSettings = () => {
         </div>
       </div>
 
+      {/* Escopo de Contabilização de Resultados */}
+      <div className="bg-[#14151a] p-5 rounded-xl border border-slate-700/50 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold text-white">{t('settings.general.balanceScope', 'Escopo de Contabilização de Resultados')}</h4>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {t('settings.general.balanceScopeDesc', 'Define se o balanceamento de vitórias e estatísticas considera apenas a temporada atual ou o histórico geral acumulado.')}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#0f1015] p-1 rounded-xl border border-slate-700 shrink-0">
+            <button
+              type="button"
+              onClick={() => setBalanceScope('current_season')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                balanceScope === 'current_season'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Temporada Atual
+            </button>
+            <button
+              type="button"
+              onClick={() => setBalanceScope('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                balanceScope === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Resultado Geral
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-[#14151a] p-5 rounded-xl border border-slate-700/50">
         <h4 className="text-sm font-semibold text-white mb-4">{t('settings.seasons.registered')}</h4>
         <div className="space-y-3">

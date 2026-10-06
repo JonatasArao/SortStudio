@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, Monitor, Image as ImageIcon, Palette, Plus, X, Briefcase, Dices } from 'lucide-react';
+import { Type, Monitor, Image as ImageIcon, Palette, Plus, X, Briefcase, Dices, FlaskConical } from 'lucide-react';
 import { useAppStore } from '../../../store/useAppStore';
 import { useTranslation } from 'react-i18next';
 import { useWheelActions } from '../../../hooks/useWheelActions';
@@ -8,6 +8,7 @@ export const VisualSettings = () => {
   const { t } = useTranslation();
   const wheelType = useAppStore(s => s.wheelType);
   const setWheelType = useAppStore(s => s.setWheelType);
+  const testModeEnabled = useAppStore(s => s.testModeEnabled);
   const textSize = useAppStore(s => s.textSize);
   const setTextSize = useAppStore(s => s.setTextSize);
   const centerSize = useAppStore(s => s.centerSize);
@@ -82,6 +83,17 @@ export const VisualSettings = () => {
                 </div>
                 <span className="font-semibold text-sm">{t('visualSettings.bingo') || 'Bingo'}</span>
               </button>
+              {testModeEnabled && (
+                <button
+                  onClick={() => setWheelType('test')}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${wheelType === 'test' ? 'border-purple-500 bg-purple-500/10 text-white shadow-[0_0_15px_rgba(168,85,247,0.15)]' : 'border-slate-800/80 bg-slate-950/40 text-slate-400 hover:border-slate-700/60 hover:text-slate-300 hover:bg-slate-950/60 shadow-inner'}`}
+                >
+                  <div className="w-12 h-12 flex items-center justify-center text-purple-400">
+                    <FlaskConical size={32} />
+                  </div>
+                  <span className="font-semibold text-sm">{t('testMode.button') || 'Modo de Teste'}</span>
+                </button>
+              )}
             </div>
           </div>
 

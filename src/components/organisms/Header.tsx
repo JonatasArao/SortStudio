@@ -16,6 +16,7 @@ import {
   Upload,
   ChevronDown,
   MoreVertical,
+  FlaskConical,
   LucideIcon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +31,7 @@ export const Header = () => {
   const setSoundEnabled = useAppStore(s => s.setSoundEnabled);
   const setIsSettingsOpen = useAppStore(s => s.setIsSettingsOpen);
   const setIsExportModalOpen = useAppStore(s => s.setIsExportModalOpen);
+  const testModeEnabled = useAppStore(s => s.testModeEnabled);
   const wheelType = useAppStore(s => s.wheelType);
   const setWheelType = useAppStore(s => s.setWheelType);
   const { importWheel } = useAppActions();
@@ -92,7 +94,7 @@ export const Header = () => {
   };
 
   const MODES: Array<{
-    id: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo';
+    id: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test';
     label: string;
     description: string;
     icon: LucideIcon;
@@ -161,6 +163,16 @@ export const Header = () => {
       iconActiveBg: 'bg-indigo-500/20 text-indigo-400',
       dotColor: 'bg-indigo-400',
     },
+    ...(testModeEnabled ? [{
+      id: 'test' as const,
+      label: t('testMode.button', 'Modo de Teste'),
+      description: 'Laboratório e simulação instantânea',
+      icon: FlaskConical,
+      iconColor: 'text-purple-400',
+      activeBg: 'bg-purple-500/15 border border-purple-500/30 text-purple-300',
+      iconActiveBg: 'bg-purple-500/20 text-purple-400',
+      dotColor: 'bg-purple-400',
+    }] : [])
   ];
 
   const currentMode = MODES.find(m => m.id === wheelType) || MODES[0];
