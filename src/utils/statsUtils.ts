@@ -54,6 +54,7 @@ export function getParticipantStats(
   items: Item[],
   results: Result[],
   referenceTimestamp?: number,
+  isSeasonFinished?: boolean,
 ): ParticipantStat[] {
   const now = Date.now();
   const refTime = referenceTimestamp !== undefined ? referenceTimestamp : now;
@@ -81,28 +82,30 @@ export function getParticipantStats(
     }
   >();
 
-  // 1. Collect from items currently on wheel
-  items.forEach((item) => {
-    const name = item.text.trim();
-    const key = name.toLowerCase();
-    const isOnWheel = item.enabled !== false;
-    if (key && !map.has(key)) {
-      map.set(key, {
-        displayName: name,
-        winsCount: 0,
-        firstWinTimestamp: null,
-        lastWinTimestamp: null,
-        firstSeenTimestamp: null,
-        hasWon: false,
-        isOnWheel: isOnWheel,
-        winTimestamps: [],
-      });
-    } else if (key && map.has(key)) {
-      if (isOnWheel) {
-        map.get(key)!.isOnWheel = true;
+  // 1. Collect from items currently on wheel (skip if season is finished)
+  if (!isSeasonFinished) {
+    items.forEach((item) => {
+      const name = item.text.trim();
+      const key = name.toLowerCase();
+      const isOnWheel = item.enabled !== false;
+      if (key && !map.has(key)) {
+        map.set(key, {
+          displayName: name,
+          winsCount: 0,
+          firstWinTimestamp: null,
+          lastWinTimestamp: null,
+          firstSeenTimestamp: null,
+          hasWon: false,
+          isOnWheel: isOnWheel,
+          winTimestamps: [],
+        });
+      } else if (key && map.has(key)) {
+        if (isOnWheel) {
+          map.get(key)!.isOnWheel = true;
+        }
       }
-    }
-  });
+    });
+  }
 
   // 2. Process results (results is an array of draws)
   results.forEach((res) => {
@@ -148,7 +151,11 @@ export function getParticipantStats(
 
   const totalDraws = results.length;
 
-  return Array.from(map.values()).map((stat) => {
+  const rawStats = isSeasonFinished
+    ? Array.from(map.values()).filter((stat) => stat.winsCount > 0)
+    : Array.from(map.values());
+
+  return rawStats.map((stat) => {
     let daysWithoutWin = 0;
     let drawsWithoutWin = 0;
 
@@ -174,12 +181,8 @@ export function getParticipantStats(
       drawsWithoutWin = count;
     } else {
       drawsWithoutWin = totalDraws;
-      const baseTimestamp =
-        firstGlobalDrawTimestamp !== null
-          ? firstGlobalDrawTimestamp
-          : stat.firstSeenTimestamp;
-      if (baseTimestamp !== null) {
-        const firstDayStart = new Date(baseTimestamp).setHours(0, 0, 0, 0);
+      if (firstGlobalDrawTimestamp !== null) {
+        const firstDayStart = new Date(firstGlobalDrawTimestamp).setHours(0, 0, 0, 0);
         const diffTime = todayStart - firstDayStart;
         daysWithoutWin = Math.max(
           0,
@@ -196,10 +199,7 @@ export function getParticipantStats(
     let sumDaysBetweenWins = 0;
 
     if (stat.hasWon && sortedWins.length > 0) {
-      const baseTimestamp =
-        firstGlobalDrawTimestamp !== null
-          ? firstGlobalDrawTimestamp
-          : stat.firstSeenTimestamp;
+      const baseTimestamp = firstGlobalDrawTimestamp;
       if (baseTimestamp !== null) {
         const firstWinDayStart = new Date(
           sortedWins[sortedWins.length - 1],

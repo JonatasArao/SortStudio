@@ -82,16 +82,18 @@ export const EntryItem: React.FC<EntryItemProps> = ({
 
           {stat && (
             <span 
-              className={`text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${
+              className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
                 stat.hasWon && stat.daysWithoutWin === 0
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  : stat.daysWithoutWin > 7 || !stat.hasWon
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold'
+                  : !stat.hasWon
+                  ? 'bg-slate-800/80 text-slate-400 border-slate-700/60 font-medium'
+                  : stat.daysWithoutWin > 7
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-bold'
+                  : 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold'
               }`}
-              title={stat.hasWon ? `${stat.daysWithoutWin} dia(s) sem ganhar` : 'Nunca ganhou'}
+              title={stat.hasWon ? `${stat.daysWithoutWin} dia(s) sem ganhar` : 'Sem vitórias registradas'}
             >
-              {stat.hasWon ? (stat.daysWithoutWin === 0 ? '🏆 Hoje' : `⏳ ${stat.daysWithoutWin}d`) : '⚠️ Nunca'}
+              {stat.hasWon ? (stat.daysWithoutWin === 0 ? '🏆 Hoje' : `⏳ ${stat.daysWithoutWin}d`) : 'Sem vitórias'}
             </span>
           )}
         </div>
@@ -182,19 +184,21 @@ export const EntryItem: React.FC<EntryItemProps> = ({
 
           {stat && (
             <span 
-              className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border shrink-0 flex items-center gap-1 ${
+              className={`text-xs px-2.5 py-1.5 rounded-lg border shrink-0 flex items-center gap-1 transition-colors ${
                 stat.hasWon && stat.daysWithoutWin === 0
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  : stat.daysWithoutWin > 7 || !stat.hasWon
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-semibold'
+                  : !stat.hasWon
+                  ? 'bg-slate-800/80 text-slate-400 border-slate-700/60 font-medium'
+                  : stat.daysWithoutWin > 7
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-semibold'
+                  : 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-semibold'
               }`}
-              title={stat.hasWon && stat.lastWinTimestamp ? `Última vitória: ${new Date(stat.lastWinTimestamp).toLocaleDateString()}` : 'Nunca ganhou'}
+              title={stat.hasWon && stat.lastWinTimestamp ? `Última vitória: ${new Date(stat.lastWinTimestamp).toLocaleDateString()}` : 'Sem vitórias registradas'}
             >
               {stat.hasWon ? (
                 stat.daysWithoutWin === 0 ? '🏆 Ganhou hoje' : `⏳ ${stat.daysWithoutWin}d sem ganhar`
               ) : (
-                '⚠️ Nunca ganhou'
+                'Sem vitórias'
               )}
             </span>
           )}

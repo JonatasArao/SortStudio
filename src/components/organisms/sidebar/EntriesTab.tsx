@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Shuffle, SortAsc, SortDesc, Plus, CheckSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';
@@ -15,16 +15,29 @@ export const EntriesTab = () => {
   const setItems = useAppStore(s => s.setItems);
   const results = useAppStore(s => s.results);
   const seasons = useAppStore(s => s.seasons);
+  const balanceScope = useAppStore(s => s.balanceScope);
   const isSpinning = useAppStore(s => s.isSpinning);
   const colors = useAppStore(s => s.colors);
   const isAdvancedEntries = useAppStore(s => s.isAdvancedEntries);
   const setIsAdvancedEntries = useAppStore(s => s.setIsAdvancedEntries);
   const setEditingEntryId = useAppStore(s => s.setEditingEntryId);
 
+  const activeSeason = useMemo(() => seasons.find(s => !s.endDate), [seasons]);
+
   const [sortCriteria, setSortCriteria] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('all');
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(
+    balanceScope === 'current_season' && activeSeason ? activeSeason.id : 'all'
+  );
   const [isSortExpanded, setIsSortExpanded] = useState(false);
+
+  useEffect(() => {
+    if (balanceScope === 'current_season') {
+      setSelectedSeasonId(activeSeason ? activeSeason.id : 'all');
+    } else {
+      setSelectedSeasonId('all');
+    }
+  }, [balanceScope, activeSeason]);
 
   const { validItems } = useWheelData();
   const { 
@@ -46,13 +59,15 @@ export const EntriesTab = () => {
 
   const participantStatsMap = useMemo(() => {
     let refTimestamp: number | undefined = undefined;
+    let isSeasonFinished = false;
     if (selectedSeasonId !== 'all') {
       const s = seasons.find(s => s.id === selectedSeasonId);
       if (s && s.endDate) {
         refTimestamp = s.endDate;
+        isSeasonFinished = true;
       }
     }
-    const stats = getParticipantStats(items, filteredResults, refTimestamp);
+    const stats = getParticipantStats(items, filteredResults, refTimestamp, isSeasonFinished);
     const map = new Map<string, ParticipantStat>();
     stats.forEach(st => map.set(st.name.toLowerCase(), st));
     return map;

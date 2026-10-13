@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Check, ListOrdered, Trophy, Download, AlertCircle, Trash2, Crown, ChevronDown, ChevronUp, ArrowDown, ArrowUp, Flame, Clock, Search, Sparkles, ArrowUpDown, SortDesc, SortAsc } from 'lucide-react';
+import { X, Check, ListOrdered, Trophy, Download, AlertCircle, Trash2, Crown, ChevronDown, ChevronUp, ArrowDown, ArrowUp, Flame, Clock, Search, Sparkles, ArrowUpDown, SortDesc, SortAsc, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
 import { ResultItem } from '../molecules/ResultItem';
@@ -22,7 +22,7 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
   const [expanded, setExpanded] = useState(false);
   const isWonToday = st.hasWon && st.daysWithoutWin === 0 && isSeasonActive;
   const isWonOnLastDay = st.hasWon && st.daysWithoutWin === 0 && !isSeasonActive;
-  const isLongSpell = st.daysWithoutWin >= 10 || !st.hasWon;
+  const isLongSpell = st.hasWon && st.daysWithoutWin >= 10;
 
   return (
     <div className={`bg-slate-900/40 transition-colors rounded-lg border flex flex-col shadow-sm overflow-hidden ${
@@ -39,6 +39,7 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
             isLeader ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
             isWonToday ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]' :
             isWonOnLastDay ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' :
+            !st.hasWon ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 font-medium' :
             isLongSpell ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :
             'bg-blue-500/15 border-blue-500/30 text-blue-400'
           }`}>
@@ -86,28 +87,32 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
             </span>
           </div>
 
-          <div className={`px-2.5 py-1 rounded-md border text-xs font-bold flex items-center gap-1.5 shadow-inner ${
-            isWonToday 
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-              : isWonOnLastDay
-              ? 'bg-blue-500/20 text-blue-200 border-blue-500/40'
-              : st.daysWithoutWin > 7 || !st.hasWon
-              ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-              : 'bg-slate-800 text-slate-400 border-slate-700'
-          }`}>
-            {isWonToday ? (
-              t('resultsModal.drySpell.wonToday')
-            ) : isWonOnLastDay ? (
-              "Venceu no fim"
-            ) : st.hasWon ? (
-              <>
-                <Clock size={12} />
-                {st.daysWithoutWin}d
-              </>
-            ) : (
-              "Sem vitórias"
-            )}
-          </div>
+          {isSeasonActive ? (
+            <div className={`px-2.5 py-1 rounded-md border text-xs flex items-center gap-1.5 shadow-inner transition-colors ${
+              isWonToday 
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                : !st.hasWon
+                ? 'bg-slate-800/80 text-slate-400 border-slate-700/60 font-medium'
+                : st.daysWithoutWin > 7
+                ? 'bg-amber-500/10 text-amber-300 border-amber-500/20 font-bold'
+                : 'bg-slate-800 text-slate-400 border-slate-700 font-bold'
+            }`}>
+              {isWonToday ? (
+                t('resultsModal.drySpell.wonToday')
+              ) : st.hasWon ? (
+                <>
+                  <Clock size={12} />
+                  {st.daysWithoutWin}d
+                </>
+              ) : (
+                "Sem vitórias"
+              )}
+            </div>
+          ) : (
+            <div className="sm:hidden px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-[11px] font-bold text-slate-300">
+              {st.winsCount} {st.winsCount === 1 ? t('resultsModal.ranking.win') : t('resultsModal.ranking.wins')}
+            </div>
+          )}
           
           <div className="text-slate-500 ml-1">
              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -119,19 +124,19 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
         <div className="px-3 pb-3 pt-3 border-t border-slate-800/50 bg-slate-900/20">
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {st.drawsWithoutWin > 0 && (
+              {isSeasonActive && st.drawsWithoutWin > 0 && (
                 <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Jejum Atual (Sorteios)</span>
                   <span className="text-sm text-slate-300 font-medium">{st.drawsWithoutWin} {t('resultsModal.drySpell.drawsCount', { count: st.drawsWithoutWin }).split(' ')[1] || 'vezes'}</span>
                 </div>
               )}
-              {st.maxDaysWithoutWin !== undefined && st.maxDaysWithoutWin > 0 && (
+              {isSeasonActive && st.maxDaysWithoutWin !== undefined && st.maxDaysWithoutWin > 0 && (
                 <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Jejum Recorde (Dias)</span>
                   <span className="text-sm text-slate-300 font-medium">{st.maxDaysWithoutWin} {t('resultsModal.drySpell.daysWithoutWin', { count: st.maxDaysWithoutWin }).split(' ')[1] || 'dias'}</span>
                 </div>
               )}
-              {st.maxDrawsWithoutWin !== undefined && st.maxDrawsWithoutWin > 0 && (
+              {isSeasonActive && st.maxDrawsWithoutWin !== undefined && st.maxDrawsWithoutWin > 0 && (
                 <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Jejum Recorde (Sorteios)</span>
                   <span className="text-sm text-slate-300 font-medium">{st.maxDrawsWithoutWin} {t('resultsModal.drySpell.drawsCount', { count: st.maxDrawsWithoutWin }).split(' ')[1] || 'vezes'}</span>
@@ -239,6 +244,10 @@ export const ResultsModal = () => {
     return currentSeason ? !currentSeason.endDate : true;
   }, [currentSeason, selectedSeasonId]);
 
+  const isSeasonFinished = useMemo(() => {
+    return selectedSeasonId !== 'all' && !isSeasonActive;
+  }, [selectedSeasonId, isSeasonActive]);
+
   const [filterMode, setFilterMode] = useState<'draw' | 'date'>('draw');
   const [customStartDraw, setCustomStartDraw] = useState('');
   const [customEndDraw, setCustomEndDraw] = useState('');
@@ -254,6 +263,12 @@ export const ResultsModal = () => {
   const [drySpellSort, setDrySpellSort] = useState<'current_spell' | 'record_spell' | 'wins' | 'name'>('wins');
   const [drySpellOrder, setDrySpellOrder] = useState<'asc' | 'desc'>('desc');
   const [drySpellOnlyOnWheel, setDrySpellOnlyOnWheel] = useState(false);
+
+  useEffect(() => {
+    if (isSeasonFinished && (drySpellSort === 'current_spell' || drySpellSort === 'record_spell')) {
+      setDrySpellSort('wins');
+    }
+  }, [isSeasonFinished, drySpellSort]);
 
   const filteredResults = useMemo(() => {
     return filteredBySeason.filter((r, i) => {
@@ -303,8 +318,8 @@ export const ResultsModal = () => {
         refTimestamp = s.endDate;
       }
     }
-    return getParticipantStats(items, filteredResults, refTimestamp);
-  }, [items, filteredResults, selectedSeasonId, seasons]);
+    return getParticipantStats(items, filteredResults, refTimestamp, isSeasonFinished);
+  }, [items, filteredResults, selectedSeasonId, seasons, isSeasonFinished]);
 
   const statsMap = useMemo(() => {
     const map = new Map<string, ParticipantStat>();
@@ -316,36 +331,36 @@ export const ResultsModal = () => {
 
   const longestDrySpellParticipant = useMemo(() => {
     let list = [...allParticipantStats];
-    if (drySpellOnlyOnWheel) {
+    if (!isSeasonFinished && drySpellOnlyOnWheel) {
       list = list.filter(p => p.isOnWheel);
     }
     if (list.length === 0) return null;
     return list.sort((a, b) => b.daysWithoutWin - a.daysWithoutWin)[0];
-  }, [allParticipantStats, drySpellOnlyOnWheel]);
+  }, [allParticipantStats, drySpellOnlyOnWheel, isSeasonFinished]);
 
   const averageDrySpell = useMemo(() => {
     let list = allParticipantStats;
-    if (drySpellOnlyOnWheel) {
+    if (!isSeasonFinished && drySpellOnlyOnWheel) {
       list = list.filter(p => p.isOnWheel);
     }
     const winners = list.filter(s => s.hasWon);
     if (winners.length === 0) return 0;
     const sum = winners.reduce((acc, curr) => acc + curr.daysWithoutWin, 0);
     return Math.round((sum / winners.length) * 10) / 10;
-  }, [allParticipantStats, drySpellOnlyOnWheel]);
+  }, [allParticipantStats, drySpellOnlyOnWheel, isSeasonFinished]);
 
   const neverWonCount = useMemo(() => {
     let list = allParticipantStats;
-    if (drySpellOnlyOnWheel) {
+    if (!isSeasonFinished && drySpellOnlyOnWheel) {
       list = list.filter(p => p.isOnWheel);
     }
     return list.filter(s => !s.hasWon).length;
-  }, [allParticipantStats, drySpellOnlyOnWheel]);
+  }, [allParticipantStats, drySpellOnlyOnWheel, isSeasonFinished]);
 
   const filteredDrySpellList = useMemo(() => {
     let list = [...allParticipantStats];
 
-    if (drySpellOnlyOnWheel) {
+    if (!isSeasonFinished && drySpellOnlyOnWheel) {
       list = list.filter(p => p.isOnWheel);
     }
 
@@ -375,7 +390,7 @@ export const ResultsModal = () => {
     });
 
     return list;
-  }, [allParticipantStats, drySpellSearch, drySpellSort, drySpellOnlyOnWheel, drySpellOrder]);
+  }, [allParticipantStats, drySpellSearch, drySpellSort, drySpellOnlyOnWheel, drySpellOrder, isSeasonFinished]);
 
   const exportResults = () => {
     if (filteredBySeason.length === 0) return;
@@ -923,39 +938,77 @@ export const ResultsModal = () => {
             <div className="flex flex-col gap-3">
               {/* Summary Header Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 shrink-0">
-                <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-inner">
-                  <div className="p-1.5 bg-amber-500/20 rounded-lg border border-amber-500/30 text-amber-400 shrink-0">
-                    <Flame size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-amber-400/90 font-medium truncate leading-tight">{t('resultsModal.drySpell.longestSpell')}</p>
-                    <p className="text-sm font-bold text-white truncate leading-tight">
-                      {longestDrySpellParticipant 
-                        ? `${longestDrySpellParticipant.name} (${longestDrySpellParticipant.daysWithoutWin}d)` 
-                        : '-'}
-                    </p>
-                  </div>
-                </div>
+                {isSeasonFinished ? (
+                  <>
+                    <div className="bg-gradient-to-br from-amber-500/15 to-yellow-500/5 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-inner">
+                      <div className="p-1.5 bg-amber-500/20 rounded-lg border border-amber-500/30 text-amber-400 shrink-0">
+                        <Crown size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-amber-400/90 font-medium truncate leading-tight">Campeão</p>
+                        <p className="text-sm font-bold text-white truncate leading-tight">
+                          {allParticipantStats[0] ? `${allParticipantStats[0].name} (${allParticipantStats[0].winsCount})` : '-'}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5 hidden sm:flex">
-                  <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400 shrink-0">
-                    <Clock size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">{t('resultsModal.drySpell.averageSpell')}</p>
-                    <p className="text-sm font-bold text-white truncate leading-tight">{averageDrySpell} {t('resultsModal.drySpell.daysWithoutWin', { count: averageDrySpell }).split(' ')[1] || 'dias'}</p>
-                  </div>
-                </div>
+                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5 hidden sm:flex">
+                      <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400 shrink-0">
+                        <ListOrdered size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">Total Sorteios</p>
+                        <p className="text-sm font-bold text-white truncate leading-tight font-mono tabular-nums">{filteredResults.length}</p>
+                      </div>
+                    </div>
 
-                <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5">
-                  <div className="p-1.5 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-400 shrink-0">
-                    <AlertCircle size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">{t('resultsModal.drySpell.neverWonCount')}</p>
-                    <p className="text-sm font-bold text-white truncate leading-tight">{neverWonCount}</p>
-                  </div>
-                </div>
+                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-400 shrink-0">
+                        <Trophy size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">Total Contemplados</p>
+                        <p className="text-sm font-bold text-emerald-400 truncate leading-tight font-mono tabular-nums">{allParticipantStats.length}</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-inner">
+                      <div className="p-1.5 bg-amber-500/20 rounded-lg border border-amber-500/30 text-amber-400 shrink-0">
+                        <Flame size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-amber-400/90 font-medium truncate leading-tight">{t('resultsModal.drySpell.longestSpell')}</p>
+                        <p className="text-sm font-bold text-white truncate leading-tight">
+                          {longestDrySpellParticipant 
+                            ? `${longestDrySpellParticipant.name} (${longestDrySpellParticipant.daysWithoutWin}d)` 
+                            : '-'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5 hidden sm:flex">
+                      <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400 shrink-0">
+                        <Clock size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">{t('resultsModal.drySpell.averageSpell')}</p>
+                        <p className="text-sm font-bold text-white truncate leading-tight">{averageDrySpell} {t('resultsModal.drySpell.daysWithoutWin', { count: averageDrySpell }).split(' ')[1] || 'dias'}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-slate-800 rounded-lg border border-slate-700/60 text-slate-400 shrink-0">
+                        <Users size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">{t('resultsModal.drySpell.neverWonCount')}</p>
+                        <p className="text-sm font-bold text-slate-300 truncate leading-tight font-mono tabular-nums">{neverWonCount}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Search & Sort Controls */}
@@ -972,20 +1025,24 @@ export const ResultsModal = () => {
                 </div>
 
                 <div className="flex items-center flex-wrap gap-3 shrink-0">
-                  <label className="flex items-center gap-1.5 cursor-pointer group">
-                    <div className="relative flex items-center justify-center">
-                      <input 
-                        type="checkbox" 
-                        className="peer sr-only" 
-                        checked={drySpellOnlyOnWheel}
-                        onChange={(e) => setDrySpellOnlyOnWheel(e.target.checked)}
-                      />
-                      <div className="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 border border-slate-700/50"></div>
-                    </div>
-                    <span className="text-[11px] text-slate-300 font-medium group-hover:text-white transition-colors select-none">{t('resultsModal.drySpell.onlyOnWheel')}</span>
-                  </label>
-                  
-                  <div className="w-px h-4 bg-slate-800/80 mx-0.5 hidden sm:block"></div>
+                  {!isSeasonFinished && (
+                    <>
+                      <label className="flex items-center gap-1.5 cursor-pointer group">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            className="peer sr-only" 
+                            checked={drySpellOnlyOnWheel}
+                            onChange={(e) => setDrySpellOnlyOnWheel(e.target.checked)}
+                          />
+                          <div className="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 border border-slate-700/50"></div>
+                        </div>
+                        <span className="text-[11px] text-slate-300 font-medium group-hover:text-white transition-colors select-none">{t('resultsModal.drySpell.onlyOnWheel')}</span>
+                      </label>
+                      
+                      <div className="w-px h-4 bg-slate-800/80 mx-0.5 hidden sm:block"></div>
+                    </>
+                  )}
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <label className="text-[11px] text-slate-400 font-medium whitespace-nowrap hidden sm:block">{t('resultsModal.drySpell.sortBy')}</label>
@@ -996,8 +1053,12 @@ export const ResultsModal = () => {
                         className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-amber-500/80 [color-scheme:dark]"
                       >
                         <option value="wins">{t('resultsModal.drySpell.sortWins')}</option>
-                        <option value="current_spell">{t('resultsModal.drySpell.sortCurrentSpell')}</option>
-                        <option value="record_spell">{t('resultsModal.drySpell.sortRecordSpell')}</option>
+                        {!isSeasonFinished && (
+                          <>
+                            <option value="current_spell">{t('resultsModal.drySpell.sortCurrentSpell')}</option>
+                            <option value="record_spell">{t('resultsModal.drySpell.sortRecordSpell')}</option>
+                          </>
+                        )}
                         <option value="name">{t('resultsModal.drySpell.sortName')}</option>
                       </select>
                       

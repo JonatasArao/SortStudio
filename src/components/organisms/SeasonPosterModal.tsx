@@ -344,11 +344,13 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
   const [showPreview, setShowPreview] = useState(true);
 
+  const isFinished = season ? !!season.endDate && season.endDate <= Date.now() : false;
+
   // Scoped stats anchored to season end date if finished
   const stats = useMemo(() => {
-    return getParticipantStats(items, results, season?.endDate)
+    return getParticipantStats(items, results, season?.endDate, isFinished)
       .sort(compareParticipantsByWins);
-  }, [items, results, season]);
+  }, [items, results, season, isFinished]);
 
   const winnersStats = useMemo(() => stats.filter(s => s.winsCount > 0), [stats]);
   const first = winnersStats[0] || null;
@@ -386,7 +388,6 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
   }, [columnsMode, displayedList.length]);
 
   const seasonName = season ? season.name : 'Resultados Gerais';
-  const isFinished = season ? !!season.endDate && season.endDate <= Date.now() : false;
 
   const dateRangeText = useMemo(() => {
     if (!season) return 'Histórico Consolidado';
