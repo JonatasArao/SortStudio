@@ -274,6 +274,9 @@ export const HorizonDisplay = () => {
                    if (winner.drawId) {
                      state.setResults(prev => prev.filter(r => r.drawId !== winner.drawId));
                    }
+                   if (winner.type === 'grand_winner' || state.eliminationMode) {
+                     state.resetEliminationBattle();
+                   }
                    setWinner(null);
                  }}
                  className="flex-1 max-w-[200px] bg-gradient-to-r from-red-600/25 to-rose-600/25 hover:from-red-600 hover:to-rose-600 text-red-200 hover:text-white px-6 py-3 rounded-2xl font-black text-base transition-all duration-300 hover:-translate-y-1 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:shadow-[0_10px_30px_rgba(239,68,68,0.35)] border border-red-500/30 uppercase tracking-wider"
@@ -284,16 +287,15 @@ export const HorizonDisplay = () => {
                  onClick={(e) => {
                    e.stopPropagation();
                    stopWinSound();
-                   if (winner.type === 'grand_winner') {
-                       const state = useAppStore.getState();
-                       state.setItems(state.items.map(i => ({ ...i, enabled: true })));
-                       state.setPityWeights({});
-                       setWinner(null);
+                   const state = useAppStore.getState();
+                   if (winner.type === 'grand_winner' || state.eliminationMode) {
+                     state.resetEliminationBattle();
+                     setWinner(null);
                    } else {
-                       if (autoRemoveWinner) {
-                         handleRemoveItem(winner.id);
-                       }
-                       setWinner(null);
+                     if (autoRemoveWinner) {
+                       handleRemoveItem(winner.id);
+                     }
+                     setWinner(null);
                    }
                  }}
                  className="flex-1 max-w-[200px] bg-gradient-to-r from-emerald-600/25 to-teal-600/25 hover:from-emerald-600 hover:to-teal-600 text-emerald-200 hover:text-white px-6 py-3 rounded-2xl font-black text-base transition-all duration-300 hover:-translate-y-1 shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:shadow-[0_10px_30px_rgba(16,185,129,0.35)] border border-emerald-500/30 uppercase tracking-wider"

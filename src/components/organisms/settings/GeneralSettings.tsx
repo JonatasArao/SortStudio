@@ -39,6 +39,8 @@ export const GeneralSettings = () => {
   const setAutoContinueElimination = useAppStore(s => s.setAutoContinueElimination);
   const eliminationSpinTime = useAppStore(s => s.eliminationSpinTime);
   const setEliminationSpinTime = useAppStore(s => s.setEliminationSpinTime);
+  const autoEliminationSpeed = useAppStore(s => s.autoEliminationSpeed);
+  const setAutoEliminationSpeed = useAppStore(s => s.setAutoEliminationSpeed);
   const antiRepetitionEnabled = useAppStore(s => s.antiRepetitionEnabled);
   const setAntiRepetitionEnabled = useAppStore(s => s.setAntiRepetitionEnabled);
   const antiRepetitionCount = useAppStore(s => s.antiRepetitionCount);
@@ -155,6 +157,45 @@ export const GeneralSettings = () => {
                   onChange={(e) => setEliminationSpinTime(Number(e.target.value))} 
                   className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500 mt-3" 
                 />
+              </div>
+
+              <div className="bg-slate-950/40 p-3 rounded-lg border border-slate-800/60 space-y-2">
+                <label className="text-sm font-medium text-slate-300">Ritmo do Auto-Giro</label>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setAutoEliminationSpeed('turbo')}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all ${
+                      autoEliminationSpeed === 'turbo'
+                        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50 shadow-sm'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    ⚡ Turbo (0.7s)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAutoEliminationSpeed('fast')}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all ${
+                      autoEliminationSpeed === 'fast'
+                        ? 'bg-orange-500/20 text-orange-300 border-orange-500/50 shadow-sm'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    🔥 Rápido (1.2s)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAutoEliminationSpeed('normal')}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all ${
+                      autoEliminationSpeed === 'normal'
+                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-sm'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    ⏳ Normal (2.2s)
+                  </button>
+                </div>
               </div>
             </div>
           )}

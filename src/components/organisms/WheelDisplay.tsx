@@ -11,6 +11,7 @@ import {
   WHEEL_TOP_OFFSET_DEG,
   DEFAULT_CENTER_IMAGE
 } from '../../constants';
+import { GhostGraveyardBackground } from './GhostGraveyardBackground';
 
 function getContrastYIQ(hexcolor: string) {
   if (!hexcolor || typeof hexcolor !== 'string' || !hexcolor.startsWith('#')) return '#ffffff';
@@ -402,6 +403,8 @@ export const WheelDisplay = () => {
     <div className={`flex-1 flex flex-col items-center justify-center p-4 lg:p-8 relative bg-gradient-to-br ${bgGradient} overflow-hidden min-h-0 transition-colors duration-500`}>
       {bgPattern}
       <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[600px] md:h-[600px] ${outerGlow} rounded-full pointer-events-none transition-all duration-500`} />
+      {/* Fantasmas Flutuantes dos Eliminados (Exclusivo Roleta Padrão) */}
+      <GhostGraveyardBackground />
 
       {/* CONTAINER DA RODA */}
       <div 

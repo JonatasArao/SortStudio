@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Item, Result, CustomAudio, PodiumRacer, Season } from '../types';
+import { Item, Result, CustomAudio, PodiumRacer, Season, EliminatedRecord } from '../types';
 import {
   DEFAULT_WHEEL_TITLE,
   DEFAULT_WIN_MESSAGE,
@@ -33,6 +33,25 @@ interface AppState {
   // Game Modes
   eliminationMode: boolean;
   setEliminationMode: (eliminationMode: boolean) => void;
+  eliminationRound: number;
+  setEliminationRound: (round: number | ((prev: number) => number)) => void;
+  eliminatedHistory: EliminatedRecord[];
+  setEliminatedHistory: (history: EliminatedRecord[] | ((prev: EliminatedRecord[]) => EliminatedRecord[])) => void;
+  isAutoEliminating: boolean;
+  setIsAutoEliminating: (isAuto: boolean) => void;
+  autoEliminationSpeed: 'turbo' | 'fast' | 'normal';
+  setAutoEliminationSpeed: (speed: 'turbo' | 'fast' | 'normal') => void;
+  eliminationOverlayItem: (Item & { round?: number }) | null;
+  setEliminationOverlayItem: (item: (Item & { round?: number }) | null) => void;
+  showEliminationPopup: boolean;
+  setShowEliminationPopup: (show: boolean) => void;
+  isGraveyardOpen: boolean;
+  setIsGraveyardOpen: (isOpen: boolean) => void;
+  initialEliminationParticipantIds: string[];
+  setInitialEliminationParticipantIds: (ids: string[]) => void;
+  resetEliminationBattle: () => void;
+  reviveItem: (itemId: string) => void;
+  reviveAllItems: () => void;
   penaltySaveWins: boolean;
   setPenaltySaveWins: (penaltySaveWins: boolean) => void;
   testModeEnabled: boolean;
@@ -180,7 +199,103 @@ export const useAppStore = create<AppState>((set) => ({
   setAutoRemoveWinner: (autoRemoveWinner) => set({ autoRemoveWinner }),
 
   eliminationMode: false,
-  setEliminationMode: (eliminationMode) => set({ eliminationMode }),
+  setEliminationMode: (eliminationMode) => set((state) => {
+    const activeIds = state.items.filter(i => i.enabled && i.text.trim() !== "").map(i => i.id);
+    return { 
+      eliminationMode,
+      isAutoEliminating: eliminationMode,
+      autoContinueElimination: eliminationMode,
+      eliminationOverlayItem: null,
+      initialEliminationParticipantIds: (eliminationMode && activeIds.length >= 2)
+        ? activeIds
+        : (state.initialEliminationParticipantIds.length >= 2 ? state.initialEliminationParticipantIds : activeIds)
+    };
+  }),
+  eliminationRound: 1,
+  setEliminationRound: (round) => set((state) => ({ 
+    eliminationRound: typeof round === 'function' ? round(state.eliminationRound) : round 
+  })),
+  eliminatedHistory: [],
+  setEliminatedHistory: (history) => set((state) => ({ 
+    eliminatedHistory: typeof history === 'function' ? history(state.eliminatedHistory) : history 
+  })),
+  isAutoEliminating: true,
+  setIsAutoEliminating: (isAutoEliminating) => set({ isAutoEliminating }),
+  autoEliminationSpeed: 'fast',
+  setAutoEliminationSpeed: (autoEliminationSpeed) => set({ autoEliminationSpeed }),
+  eliminationOverlayItem: null,
+  setEliminationOverlayItem: (eliminationOverlayItem) => set({ eliminationOverlayItem }),
+  showEliminationPopup: true,
+  setShowEliminationPopup: (showEliminationPopup) => set({ showEliminationPopup }),
+  isGraveyardOpen: false,
+  setIsGraveyardOpen: (isGraveyardOpen) => set({ isGraveyardOpen }),
+  initialEliminationParticipantIds: [],
+  setInitialEliminationParticipantIds: (initialEliminationParticipantIds) => set({ initialEliminationParticipantIds }),
+  resetEliminationBattle: () => set((state) => {
+    // Restaura a seleção de participantes exatamente como estavam no início da batalha
+    let targetIds: Set<string> | null = null;
+
+    if (state.initialEliminationParticipantIds && state.initialEliminationParticipantIds.length >= 2) {
+      targetIds = new Set(state.initialEliminationParticipantIds);
+    } else {
+      // Reconstroi os participantes que entraram na disputa a partir do histórico de eliminados + vencedor + ativos
+      const battleParticipantIds = new Set<string>();
+      state.eliminatedHistory.forEach(rec => battleParticipantIds.add(rec.itemId));
+      if (state.winner) battleParticipantIds.add(state.winner.id);
+      state.items.filter(i => i.enabled && i.text.trim() !== "").forEach(i => battleParticipantIds.add(i.id));
+
+      if (battleParticipantIds.size >= 2) {
+        targetIds = battleParticipantIds;
+      } else {
+        // Fallback: todos os itens com texto não vazio
+        targetIds = null;
+      }
+    }
+
+    const restoredItems = state.items.map((i) => ({
+      ...i,
+      enabled: targetIds ? targetIds.has(i.id) : (i.text.trim() !== ""),
+      isEliminated: false,
+      eliminatedRound: undefined,
+    }));
+
+    const restoredActiveIds = restoredItems.filter(i => i.enabled && i.text.trim() !== "").map(i => i.id);
+
+    return {
+      items: restoredItems,
+      initialEliminationParticipantIds: restoredActiveIds.length >= 2 ? restoredActiveIds : state.initialEliminationParticipantIds,
+      eliminatedHistory: [],
+      eliminationRound: 1,
+      isAutoEliminating: true,
+      autoContinueElimination: true,
+      eliminationOverlayItem: null,
+      winner: null,
+    };
+  }),
+  reviveItem: (itemId) => set((state) => {
+    const updatedItems = state.items.map((i) =>
+      i.id === itemId
+        ? { ...i, enabled: true, isEliminated: false, eliminatedRound: undefined }
+        : i
+    );
+    const updatedHistory = state.eliminatedHistory.filter((rec) => rec.itemId !== itemId);
+    return {
+      items: updatedItems,
+      eliminatedHistory: updatedHistory,
+    };
+  }),
+  reviveAllItems: () => set((state) => {
+    const updatedItems = state.items.map((i) => ({
+      ...i,
+      enabled: true,
+      isEliminated: false,
+      eliminatedRound: undefined,
+    }));
+    return {
+      items: updatedItems,
+      eliminatedHistory: [],
+    };
+  }),
   penaltySaveWins: false,
   setPenaltySaveWins: (penaltySaveWins) => set({ penaltySaveWins }),
   testModeEnabled: false,

@@ -80,6 +80,16 @@ export const EntryItem: React.FC<EntryItemProps> = ({
             disabled={isSpinning}
           />
 
+          {item.isEliminated && (
+            <span 
+              className="text-[10px] px-1.5 py-0.5 rounded bg-red-950/80 text-red-400 border border-red-500/30 font-bold shrink-0 flex items-center gap-0.5"
+              title="Participante eliminado da batalha"
+            >
+              <span>💀</span>
+              <span>Eliminado</span>
+            </span>
+          )}
+
           {stat && (
             <span 
               className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
@@ -181,6 +191,16 @@ export const EntryItem: React.FC<EntryItemProps> = ({
             placeholder={t('entryItem.placeholderFull')}
             disabled={isSpinning}
           />
+
+          {item.isEliminated && (
+            <span 
+              className="text-xs px-2.5 py-1.5 rounded-lg bg-red-950/80 text-red-400 border border-red-500/30 font-bold shrink-0 flex items-center gap-1"
+              title="Participante eliminado da batalha"
+            >
+              <span>💀</span>
+              <span>Eliminado</span>
+            </span>
+          )}
 
           {stat && (
             <span 

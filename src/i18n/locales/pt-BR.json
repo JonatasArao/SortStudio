@@ -556,5 +556,29 @@
     "evaluationBalanced": "Distribuição perfeitamente equilibrada e harmônica.",
     "evaluationNatural": "Variação aleatória natural dentro do intervalo estatístico esperado.",
     "evaluationSkewed": "Distribuição deliberadamente moldada pelos algoritmos de Pity/Balanceamento/Anti-Repetição ativos."
+  },
+  "eliminationHUD": {
+    "modeTitle": "Modo Eliminação",
+    "round": "Rodada",
+    "finalRound": "🔥 GRANDE FINAL",
+    "survivors": "vivos",
+    "eliminated": "eliminados",
+    "spinBtn": "Girar Rodada",
+    "spinBtnShort": "Girar",
+    "spinTooltip": "Girar próxima rodada de eliminação",
+    "pauseAuto": "Pausar",
+    "startAuto": "Auto-Giro",
+    "viewPanel": "Abrir lista de Sobreviventes e Cemitério",
+    "graveyard": "Cemitério",
+    "resetTooltip": "Reiniciar Batalha (Reviver Todos)",
+    "confirmReset": "Deseja reiniciar a batalha? Todos os participantes eliminados serão revividos.",
+    "exitMode": "Sair do Modo Eliminação"
+  },
+  "graveyardPanel": {
+    "battleStatus": "Status da Batalha",
+    "resetBattle": "Reiniciar",
+    "survivors": "Vivos",
+    "graveyard": "Cemitério",
+    "searchPlh": "Filtrar participantes..."
   }
 }

@@ -5,6 +5,16 @@ export interface Season {
   endDate?: number;
 }
 
+export interface EliminatedRecord {
+  id: string;
+  itemId: string;
+  text: string;
+  color?: string;
+  round: number;
+  eliminatedAt: number;
+  rank?: number;
+}
+
 export interface Item {
   id: string;
   text: string;
@@ -17,6 +27,7 @@ export interface Item {
   isEliminated?: boolean;
   type?: "winner" | "eliminated" | "grand_winner";
   drawId?: string;
+  eliminatedRound?: number;
 }
 
 export interface Result extends Item {
@@ -89,6 +100,7 @@ export interface AppSettings {
   grandWinnerMessage?: string;
   eliminationMode?: boolean;
   autoContinueElimination?: boolean;
+  eliminationSpinSpeed?: 'fast' | 'normal' | 'dramatic';
   balanceWeightsByWins?: boolean;
   balanceWeightsMode?: 'linear' | 'quadratic' | 'cubic' | 'relative';
   balanceScope?: 'all' | 'current_season';

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Trophy, Crown, Car } from 'lucide-react';
+import { Trophy, Crown, Car, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,48 @@ export const WinnerModal = () => {
       stopWinSound();
     };
   }, [stopWinSound]);
+
+  // Ao recusar: cancela resultado e restaura seleção de participantes do início se for modo eliminação
+  const handleReject = React.useCallback(() => {
+    stopWinSound();
+    const state = useAppStore.getState();
+    const currentWinner = state.winner;
+    if (currentWinner?.drawId) {
+      state.setResults(prev => prev.filter(r => r.drawId !== currentWinner.drawId));
+    }
+    if (currentWinner?.type === 'grand_winner' || state.eliminationMode) {
+      state.resetEliminationBattle();
+    } else {
+      setWinner(null);
+    }
+  }, [setWinner, stopWinSound]);
+
+  // Ao aceitar: restaura seleção de participantes do início se for modo eliminação
+  const handleAccept = React.useCallback(() => {
+    stopWinSound();
+    const state = useAppStore.getState();
+    const currentWinner = state.winner;
+    if (currentWinner?.type === 'grand_winner' || state.eliminationMode) {
+      state.resetEliminationBattle();
+    } else {
+      if (autoRemoveWinner && currentWinner) {
+        handleRemoveItem(currentWinner.id);
+      }
+      setWinner(null);
+    }
+  }, [autoRemoveWinner, handleRemoveItem, setWinner, stopWinSound]);
+
+  useEffect(() => {
+    if (!winner || winner.isEliminated) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleAccept();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [winner, handleAccept]);
 
   if (!winner || winner.isEliminated) return null;
   
@@ -79,33 +121,13 @@ export const WinnerModal = () => {
 
             <div className="flex flex-row gap-2.5">
               <button 
-                onClick={() => {
-                  stopWinSound();
-                  const state = useAppStore.getState();
-                  if (winner.drawId) {
-                    state.setResults(prev => prev.filter(r => r.drawId !== winner.drawId));
-                  }
-                  setWinner(null);
-                }}
+                onClick={handleReject}
                 className="flex-1 bg-slate-900 hover:bg-red-600 text-slate-300 hover:text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-black text-xs transition-all border border-slate-800"
               >
                 {t('horizonDisplay.reject').toUpperCase()}
               </button>
               <button 
-                onClick={() => {
-                  stopWinSound();
-                  if (isGrandWinner) {
-                      const state = useAppStore.getState();
-                      state.setItems(state.items.map(i => ({ ...i, enabled: true })));
-                      state.setPityWeights({});
-                      setWinner(null);
-                  } else {
-                      if (autoRemoveWinner) {
-                        handleRemoveItem(winner.id);
-                      }
-                      setWinner(null);
-                  }
-                }}
+                onClick={handleAccept}
                 className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-black text-xs transition-all shadow-lg border-b-2 border-amber-700"
               >
                 {t('horizonDisplay.accept').toUpperCase()}
@@ -130,33 +152,13 @@ export const WinnerModal = () => {
             
             <div className="flex flex-row gap-2.5">
               <button 
-                onClick={() => {
-                  stopWinSound();
-                  const state = useAppStore.getState();
-                  if (winner.drawId) {
-                    state.setResults(prev => prev.filter(r => r.drawId !== winner.drawId));
-                  }
-                  setWinner(null);
-                }}
+                onClick={handleReject}
                 className="flex-1 bg-slate-900 hover:bg-red-600 text-slate-300 hover:text-white px-3 sm:px-4 py-2.5 rounded-xl font-black text-xs transition-all border border-slate-800"
               >
                 {t('horizonDisplay.reject').toUpperCase()}
               </button>
               <button 
-                onClick={() => {
-                  stopWinSound();
-                  if (isGrandWinner) {
-                      const state = useAppStore.getState();
-                      state.setItems(state.items.map(i => ({ ...i, enabled: true })));
-                      state.setPityWeights({});
-                      setWinner(null);
-                  } else {
-                      if (autoRemoveWinner) {
-                        handleRemoveItem(winner.id);
-                      }
-                      setWinner(null);
-                  }
-                }}
+                onClick={handleAccept}
                 className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-[0_0_20px_rgba(16,185,129,0.2)] text-white px-3 sm:px-4 py-2.5 rounded-xl font-black text-xs transition-all"
               >
                 {t('horizonDisplay.accept').toUpperCase()}
@@ -181,33 +183,13 @@ export const WinnerModal = () => {
             
             <div className="flex flex-row gap-2.5">
               <button 
-                onClick={() => {
-                  stopWinSound();
-                  const state = useAppStore.getState();
-                  if (winner.drawId) {
-                    state.setResults(prev => prev.filter(r => r.drawId !== winner.drawId));
-                  }
-                  setWinner(null);
-                }}
+                onClick={handleReject}
                 className="flex-1 bg-slate-900 hover:bg-red-600 text-slate-300 hover:text-white px-3 sm:px-4 py-2.5 rounded-xl font-black text-xs transition-all border border-slate-800"
               >
                 {t('horizonDisplay.reject').toUpperCase()}
               </button>
               <button 
-                onClick={() => {
-                  stopWinSound();
-                  if (isGrandWinner) {
-                      const state = useAppStore.getState();
-                      state.setItems(state.items.map(i => ({ ...i, enabled: true })));
-                      state.setPityWeights({});
-                      setWinner(null);
-                  } else {
-                      if (autoRemoveWinner) {
-                        handleRemoveItem(winner.id);
-                      }
-                      setWinner(null);
-                  }
-                }}
+                onClick={handleAccept}
                 className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 px-3 sm:px-4 py-2.5 rounded-xl font-black text-xs transition-all shadow-lg border-b-2 border-amber-700"
               >
                 {t('horizonDisplay.accept').toUpperCase()}
@@ -240,33 +222,13 @@ export const WinnerModal = () => {
 
           <div className="flex flex-row gap-2.5">
             <button 
-              onClick={() => {
-                stopWinSound();
-                const state = useAppStore.getState();
-                if (winner.drawId) {
-                  state.setResults(prev => prev.filter(r => r.drawId !== winner.drawId));
-                }
-                setWinner(null);
-              }}
+              onClick={handleReject}
               className="flex-1 bg-slate-900 hover:bg-red-600 text-slate-300 hover:text-white px-3 sm:px-4 py-2.5 rounded-xl font-black text-xs transition-all border border-slate-800"
             >
               {t('horizonDisplay.reject').toUpperCase()}
             </button>
             <button 
-              onClick={() => {
-                stopWinSound();
-                if (isGrandWinner) {
-                    const state = useAppStore.getState();
-                    state.setItems(state.items.map(i => ({ ...i, enabled: true })));
-                    state.setPityWeights({});
-                    setWinner(null);
-                } else {
-                    if (autoRemoveWinner) {
-                      handleRemoveItem(winner.id);
-                    }
-                    setWinner(null);
-                }
-              }}
+              onClick={handleAccept}
               className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 px-3 sm:px-4 py-2.5 rounded-xl font-black text-xs transition-all shadow-lg border-b-2 border-amber-700"
             >
               {t('horizonDisplay.accept').toUpperCase()}
@@ -282,8 +244,21 @@ export const WinnerModal = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-all animate-in fade-in duration-300">
-      <div className="bg-slate-900/95 px-6 sm:px-10 py-8 sm:py-12 rounded-[2rem] max-w-[90vw] sm:max-w-lg w-full shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-slate-700/50 text-center relative overflow-hidden group">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-all animate-in fade-in duration-300"
+      onClick={handleAccept}
+    >
+      <div 
+        className="bg-slate-900/95 px-6 sm:px-10 py-8 sm:py-12 rounded-[2rem] max-w-[90vw] sm:max-w-lg w-full shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-slate-700/50 text-center relative overflow-hidden group"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={handleAccept}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors z-20"
+          title={t('common.close', 'Fechar')}
+        >
+          <X className="w-5 h-5" />
+        </button>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-40 bg-amber-500/10 blur-[80px] pointer-events-none" />
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] h-40 bg-emerald-500/10 blur-[80px] pointer-events-none" />
         
@@ -295,33 +270,13 @@ export const WinnerModal = () => {
         
         <div className="flex flex-row gap-3 sm:gap-4 w-full justify-center relative z-10">
           <button 
-            onClick={() => {
-              stopWinSound();
-              const state = useAppStore.getState();
-              if (winner.drawId) {
-                state.setResults(prev => prev.filter(r => r.drawId !== winner.drawId));
-              }
-              setWinner(null);
-            }}
+            onClick={handleReject}
             className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-2 sm:px-6 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 border border-red-500/30 hover:border-red-500/50"
           >
             {t('horizonDisplay.reject').toUpperCase()}
           </button>
           <button 
-            onClick={() => {
-              stopWinSound();
-              if (isGrandWinner) {
-                  const state = useAppStore.getState();
-                  state.setItems(state.items.map(i => ({ ...i, enabled: true })));
-                  state.setPityWeights({});
-                  setWinner(null);
-              } else {
-                  if (autoRemoveWinner) {
-                    handleRemoveItem(winner.id);
-                  }
-                  setWinner(null);
-              }
-            }}
+            onClick={handleAccept}
             className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-2 sm:px-6 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-400 hover:border-emerald-300"
           >
             {t('horizonDisplay.accept').toUpperCase()}

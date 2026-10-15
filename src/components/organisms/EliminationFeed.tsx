@@ -27,6 +27,8 @@ export const EliminationFeed = () => {
     }
   }, [winner]);
   
+  if (feed.length === 0) return null;
+
   return (
     <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 w-60 xs:w-68 sm:w-72 flex flex-col gap-1.5 sm:gap-2 justify-end pointer-events-none z-50 overflow-hidden" style={{ maxHeight: '320px' }}>
       <AnimatePresence>

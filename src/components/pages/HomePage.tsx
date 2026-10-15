@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Header } from '../organisms/Header';
+import { EliminationHUD } from '../organisms/EliminationHUD';
 import { WheelDisplay } from '../organisms/WheelDisplay';
 import { HorizonDisplay } from '../organisms/HorizonDisplay';
 import { MysteryBoxDisplay } from '../organisms/MysteryBoxDisplay';
@@ -18,6 +19,8 @@ import { ExportModal } from '../organisms/settings/ExportModal';
 import { TestDisplay } from '../organisms/TestDisplay';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { EliminationFeed } from '../organisms/EliminationFeed';
+import { GraveyardModal } from '../organisms/GraveyardModal';
+import { EliminationPopup } from '../organisms/EliminationPopup';
 
 export const HomePage = () => {
   const winner = useAppStore(s => s.winner);
@@ -31,8 +34,23 @@ export const HomePage = () => {
   return (
     <div className="h-[100dvh] w-full bg-[#14151a] text-slate-200 flex flex-col font-sans overflow-hidden">
       <Header />
+      <EliminationHUD />
       <main className="flex flex-1 flex-row overflow-hidden min-h-0 relative">
-        {wheelType === 'horizon' ? <HorizonDisplay /> : wheelType === 'mystery_box' ? <MysteryBoxDisplay /> : wheelType === 'race' ? <RaceDisplay /> : wheelType === 'penalty_shootout' ? <PenaltyShootoutDisplay /> : wheelType === 'bingo' ? <BingoDisplay /> : wheelType === 'test' ? <TestDisplay /> : <WheelDisplay />}
+        {wheelType === 'horizon' ? (
+          <HorizonDisplay />
+        ) : wheelType === 'mystery_box' ? (
+          <MysteryBoxDisplay />
+        ) : wheelType === 'race' ? (
+          <RaceDisplay />
+        ) : wheelType === 'penalty_shootout' ? (
+          <PenaltyShootoutDisplay />
+        ) : wheelType === 'bingo' ? (
+          <BingoDisplay />
+        ) : wheelType === 'test' ? (
+          <TestDisplay />
+        ) : (
+          <WheelDisplay />
+        )}
         <Sidebar />
         <EliminationFeed />
       </main>
@@ -43,9 +61,11 @@ export const HomePage = () => {
       <WinnerModal />
       <ResultsModal />
       <ExportModal />
+      <GraveyardModal />
+      <EliminationPopup />
       {winner && showConfetti && winner.isEliminated !== true && <Confetti />}
 
-      {/* Global CSS injected here to maintain original structure without moving to index.css if not needed */}
+      {/* Global CSS scrollbar styling */}
       <style dangerouslySetInnerHTML={{__html: `.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } .custom-scrollbar::-webkit-scrollbar { width: 8px; } .custom-scrollbar::-webkit-scrollbar-track { background: #1a1b23; border-radius: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d303e; border-radius: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #474f6b; }`}} />
     </div>
   );

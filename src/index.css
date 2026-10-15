@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+@keyframes ghostFloatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-9px) rotate(-1.5deg);
+  }
+  75% {
+    transform: translateY(9px) rotate(1.5deg);
+  }
+}
+
+@keyframes ghostFloatMedium {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(10px) rotate(-2deg);
+  }
+}
+
+@keyframes ghostFloatFast {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1deg);
+  }
+}

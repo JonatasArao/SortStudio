@@ -61,7 +61,11 @@ export const playRaceDefinedAudio = () => {
     const isFinalRound = state.eliminationMode && state.items.filter(i => i.enabled && !i.isEliminated).length === 2;
     const isElimFast = !isFinalRound && state.eliminationMode;
     const spinRangeAudio = getSpinTimeRanges(state.wheelType, isElimFast);
-    actualSpinTime = isElimFast ? state.eliminationSpinTime : state.spinTime;
+    actualSpinTime = isElimFast 
+      ? (state.autoEliminationSpeed === 'turbo' 
+          ? Math.max(1, state.eliminationSpinTime * 0.6) 
+          : state.eliminationSpinTime) 
+      : state.spinTime;
     actualSpinTime = Math.max(spinRangeAudio.min, Math.min(spinRangeAudio.max, actualSpinTime));
     const spinDurationMs = actualSpinTime * 1000;
 
@@ -203,6 +207,11 @@ export const useWheelActions = () => {
     if (state.isSpinning || currentValidItems.length < 2) return;
     const ctx = getAudioCtx();
     if (ctx && ctx.state === "suspended") ctx.resume();
+
+    // Se estiver no início da batalha de eliminação, captura a seleção de participantes ativos do início
+    if (state.eliminationMode && (state.eliminationRound === 1 || state.eliminatedHistory.length === 0 || state.initialEliminationParticipantIds.length < 2)) {
+      state.setInitialEliminationParticipantIds(currentValidItems.map(i => i.id));
+    }
 
     state.setWinSoundPlayedInRace(false);
     state.setIsSpinning(true);
@@ -353,7 +362,11 @@ export const useWheelActions = () => {
     const isFinalRound = state.eliminationMode && currentValidItems.length === 2;
     let actualSpinTime = isFinalRound 
       ? state.spinTime 
-      : (state.eliminationMode ? state.eliminationSpinTime : state.spinTime);
+      : (state.eliminationMode 
+          ? (state.autoEliminationSpeed === 'turbo' 
+              ? Math.max(1, state.eliminationSpinTime * 0.6) 
+              : state.eliminationSpinTime) 
+          : state.spinTime);
 
     const spinRange = getSpinTimeRanges(state.wheelType, !isFinalRound && state.eliminationMode);
     actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
@@ -444,13 +457,48 @@ export const useWheelActions = () => {
       const type = isFinalRound ? 'grand_winner' : (currentState.eliminationMode ? 'eliminated' : 'winner');
 
       if (currentState.eliminationMode && !isFinalRound) {
+        const round = currentState.eliminationRound;
         currentState.setWinner({ ...winningItem, isEliminated: true, type: 'eliminated' });
+        const isAuto = currentState.isAutoEliminating || currentState.autoContinueElimination;
+        if (!isAuto) {
+          currentState.setEliminationOverlayItem({ ...winningItem, round });
+        } else {
+          currentState.setEliminationOverlayItem(null);
+        }
+        currentState.setEliminatedHistory(prev => [
+          {
+            id: crypto.randomUUID(),
+            itemId: winningItem.id,
+            text: winningItem.text,
+            color: winningItem.color,
+            round,
+            eliminatedAt: Date.now(),
+            rank: currentValidItems.length,
+          },
+          ...prev,
+        ]);
+        currentState.setEliminationRound(r => r + 1);
       } else if (isFinalRound) {
+        const round = currentState.eliminationRound;
         currentState.setWinner({ ...winningItem, isEliminated: false, type: 'grand_winner', drawId });
+        currentState.setEliminationOverlayItem(null);
+        currentState.setIsAutoEliminating(false);
         // Disable the OTHER item magically to clean state since game is over
         const otherItem = currentValidItems.find(i => i.id !== winningItem.id);
         if (otherItem) {
            currentState.setItems(prev => prev.map(i => i.id === otherItem.id ? { ...i, enabled: false } : i));
+           currentState.setEliminatedHistory(prev => [
+             {
+               id: crypto.randomUUID(),
+               itemId: otherItem.id,
+               text: otherItem.text,
+               color: otherItem.color,
+               round,
+               eliminatedAt: Date.now(),
+               rank: 2,
+             },
+             ...prev,
+           ]);
         }
       } else {
         currentState.setWinner({ ...winningItem, type: 'winner', drawId });

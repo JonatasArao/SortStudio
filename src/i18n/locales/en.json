@@ -556,5 +556,29 @@
     "evaluationBalanced": "Harmonious and balanced distribution.",
     "evaluationNatural": "Natural random variance within normal statistical bounds.",
     "evaluationSkewed": "Distribution intentionally shaped by active Pity/Balancing/Anti-Repetition algorithms."
+  },
+  "eliminationHUD": {
+    "modeTitle": "Elimination Mode",
+    "round": "Round",
+    "finalRound": "🔥 GRAND FINALE",
+    "survivors": "alive",
+    "eliminated": "eliminated",
+    "spinBtn": "Spin Round",
+    "spinBtnShort": "Spin",
+    "spinTooltip": "Spin next elimination round",
+    "pauseAuto": "Pause",
+    "startAuto": "Auto-Spin",
+    "viewPanel": "Open Survivors & Graveyard list",
+    "graveyard": "Graveyard",
+    "resetTooltip": "Reset Battle (Revive All)",
+    "confirmReset": "Reset the battle? All eliminated participants will be revived.",
+    "exitMode": "Exit Elimination Mode"
+  },
+  "graveyardPanel": {
+    "battleStatus": "Battle Status",
+    "resetBattle": "Reset",
+    "survivors": "Survivors",
+    "graveyard": "Graveyard",
+    "searchPlh": "Filter participants..."
   }
 }
