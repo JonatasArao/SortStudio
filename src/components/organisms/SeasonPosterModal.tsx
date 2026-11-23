@@ -1,24 +1,24 @@
-import React, { useRef, useState, useMemo } from 'react';
-import { 
+import React, { useRef, useState, useMemo, useEffect } from 'react';
+import {
   X,
-  Trophy, 
-  Crown, 
-  Download, 
-  Copy, 
-  Check, 
-  Calendar, 
-  Users, 
+  Trophy,
+  Crown,
+  Download,
+  Copy,
+  Check,
+  Calendar,
+  Users,
   Sparkles,
   Award,
   Palette,
   Eye,
   EyeOff,
-  Columns,
-  Maximize2
+  Columns
 } from 'lucide-react';
 import { toPng, toJpeg, toBlob } from 'html-to-image';
 import { Season, Item, Result } from '../../types';
 import { getParticipantStats, compareParticipantsByWins, ParticipantStat } from '../../utils/statsUtils';
+import { Button } from '../atoms/Button';
 
 interface SeasonPosterModalProps {
   isOpen: boolean;
@@ -77,21 +77,20 @@ const PosterContent: React.FC<PosterContentProps> = ({
   displayedList,
   useTwoColumns,
 }) => {
-  // Split into 2 columns if requested
   const mid = Math.ceil(displayedList.length / 2);
   const col1 = useTwoColumns ? displayedList.slice(0, mid) : displayedList;
   const col2 = useTwoColumns ? displayedList.slice(mid) : [];
 
   const renderRankingTable = (list: ParticipantStat[], startIndex: number) => {
     return (
-      <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl overflow-hidden shadow-inner flex flex-col">
-        <div className="flex items-center justify-between bg-slate-900/90 py-2.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-800">
+      <div className="bg-[#0B0D13]/85 border border-white/[0.08] rounded-xl overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between bg-[#10131C] py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-white/[0.08]">
           <div className="w-12">Pos</div>
-          <div className="flex-1 px-2">Participante / Opção</div>
+          <div className="flex-1 px-2">Participante</div>
           <div className="text-right w-16">Sorteios</div>
         </div>
 
-        <div className="divide-y divide-slate-800/50">
+        <div className="divide-y divide-white/[0.05]">
           {list.length === 0 ? (
             <div className="py-4 text-center text-xs text-slate-500">Sem participantes nesta coluna</div>
           ) : (
@@ -105,28 +104,28 @@ const PosterContent: React.FC<PosterContentProps> = ({
               return (
                 <div
                   key={st.name}
-                  className={`flex items-center justify-between py-2.5 px-4 text-xs transition-colors ${
-                    isFirst ? 'bg-amber-500/10 font-semibold' : ''
+                  className={`flex items-center justify-between py-2.5 px-4 text-xs ${
+                    isFirst ? 'bg-amber-500/[0.08] font-semibold' : ''
                   }`}
                 >
-                  <div className="w-12 flex items-center gap-1.5 shrink-0">
-                    <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black font-mono shrink-0 ${
-                      isFirst ? 'bg-amber-500 text-slate-950' :
+                  <div className="w-12 flex items-center shrink-0">
+                    <span className={`w-6 h-5 rounded-md flex items-center justify-center text-[10px] font-bold font-mono tabular-nums shrink-0 ${
+                      isFirst ? 'bg-amber-400 text-slate-950' :
                       isSecond ? 'bg-slate-300 text-slate-950' :
                       isThird ? 'bg-amber-700 text-amber-100' :
-                      'bg-slate-800 text-slate-400'
+                      'bg-[#161A26] text-slate-400'
                     }`}>
                       {globalIndex + 1}
                     </span>
                   </div>
 
                   <div className="flex-1 px-2 truncate min-w-0">
-                    <span className={`truncate block ${isFirst ? 'text-amber-200 font-bold' : isWinner ? 'text-slate-100 font-medium' : 'text-slate-400'}`}>
+                    <span className={`truncate block ${isFirst ? 'text-amber-200 font-bold' : isWinner ? 'text-white font-medium' : 'text-slate-400'}`}>
                       {st.name}
                     </span>
                   </div>
 
-                  <div className="w-16 text-right font-mono font-bold shrink-0">
+                  <div className="w-16 text-right font-mono tabular-nums font-bold shrink-0">
                     <span className={isWinner ? 'text-amber-400 text-sm' : 'text-slate-600'}>
                       {st.winsCount}
                     </span>
@@ -142,62 +141,57 @@ const PosterContent: React.FC<PosterContentProps> = ({
 
   return (
     <div
-      className={`w-full ${themeConfig.containerBg} border ${themeConfig.borderColor} rounded-3xl p-7 text-white relative shadow-2xl font-sans select-none box-border`}
+      className={`w-full ${themeConfig.containerBg} border ${themeConfig.borderColor} rounded-2xl p-7 text-white relative shadow-2xl font-sans select-none box-border`}
     >
-      {/* Background Ambient Lighting & Gradients */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[240px] bg-gradient-to-b from-amber-500/10 via-orange-500/5 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-red-600/10 blur-3xl pointer-events-none" />
-      <div className="absolute -top-10 -left-10 w-72 h-72 bg-blue-600/10 blur-3xl pointer-events-none" />
-
       {/* Top Header Ribbon */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-6 relative z-10">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-6 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-amber-400/40 shrink-0">
-            <Trophy size={22} className="text-slate-950 fill-slate-950" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg border border-amber-300/40 shrink-0">
+            <Trophy size={20} className="text-slate-950" />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block leading-tight">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block leading-tight">
               {appTitle.toUpperCase()}
             </span>
-            <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
+            <span className="text-xs font-semibold text-amber-400 flex items-center gap-1">
               <Sparkles size={11} /> RESULTADOS OFICIAIS
             </span>
           </div>
         </div>
 
         <div className="text-right">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-sm bg-slate-900/90 border-slate-700 text-slate-200">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider border bg-[#10131C] border-white/[0.1] text-slate-200">
             <Calendar size={12} className="text-amber-400" />
             <span>{seasonName}</span>
-            {isFinished && <span className="text-red-400 ml-1">• Finalizada</span>}
+            {isFinished && <span className="text-red-400 ml-1">· Finalizada</span>}
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 font-mono">{dateRangeText}</p>
+          <p className="text-[10px] text-slate-400 mt-1 font-mono tabular-nums">{dateRangeText}</p>
         </div>
       </div>
 
       {/* Poster Main Banner & Title */}
       <div className="text-center mb-6 relative z-10">
-        <h1 className={`text-3xl sm:text-4xl font-black uppercase tracking-tight bg-gradient-to-r ${themeConfig.headerGradient} bg-clip-text text-transparent drop-shadow-sm`}>
+        <h1 className={`text-3xl sm:text-4xl font-extrabold uppercase tracking-tight bg-gradient-to-r ${themeConfig.headerGradient} bg-clip-text text-transparent`}>
           RESULTADO DA TEMPORADA
         </h1>
         <p className="text-xs font-medium text-slate-400 mt-1 uppercase tracking-widest">
-          Quadro de Honra e Ranking de Participantes Sorteados
+          Quadro de Honra e Ranking de Participantes
         </p>
       </div>
 
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-3 gap-3 mb-6 relative z-10">
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3.5 text-center shadow-inner">
+        <div className="bg-[#0B0D13]/80 border border-white/[0.08] rounded-xl p-3.5 text-center">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Sorteios Realizados</span>
-          <span className="text-2xl font-black text-white font-mono mt-0.5 block">{totalWins}</span>
+          <span className="text-2xl font-bold text-white font-mono tabular-nums mt-0.5 block">{totalWins}</span>
         </div>
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3.5 text-center shadow-inner">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Participantes Sorteados</span>
-          <span className="text-2xl font-black text-amber-400 font-mono mt-0.5 block">{winnersStats.length}</span>
+        <div className="bg-[#0B0D13]/80 border border-white/[0.08] rounded-xl p-3.5 text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Contemplados</span>
+          <span className="text-2xl font-bold text-amber-400 font-mono tabular-nums mt-0.5 block">{winnersStats.length}</span>
         </div>
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3.5 text-center shadow-inner">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total de Participantes</span>
-          <span className="text-2xl font-black text-slate-200 font-mono mt-0.5 block">{stats.length}</span>
+        <div className="bg-[#0B0D13]/80 border border-white/[0.08] rounded-xl p-3.5 text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Participantes</span>
+          <span className="text-2xl font-bold text-slate-200 font-mono tabular-nums mt-0.5 block">{stats.length}</span>
         </div>
       </div>
 
@@ -205,34 +199,32 @@ const PosterContent: React.FC<PosterContentProps> = ({
       {first && first.winsCount > 0 ? (
         <div className="mb-6 relative z-10">
           {/* 1st Place - Champion Banner */}
-          <div className={`${themeConfig.leaderCard} rounded-2xl p-4 sm:p-5 border relative overflow-hidden mb-3.5`}>
-            <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className={`${themeConfig.leaderCard} rounded-xl p-4 sm:p-5 border relative overflow-hidden mb-3`}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="relative shrink-0">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-slate-950 font-black text-2xl shadow-xl shadow-amber-500/30 border border-amber-300">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-slate-950 font-black text-2xl border border-amber-300 font-mono tabular-nums">
                     1º
                   </div>
-                  <Crown size={22} className="text-amber-300 fill-amber-300 absolute -top-3.5 -right-2 drop-shadow-md" />
+                  <Crown size={20} className="text-amber-300 fill-amber-300 absolute -top-3 -right-2" />
                 </div>
 
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                      {isFinished ? '🏆 MAIS SORTEADO DA TEMPORADA' : '⭐ LÍDER DE SORTEIOS'}
-                    </span>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+                    <Trophy size={12} />
+                    <span>{isFinished ? 'Mais Sorteado da Temporada' : 'Líder de Sorteios'}</span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1 truncate">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5 truncate">
                     {first.name}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-0.5 font-mono tabular-nums">
                     {first.lastWinTimestamp ? `Último sorteio: ${new Date(first.lastWinTimestamp).toLocaleDateString('pt-BR')}` : 'Contemplado na temporada'}
                   </p>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <span className="text-3xl font-black text-amber-300 font-mono block leading-none">
+                <span className="text-3xl font-bold text-amber-300 font-mono tabular-nums block leading-none">
                   {first.winsCount}
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400/80">
@@ -246,37 +238,37 @@ const PosterContent: React.FC<PosterContentProps> = ({
           {(second || third) && (
             <div className="grid grid-cols-2 gap-3">
               {second && (
-                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                <div className="bg-[#10131C] border border-white/[0.08] rounded-xl p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-200 text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-[#161A26] border border-white/[0.1] flex items-center justify-center font-bold text-slate-200 text-xs font-mono tabular-nums shrink-0">
                       2º
                     </div>
                     <div className="min-w-0">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block leading-tight">2º Mais Sorteado</span>
-                      <span className="text-sm font-bold text-white truncate block">{second.name}</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block leading-tight">2º Lugar</span>
+                      <span className="text-sm font-semibold text-white truncate block">{second.name}</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-lg font-black text-slate-200 font-mono leading-none block">{second.winsCount}</span>
-                    <span className="text-[9px] uppercase font-semibold text-slate-400">sorteios</span>
+                    <span className="text-lg font-bold text-slate-200 font-mono tabular-nums leading-none block">{second.winsCount}</span>
+                    <span className="text-[10px] uppercase font-medium text-slate-400">sorteios</span>
                   </div>
                 </div>
               )}
 
               {third && (
-                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                <div className="bg-[#10131C] border border-white/[0.08] rounded-xl p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-amber-950/40 border border-amber-800/40 flex items-center justify-center font-bold text-amber-400 text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-amber-950/50 border border-amber-700/40 flex items-center justify-center font-bold text-amber-300 text-xs font-mono tabular-nums shrink-0">
                       3º
                     </div>
                     <div className="min-w-0">
-                      <span className="text-[10px] font-bold uppercase text-amber-400/80 block leading-tight">3º Mais Sorteado</span>
-                      <span className="text-sm font-bold text-white truncate block">{third.name}</span>
+                      <span className="text-[10px] font-bold uppercase text-amber-400/80 block leading-tight">3º Lugar</span>
+                      <span className="text-sm font-semibold text-white truncate block">{third.name}</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-lg font-black text-amber-400 font-mono leading-none block">{third.winsCount}</span>
-                    <span className="text-[9px] uppercase font-semibold text-amber-500/80">sorteios</span>
+                    <span className="text-lg font-bold text-amber-300 font-mono tabular-nums leading-none block">{third.winsCount}</span>
+                    <span className="text-[10px] uppercase font-medium text-amber-400/70">sorteios</span>
                   </div>
                 </div>
               )}
@@ -284,10 +276,10 @@ const PosterContent: React.FC<PosterContentProps> = ({
           )}
         </div>
       ) : (
-        <div className="bg-slate-950/50 border border-slate-800/80 rounded-2xl p-7 text-center mb-6 relative z-10">
-          <Trophy size={32} className="text-slate-600 mx-auto mb-2 opacity-50" />
+        <div className="bg-[#0B0D13]/70 border border-white/[0.08] rounded-xl p-7 text-center mb-6 relative z-10">
+          <Trophy size={28} className="text-slate-600 mx-auto mb-2" />
           <p className="text-sm text-slate-300 font-medium">Nenhum resultado registrado nesta temporada ainda.</p>
-          <span className="text-xs text-slate-500">Gire a roleta de sorteios para registrar os primeiros participantes sorteados no quadro de honra.</span>
+          <span className="text-xs text-slate-500">Gire a roleta de sorteios para registrar os primeiros participantes.</span>
         </div>
       )}
 
@@ -297,13 +289,13 @@ const PosterContent: React.FC<PosterContentProps> = ({
           <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
             <Award size={13} className="text-amber-400" /> Ranking de Participantes
           </span>
-          <span className="text-[11px] font-mono text-slate-400">
-            Exibindo {displayedList.length} de {stats.length} participantes
+          <span className="text-[11px] font-mono tabular-nums text-slate-400">
+            Exibindo {displayedList.length} de {stats.length}
           </span>
         </div>
 
         {useTwoColumns ? (
-          <div className="grid grid-cols-2 gap-3.5 items-start">
+          <div className="grid grid-cols-2 gap-3 items-start">
             <div>{renderRankingTable(col1, 0)}</div>
             <div>{renderRankingTable(col2, mid)}</div>
           </div>
@@ -312,13 +304,10 @@ const PosterContent: React.FC<PosterContentProps> = ({
         )}
       </div>
 
-      {/* Official Bottom Seal / Footer */}
-      <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span>Documento Oficial • SortStudio Roleta & Sorteios</span>
-        </div>
-        <div className="font-mono text-slate-500">
+      {/* Official Bottom Footer */}
+      <div className="pt-4 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-slate-400 relative z-10">
+        <span>Documento Oficial · SortStudio</span>
+        <div className="font-mono tabular-nums text-slate-500">
           Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
@@ -330,7 +319,6 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
   isOpen,
   onClose,
   season,
-  allSeasons,
   results,
   items,
   appTitle
@@ -344,9 +332,17 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
   const [showPreview, setShowPreview] = useState(true);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const isFinished = season ? !!season.endDate && season.endDate <= Date.now() : false;
 
-  // Scoped stats anchored to season end date if finished
   const stats = useMemo(() => {
     return getParticipantStats(items, results, season?.endDate, isFinished)
       .sort(compareParticipantsByWins);
@@ -396,7 +392,7 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
       const endStr = new Date(season.endDate).toLocaleDateString('pt-BR');
       return `${startStr} até ${endStr}`;
     }
-    return `Início em ${startStr} • Em andamento`;
+    return `Início em ${startStr} · Em andamento`;
   }, [season]);
 
   const prepareCapture = async (): Promise<{ target: HTMLDivElement; width: number; height: number; options: any } | null> => {
@@ -409,7 +405,6 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
     await new Promise(r => setTimeout(r, 120));
 
     const targetWidth = 760;
-    // Calculate total height accurately to avoid any cutting off
     const computedHeight = Math.ceil(Math.max(
       target.scrollHeight,
       target.offsetHeight,
@@ -481,44 +476,43 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
     }
   };
 
-  // Theme-specific styles
   const themeConfig: ThemeConfig = useMemo(() => {
     switch (posterTheme) {
       case 'gold_championship':
         return {
-          containerBg: 'bg-gradient-to-b from-[#18140c] via-[#0d0d0f] to-[#141007]',
+          containerBg: 'bg-gradient-to-b from-[#17130B] via-[#0B0D13] to-[#141008]',
           borderColor: 'border-amber-500/40',
           accentColor: 'text-amber-400',
           accentBg: 'bg-amber-500/15',
           accentBorder: 'border-amber-500/30',
           headerGradient: 'from-amber-200 via-amber-400 to-yellow-500',
           badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-          leaderCard: 'bg-gradient-to-br from-amber-950/40 via-slate-900/90 to-amber-900/20 border-amber-500/50 shadow-[0_0_30px_rgba(245,158,11,0.15)]',
+          leaderCard: 'bg-gradient-to-br from-amber-950/35 via-[#12151F] to-amber-900/15 border-amber-500/45',
           badgeText: 'text-amber-400'
         };
       case 'cyber_neon':
         return {
-          containerBg: 'bg-gradient-to-b from-[#090b14] via-[#05060b] to-[#080512]',
+          containerBg: 'bg-gradient-to-b from-[#090D18] via-[#070910] to-[#0E0817]',
           borderColor: 'border-cyan-500/40',
           accentColor: 'text-cyan-400',
           accentBg: 'bg-cyan-500/15',
           accentBorder: 'border-cyan-500/30',
-          headerGradient: 'from-cyan-300 via-teal-300 to-fuchsia-400',
+          headerGradient: 'from-cyan-300 via-teal-300 to-indigo-400',
           badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
-          leaderCard: 'bg-gradient-to-br from-cyan-950/40 via-slate-900/90 to-fuchsia-950/20 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.15)]',
+          leaderCard: 'bg-gradient-to-br from-cyan-950/35 via-[#12151F] to-indigo-950/25 border-cyan-500/45',
           badgeText: 'text-cyan-400'
         };
       case 'studio_dark':
       default:
         return {
-          containerBg: 'bg-gradient-to-b from-[#0c0e14] via-[#0a0a0f] to-[#120e0e]',
-          borderColor: 'border-amber-500/30',
+          containerBg: 'bg-gradient-to-b from-[#12151F] via-[#0B0D13] to-[#10131C]',
+          borderColor: 'border-white/[0.12]',
           accentColor: 'text-amber-400',
           accentBg: 'bg-amber-500/15',
           accentBorder: 'border-amber-500/30',
-          headerGradient: 'from-amber-300 via-orange-400 to-yellow-500',
+          headerGradient: 'from-amber-200 via-amber-400 to-orange-400',
           badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-          leaderCard: 'bg-gradient-to-br from-slate-900/95 via-amber-950/20 to-slate-900/95 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.12)]',
+          leaderCard: 'bg-gradient-to-br from-[#161A26] via-amber-950/20 to-[#161A26] border-amber-500/40',
           badgeText: 'text-amber-400'
         };
     }
@@ -527,29 +521,32 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-[220] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+    <div
+      className="fixed inset-0 z-[220] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Exportar Pôster da Temporada"
     >
-      <div 
-        className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+      <div
+        className="bg-[var(--studio-surface)] border border-[var(--studio-border-strong)] text-[var(--studio-text)] rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-950/40">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white">
-              <Download size={20} />
+        <div className="px-4 sm:px-6 py-4 border-b border-[var(--studio-border)] flex items-center justify-between shrink-0 bg-[var(--studio-surface-elevated)]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Download size={18} />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                Exportar Pôster da Temporada
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                  {seasonName}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                Gere a imagem de classificação oficial completa em alta resolução (sem cortes).
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-semibold text-[var(--studio-text)]">
+                  Exportar Pôster da Temporada
+                </h2>
+                <span className="text-xs text-[var(--studio-text-muted)]">· {seasonName}</span>
+              </div>
+              <p className="text-xs text-[var(--studio-text-muted)] mt-0.5 truncate">
+                Gere a imagem oficial completa em alta resolução.
               </p>
             </div>
           </div>
@@ -557,42 +554,43 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+            className="p-2 text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)] rounded-lg transition-colors shrink-0"
             title="Fechar"
+            aria-label="Fechar"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-6">
+        <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-5">
           {/* Options Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/50 p-3 sm:p-4 rounded-2xl border border-slate-800/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-[var(--studio-surface-elevated)] p-3.5 rounded-xl border border-[var(--studio-border)]">
             {/* Theme Selector */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Palette size={13} className="text-amber-400" /> Estilo Visual
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] flex items-center gap-1.5">
+                <Palette size={13} className="text-amber-600 dark:text-amber-400" /> Estilo Visual
               </label>
               <select
                 value={posterTheme}
                 onChange={(e) => setPosterTheme(e.target.value as PosterTheme)}
-                className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500"
+                className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-2 text-xs font-semibold text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)]"
               >
-                <option value="studio_dark">🎲 Studio Dark</option>
-                <option value="gold_championship">🏆 Gala Dourada</option>
-                <option value="cyber_neon">⚡ Cyber Neon</option>
+                <option value="studio_dark">Studio Broadcast</option>
+                <option value="gold_championship">Gala Dourada</option>
+                <option value="cyber_neon">Cyber Neon</option>
               </select>
             </div>
 
             {/* Classification Scope */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Users size={13} className="text-emerald-400" /> Participantes
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] flex items-center gap-1.5">
+                <Users size={13} className="text-emerald-600 dark:text-emerald-400" /> Participantes
               </label>
               <select
                 value={displayFilter}
                 onChange={(e) => setDisplayFilter(e.target.value as DisplayFilter)}
-                className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500"
+                className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-2 text-xs font-semibold text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)]"
               >
                 <option value="top5">Top 5 Melhores</option>
                 <option value="top10">Top 10 Melhores</option>
@@ -600,19 +598,19 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
                 <option value="top30">Top 30 Melhores</option>
                 <option value="top50">Top 50 Melhores</option>
                 <option value="only_winners">Apenas Sorteados ({winnersStats.length})</option>
-                <option value="all">Todos os Participantes ({stats.length})</option>
+                <option value="all">Todos ({stats.length})</option>
               </select>
             </div>
 
             {/* Column Layout */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Columns size={13} className="text-purple-400" /> Organização
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] flex items-center gap-1.5">
+                <Columns size={13} className="text-[var(--studio-accent-fg)]" /> Organização
               </label>
               <select
                 value={columnsMode}
                 onChange={(e) => setColumnsMode(e.target.value as ColumnLayout)}
-                className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500"
+                className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-2 text-xs font-semibold text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)]"
               >
                 <option value="auto">Automático ({displayedList.length > 12 ? '2 Colunas' : '1 Coluna'})</option>
                 <option value="1">1 Coluna</option>
@@ -622,28 +620,28 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
 
             {/* Format Selection */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Sparkles size={13} className="text-cyan-400" /> Formato
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] flex items-center gap-1.5">
+                <Sparkles size={13} className="text-cyan-600 dark:text-cyan-400" /> Formato
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <button
                   type="button"
                   onClick={() => setFormat('png')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                  className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                     format === 'png'
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
-                      : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white'
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/45'
+                      : 'bg-[var(--studio-card)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:text-[var(--studio-text)]'
                   }`}
                 >
-                  PNG (2x Nítido)
+                  PNG (2x)
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormat('jpeg')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                  className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                     format === 'jpeg'
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
-                      : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white'
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/45'
+                      : 'bg-[var(--studio-card)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:text-[var(--studio-text)]'
                   }`}
                 >
                   JPG
@@ -654,13 +652,13 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
 
           {/* Toggle Preview Button */}
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <Eye size={14} className="text-amber-400" /> Pré-visualização do Pôster
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] flex items-center gap-2">
+              <Eye size={14} className="text-amber-600 dark:text-amber-400" /> Pré-visualização do Pôster
             </span>
             <button
               type="button"
               onClick={() => setShowPreview(!showPreview)}
-              className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+              className="text-xs text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] flex items-center gap-1.5 transition-colors"
             >
               {showPreview ? <EyeOff size={13} /> : <Eye size={13} />}
               <span>{showPreview ? 'Ocultar Prévia' : 'Mostrar Prévia'}</span>
@@ -669,7 +667,7 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
 
           {/* INTERACTIVE PREVIEW IN MODAL */}
           {showPreview && (
-            <div className="w-full flex justify-center py-2 overflow-x-auto">
+            <div className="w-full flex justify-center py-1 overflow-x-auto">
               <div className="w-full max-w-[760px] shrink-0">
                 <PosterContent
                   appTitle={appTitle}
@@ -692,40 +690,40 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-slate-800/80 bg-slate-950/60 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-all"
-          >
+        <div className="px-4 sm:px-6 py-3.5 border-t border-[var(--studio-border)] bg-[var(--studio-surface-elevated)] flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <Button type="button" variant="secondary" size="sm" onClick={onClose}>
             Fechar
-          </button>
+          </Button>
 
           <div className="flex items-center gap-2.5">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={handleCopy}
               disabled={isExporting}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
+              className="gap-1.5"
             >
-              {copied ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}
+              {copied ? <Check size={14} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={14} />}
               <span>{copied ? 'Copiado!' : 'Copiar Imagem'}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="success"
+              size="sm"
               onClick={handleDownload}
               disabled={isExporting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+              className="gap-2"
             >
-              <Download size={16} />
+              <Download size={15} />
               <span>{isExporting ? 'Gerando Imagem...' : `Baixar Pôster (${format.toUpperCase()})`}</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* DEDICATED OFFSCREEN CAPTURE ELEMENT (Always mounted, unconstrained, zero scroll offset) */}
+      {/* DEDICATED OFFSCREEN CAPTURE ELEMENT */}
       <div
         style={{
           position: 'fixed',
@@ -768,4 +766,3 @@ export const SeasonPosterModal: React.FC<SeasonPosterModalProps> = ({
     </div>
   );
 };
-

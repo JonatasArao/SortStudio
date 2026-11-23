@@ -13,7 +13,7 @@ export const DEFAULT_SLICE_COLORS = [
 ];
 
 export const DEFAULT_CENTER_IMAGE =
-  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%230f172a" stroke="%23f97316" stroke-width="4"/><polygon points="50,22 59,38 78,41 64,55 67,74 50,65 33,74 36,55 22,41 41,38" fill="%23fcd34d"/></svg>';
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="%23f97316" stroke-width="4"/><polygon points="50,20 59,37 78,40 64,54 67,73 50,64 33,73 36,54 22,40 41,37" fill="%23fcd34d"/></svg>';
 
 // Math and Geometry Constants for the Wheel
 export const FULL_CIRCLE_DEG = 360;

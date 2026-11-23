@@ -5,33 +5,42 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg' | 'icon';
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  className = '', 
-  ...props 
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  type = 'button',
+  ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-bold tracking-widest uppercase transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:border-b-0";
-  
+  const baseStyles =
+    'inline-flex items-center justify-center font-semibold whitespace-nowrap shrink-0 transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none';
+
   const variants = {
-    primary: "bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.4)] border-b-4 border-blue-800 hover:border-blue-600 active:translate-y-1 active:border-b-0 hover:-translate-y-0.5",
-    secondary: "bg-[#1b1c23] hover:bg-[#252733] border border-white/10 text-white rounded-lg shadow-sm hover:shadow-md",
-    danger: "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl shadow-[0_10px_30px_rgba(239,68,68,0.3)] border-b-4 border-red-800 hover:border-red-600 active:translate-y-1 active:border-b-0 hover:-translate-y-1",
-    success: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] border-b-4 border-emerald-800 hover:border-emerald-600 active:translate-y-1 active:border-b-0 hover:-translate-y-1",
-    amber: "bg-amber-600 hover:bg-amber-500 text-white rounded-xl shadow-[0_10px_30px_rgba(245,158,11,0.4)] border-b-4 border-amber-800 hover:border-amber-700 active:translate-y-1 active:border-b-0 hover:-translate-y-1",
-    ghost: "text-slate-400 hover:text-white bg-transparent normal-case font-medium tracking-normal",
+    primary:
+      'bg-[var(--studio-accent)] hover:bg-[var(--studio-accent-hover)] text-[var(--studio-accent-text)] rounded-xl border border-transparent shadow-sm',
+    secondary:
+      'bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] text-[var(--studio-text-secondary)] hover:text-[var(--studio-text)] rounded-xl border border-[var(--studio-border-strong)] shadow-sm',
+    danger:
+      'bg-red-600 hover:bg-red-500 text-white rounded-xl border border-red-400/25 shadow-sm',
+    success:
+      'bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl border border-emerald-400/25 shadow-sm',
+    amber:
+      'bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl border border-amber-300/30 shadow-sm',
+    ghost:
+      'bg-transparent hover:bg-[var(--studio-accent-soft)] text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] rounded-xl border border-transparent',
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base rounded-xl",
-    lg: "px-10 py-4 text-xl md:text-2xl rounded-xl",
-    icon: "p-2 rounded-full",
+    sm: 'min-h-[calc(var(--studio-control-h)-4px)] px-3.5 text-xs gap-1.5',
+    md: 'min-h-[var(--studio-control-h)] px-4 text-sm gap-2',
+    lg: 'h-12 px-6 text-base gap-2.5',
+    icon: 'w-10 h-10 p-0 rounded-xl',
   };
 
   return (
-    <button 
+    <button
+      type={type}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
@@ -39,5 +48,3 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 };
-
-

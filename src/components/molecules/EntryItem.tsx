@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, ArrowDown, Settings2, X, Palette, Eye, EyeOff, Clock } from 'lucide-react';
+import { ArrowUp, ArrowDown, Settings2, X, Palette, Eye, EyeOff, Clock, Trophy, Skull, Ban } from 'lucide-react';
 import { Item } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { ParticipantStat } from '../../utils/statsUtils';
@@ -9,11 +9,11 @@ function getContrastYIQ(hexcolor: string) {
   let hex = hexcolor.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
   if (hex.length !== 6) return '#ffffff';
-  
+
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
-  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return yiq >= 128 ? '#111111' : '#ffffff';
 }
 
@@ -49,109 +49,129 @@ export const EntryItem: React.FC<EntryItemProps> = ({
   onEditSettings,
 }) => {
   const { t } = useTranslation();
-  const currentWeight = effectiveWeight !== undefined ? effectiveWeight : (item.weight !== undefined ? item.weight : 1);
+  const baseWeight = item.weight !== undefined ? item.weight : 1;
+  const currentWeight = effectiveWeight !== undefined ? effectiveWeight : baseWeight;
   const weightPercentage = item.enabled !== false ? Math.round((currentWeight / totalWeight) * 100) : 0;
   const itemColor = item.color || color || '#cccccc';
+  const weightAdjusted = currentWeight !== baseWeight;
 
   if (!isAdvancedEntries) {
     return (
-      <div className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all border border-transparent hover:bg-slate-800/40 hover:border-slate-700/50 group ${item.enabled === false ? 'opacity-50 grayscale' : ''}`}>
-        <label 
-          className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center shadow-inner ring-2 ring-slate-800 transition-transform hover:scale-110 ${isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+      <div
+        className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border transition-colors duration-150 group ${
+          item.enabled === false
+            ? 'bg-[var(--studio-input)] border-[var(--studio-border)] opacity-55'
+            : 'bg-[var(--studio-card)] border-[var(--studio-border)] hover:border-[var(--studio-border-strong)] hover:bg-[var(--studio-card-hover)]'
+        }`}
+      >
+        <label
+          className={`relative shrink-0 w-5 h-5 rounded-full ring-1 ring-black/15 dark:ring-white/20 transition-transform hover:scale-110 ${
+            isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          }`}
           style={{ backgroundColor: itemColor }}
           title={t('entryItem.changeColor')}
         >
-          <input 
-            type="color" 
+          <input
+            type="color"
             disabled={isSpinning}
-            value={itemColor} 
-            onChange={(e) => onUpdate(item.id, { color: e.target.value })}
+            value={itemColor}
+            onChange={e => onUpdate(item.id, { color: e.target.value })}
             className="absolute opacity-0 w-0 h-0"
           />
         </label>
-        
-        <div className="flex-1 flex items-center gap-1.5 min-w-0">
-          <input 
-            type="text" 
-            value={item.text} 
-            onChange={(e) => onUpdate(item.id, { text: e.target.value })}
-            className={`flex-1 min-w-0 bg-transparent border-none text-slate-100 font-medium focus:outline-none focus:ring-0 px-1 py-1 text-sm ${item.enabled === false ? 'line-through text-slate-400' : ''}`}
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <input
+            type="text"
+            value={item.text}
+            onChange={e => onUpdate(item.id, { text: e.target.value })}
+            className={`w-full min-w-0 bg-transparent border-none text-[var(--studio-text)] placeholder:text-[var(--studio-text-muted)] font-medium focus:outline-none focus:ring-0 px-1 py-0.5 text-sm ${
+              item.enabled === false ? 'line-through text-[var(--studio-text-muted)]' : ''
+            }`}
             placeholder={t('entryItem.placeholderCompact')}
             disabled={isSpinning}
           />
 
-          {item.isEliminated && (
-            <span 
-              className="text-[10px] px-1.5 py-0.5 rounded bg-red-950/80 text-red-400 border border-red-500/30 font-bold shrink-0 flex items-center gap-0.5"
-              title="Participante eliminado da batalha"
-            >
-              <span>💀</span>
-              <span>Eliminado</span>
-            </span>
-          )}
-
-          {stat && (
-            <span 
-              className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
-                stat.hasWon && stat.daysWithoutWin === 0
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold'
-                  : !stat.hasWon
-                  ? 'bg-slate-800/80 text-slate-400 border-slate-700/60 font-medium'
-                  : stat.daysWithoutWin > 7
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-bold'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold'
-              }`}
-              title={stat.hasWon ? `${stat.daysWithoutWin} dia(s) sem ganhar` : 'Sem vitórias registradas'}
-            >
-              {stat.hasWon ? (stat.daysWithoutWin === 0 ? '🏆 Hoje' : `⏳ ${stat.daysWithoutWin}d`) : 'Sem vitórias'}
-            </span>
+          {(item.isEliminated || stat) && (
+            <div className="flex items-center gap-1.5 px-1 text-[11px] leading-tight text-[var(--studio-text-muted)] truncate">
+              {item.isEliminated && (
+                <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-medium">
+                  <Skull size={11} />
+                  <span>Eliminado</span>
+                </span>
+              )}
+              {item.isEliminated && stat && <span aria-hidden="true">·</span>}
+              {stat && (
+                <span
+                  className={`inline-flex items-center gap-1 font-medium ${
+                    stat.hasWon && stat.daysWithoutWin === 0
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : !stat.hasWon
+                      ? 'text-[var(--studio-text-muted)]'
+                      : stat.daysWithoutWin > 7
+                      ? 'text-amber-700 dark:text-amber-400'
+                      : 'text-blue-700 dark:text-blue-400'
+                  }`}
+                  title={stat.hasWon ? `${stat.daysWithoutWin} dia(s) sem ganhar` : 'Sem vitórias registradas'}
+                >
+                  {stat.hasWon ? (
+                    stat.daysWithoutWin === 0 ? (
+                      <>
+                        <Trophy size={10} />
+                        <span>Hoje</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock size={10} />
+                        <span className="font-mono tabular-nums">{stat.daysWithoutWin}d</span>
+                      </>
+                    )
+                  ) : (
+                    <span>Sem vitórias</span>
+                  )}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
-          {currentWeight !== (item.weight !== undefined ? item.weight : 1) && (
-            <span 
-              className={`text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${
-                currentWeight === 0 
-                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
-                  : currentWeight > (item.weight !== undefined ? item.weight : 1)
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-              }`}
-              title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
-            >
-              {currentWeight === 0 ? '0' : `${currentWeight > (item.weight !== undefined ? item.weight : 1) ? '▲' : '▼'}${currentWeight.toFixed(1)}`}
-            </span>
-          )}
-          <span 
-            className={`text-xs font-semibold px-2 py-1 rounded-md min-w-[3rem] text-center border ${
+        {/* Probability readout & touch-accessible actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <span
+            className={`text-xs font-mono tabular-nums font-semibold px-1.5 py-0.5 rounded-md ${
               currentWeight === 0
-                ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                : currentWeight !== (item.weight !== undefined ? item.weight : 1) 
-                ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' 
-                : 'text-slate-400 bg-slate-800/60 border-slate-700/50'
+                ? 'text-rose-600 dark:text-rose-400'
+                : weightAdjusted
+                ? 'text-amber-700 dark:text-amber-400'
+                : 'text-[var(--studio-text-secondary)]'
             }`}
-            title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}${currentWeight !== (item.weight !== undefined ? item.weight : 1) ? ` (${t('entryItem.adjustedByBalance')})` : ''}`}
+            title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}${
+              weightAdjusted ? ` (${t('entryItem.adjustedByBalance')})` : ''
+            }`}
           >
             {weightPercentage}%
           </span>
-          
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-            <button 
-              onClick={() => onUpdate(item.id, { enabled: item.enabled === false ? true : false })} 
-              disabled={isSpinning} 
-              className="text-slate-500 hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors disabled:opacity-50 focus:opacity-100 focus:outline-none" 
+
+          <div className="flex items-center gap-0.5 opacity-90 sm:opacity-45 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={() => onUpdate(item.id, { enabled: item.enabled === false })}
+              disabled={isSpinning}
+              className="w-8 h-8 flex items-center justify-center text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] rounded-lg hover:bg-[var(--studio-accent-soft)] transition-colors disabled:opacity-40"
               title={item.enabled !== false ? t('entryItem.disable') : t('entryItem.enable')}
+              aria-label={item.enabled !== false ? t('entryItem.disable') : t('entryItem.enable')}
             >
-              {item.enabled !== false ? <Eye size={16} /> : <EyeOff size={16} />}
+              {item.enabled !== false ? <Eye size={15} /> : <EyeOff size={15} />}
             </button>
-            <button 
-              onClick={() => onRemove(item.id)} 
-              disabled={isSpinning} 
-              className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors disabled:opacity-50 focus:opacity-100 focus:outline-none" 
+            <button
+              type="button"
+              onClick={() => onRemove(item.id)}
+              disabled={isSpinning}
+              className="w-8 h-8 flex items-center justify-center text-[var(--studio-text-muted)] hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors disabled:opacity-40"
               title={t('entryItem.delete')}
+              aria-label={t('entryItem.delete')}
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           </div>
         </div>
@@ -160,159 +180,198 @@ export const EntryItem: React.FC<EntryItemProps> = ({
   }
 
   return (
-    <div className={`flex items-stretch gap-3 p-3.5 rounded-xl bg-slate-800/30 border transition-all ${item.enabled === false ? 'border-slate-800 opacity-60 grayscale' : 'border-slate-700/60 hover:border-slate-600'}`}>
-      
-      {/* Left: Move Controls */}
-      <div className="flex flex-col items-center justify-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-        <button 
-          onClick={() => onMove(item.id, 'up')} 
-          disabled={isSpinning || index === 0} 
-          className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+    <div
+      className={`flex items-stretch gap-2.5 p-3 rounded-xl border transition-colors duration-150 ${
+        item.enabled === false
+          ? 'bg-[var(--studio-input)] border-[var(--studio-border)] opacity-60'
+          : 'bg-[var(--studio-card)] border-[var(--studio-border)] hover:border-[var(--studio-border-strong)]'
+      }`}
+    >
+      {/* Left: Reorder Controls */}
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => onMove(item.id, 'up')}
+          disabled={isSpinning || index === 0}
+          className="w-7 h-7 flex items-center justify-center text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-accent-soft)] rounded-lg disabled:opacity-25 transition-colors"
+          aria-label="Mover para cima"
         >
-          <ArrowUp size={16} />
+          <ArrowUp size={14} />
         </button>
-        <button 
-          onClick={() => onMove(item.id, 'down')} 
-          disabled={isSpinning || index === totalItems - 1} 
-          className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        <button
+          type="button"
+          onClick={() => onMove(item.id, 'down')}
+          disabled={isSpinning || index === totalItems - 1}
+          className="w-7 h-7 flex items-center justify-center text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-accent-soft)] rounded-lg disabled:opacity-25 transition-colors"
+          aria-label="Mover para baixo"
         >
-          <ArrowDown size={16} />
+          <ArrowDown size={14} />
         </button>
       </div>
 
-      {/* Center: Inputs */}
-      <div className="flex-1 flex flex-col gap-3">
+      {/* Center: Name, Status Metadata & Weight */}
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
+        <input
+          type="text"
+          value={item.text}
+          onChange={e => onUpdate(item.id, { text: e.target.value })}
+          className={`w-full bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-1.5 text-sm text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)] transition-colors placeholder:text-[var(--studio-text-muted)] ${
+            item.enabled === false ? 'line-through text-[var(--studio-text-muted)]' : ''
+          }`}
+          placeholder={t('entryItem.placeholderFull')}
+          disabled={isSpinning}
+        />
+
+        {(item.isEliminated || stat) && (
+          <div className="flex items-center gap-2 text-[11px] text-[var(--studio-text-muted)] px-0.5 truncate">
+            {item.isEliminated && (
+              <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-medium">
+                <Skull size={11} />
+                <span>Eliminado</span>
+              </span>
+            )}
+            {item.isEliminated && stat && <span aria-hidden="true">·</span>}
+            {stat && (
+              <span
+                className={`inline-flex items-center gap-1 font-medium ${
+                  stat.hasWon && stat.daysWithoutWin === 0
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : !stat.hasWon
+                    ? 'text-[var(--studio-text-muted)]'
+                    : stat.daysWithoutWin > 7
+                    ? 'text-amber-700 dark:text-amber-400'
+                    : 'text-blue-700 dark:text-blue-400'
+                }`}
+                title={
+                  stat.hasWon && stat.lastWinTimestamp
+                    ? `Última vitória: ${new Date(stat.lastWinTimestamp).toLocaleDateString()}`
+                    : 'Sem vitórias registradas'
+                }
+              >
+                {stat.hasWon ? (
+                  stat.daysWithoutWin === 0 ? (
+                    <>
+                      <Trophy size={11} />
+                      <span>Ganhou hoje</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock size={11} />
+                      <span className="font-mono tabular-nums">{stat.daysWithoutWin}d sem ganhar</span>
+                    </>
+                  )
+                ) : (
+                  <span>Sem vitórias</span>
+                )}
+              </span>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
-          <input
-            type="text" 
-            value={item.text} 
-            onChange={(e) => onUpdate(item.id, { text: e.target.value })}
-            className={`flex-1 w-full bg-slate-900/60 border border-slate-700/80 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder-slate-600 ${item.enabled === false ? 'line-through text-slate-400' : ''}`}
-            placeholder={t('entryItem.placeholderFull')}
-            disabled={isSpinning}
-          />
-
-          {item.isEliminated && (
-            <span 
-              className="text-xs px-2.5 py-1.5 rounded-lg bg-red-950/80 text-red-400 border border-red-500/30 font-bold shrink-0 flex items-center gap-1"
-              title="Participante eliminado da batalha"
-            >
-              <span>💀</span>
-              <span>Eliminado</span>
-            </span>
-          )}
-
-          {stat && (
-            <span 
-              className={`text-xs px-2.5 py-1.5 rounded-lg border shrink-0 flex items-center gap-1 transition-colors ${
-                stat.hasWon && stat.daysWithoutWin === 0
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-semibold'
-                  : !stat.hasWon
-                  ? 'bg-slate-800/80 text-slate-400 border-slate-700/60 font-medium'
-                  : stat.daysWithoutWin > 7
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-semibold'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-semibold'
-              }`}
-              title={stat.hasWon && stat.lastWinTimestamp ? `Última vitória: ${new Date(stat.lastWinTimestamp).toLocaleDateString()}` : 'Sem vitórias registradas'}
-            >
-              {stat.hasWon ? (
-                stat.daysWithoutWin === 0 ? '🏆 Ganhou hoje' : `⏳ ${stat.daysWithoutWin}d sem ganhar`
-              ) : (
-                'Sem vitórias'
-              )}
-            </span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <label 
-            className={`relative flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden border border-white/10 shadow-sm transition-transform hover:scale-105 shrink-0 ${isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+          <label
+            className={`relative flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden border border-[var(--studio-border-strong)] shrink-0 ${
+              isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105 transition-transform'
+            }`}
             style={{ backgroundColor: itemColor }}
             title={t('entryItem.changeColor')}
           >
-            <input 
-              type="color" 
+            <input
+              type="color"
               disabled={isSpinning}
-              value={itemColor} 
-              onChange={(e) => onUpdate(item.id, { color: e.target.value })}
-              className="absolute opacity-0 inset-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
+              value={itemColor}
+              onChange={e => onUpdate(item.id, { color: e.target.value })}
+              className="absolute opacity-0 inset-0 w-full h-full cursor-pointer"
             />
-            <Palette size={16} color={getContrastYIQ(itemColor)} />
+            <Palette size={15} color={getContrastYIQ(itemColor)} />
           </label>
-          
-          <div className={`flex-1 flex items-center bg-slate-900/60 border border-slate-700/80 rounded-lg overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors h-9 ${isSpinning ? 'opacity-50' : ''}`}>
-            <div className="px-2 py-1.5 text-xs font-semibold text-slate-400 border-r border-slate-700/80 bg-slate-800/40 h-full flex items-center shrink-0">
+
+          <div
+            className={`flex-1 flex items-center bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg overflow-hidden focus-within:border-[var(--studio-accent)] transition-colors h-9 ${
+              isSpinning ? 'opacity-50' : ''
+            }`}
+          >
+            <span className="px-2.5 text-xs font-medium text-[var(--studio-text-muted)] border-r border-[var(--studio-border)] h-full flex items-center shrink-0">
               {t('entryItem.weight')}
-            </div>
-            <input 
-              type="number" 
-              min="0.1" 
+            </span>
+            <input
+              type="number"
+              min="0.1"
               step="0.1"
               disabled={isSpinning}
-              value={item.weight !== undefined ? item.weight : 1} 
-              onChange={(e) => onUpdate(item.id, { weight: Number(e.target.value) })}
-              className="flex-1 w-full min-w-[1rem] bg-transparent text-white border-none focus:outline-none px-1 py-1 text-sm disabled:cursor-not-allowed text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              value={baseWeight}
+              onChange={e => onUpdate(item.id, { weight: Number(e.target.value) })}
+              className="flex-1 w-full min-w-[2.5rem] bg-transparent text-[var(--studio-text)] font-mono tabular-nums border-none focus:outline-none px-1.5 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            {currentWeight !== (item.weight !== undefined ? item.weight : 1) && (
-              <div 
-                className={`px-1.5 text-[10px] font-bold h-full flex items-center justify-center border-l border-slate-700/80 shrink-0 ${
+            {weightAdjusted && (
+              <span
+                className={`px-1.5 text-[11px] font-mono tabular-nums font-semibold h-full flex items-center gap-0.5 border-l border-[var(--studio-border)] shrink-0 ${
                   currentWeight === 0
-                    ? 'text-rose-400 bg-rose-500/10'
-                    : currentWeight > (item.weight !== undefined ? item.weight : 1)
-                    ? 'text-emerald-400 bg-emerald-500/10'
-                    : 'text-amber-400 bg-amber-500/10'
-                }`} 
-                title={`${t('entryItem.adjustedByBalance')}: ${item.weight !== undefined ? item.weight : 1}\n${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : currentWeight > baseWeight
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-amber-700 dark:text-amber-400'
+                }`}
+                title={`${t('entryItem.adjustedByBalance')}: ${baseWeight}\n${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
               >
-                {currentWeight === 0 ? '🚫 0' : `${currentWeight > (item.weight !== undefined ? item.weight : 1) ? '▲' : '▼'}${currentWeight.toFixed(1)}`}
-              </div>
+                {currentWeight === 0 ? (
+                  <Ban size={11} />
+                ) : (
+                  `${currentWeight > baseWeight ? '+' : ''}${(currentWeight - baseWeight).toFixed(1)}`
+                )}
+              </span>
             )}
-            <div 
-              className={`px-2 text-xs font-bold border-l h-full flex items-center min-w-[3rem] justify-center shrink-0 ${
-                currentWeight === 0
-                  ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                  : 'text-blue-400 bg-blue-500/10 border-blue-500/20'
+            <span
+              className={`px-2 text-xs font-mono tabular-nums font-semibold border-l border-[var(--studio-border)] h-full flex items-center min-w-[3rem] justify-center shrink-0 ${
+                currentWeight === 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[var(--studio-accent-fg)]'
               }`}
               title={`${t('entryItem.effectiveWeight')}: ${currentWeight.toFixed(2)}`}
             >
               {weightPercentage}%
-            </div>
+            </span>
           </div>
         </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex flex-col items-center justify-between shrink-0 ml-1">
-        <button 
-          onClick={() => onRemove(item.id)} 
-          disabled={isSpinning} 
-          className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent" 
+      <div className="flex flex-col items-center justify-between shrink-0">
+        <button
+          type="button"
+          onClick={() => onRemove(item.id)}
+          disabled={isSpinning}
+          className="w-8 h-8 flex items-center justify-center text-[var(--studio-text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30"
           title={t('entryItem.delete')}
+          aria-label={t('entryItem.delete')}
         >
-          <X size={18} />
+          <X size={16} />
         </button>
-        <div className="flex flex-col items-center gap-2 mt-auto">
-          <button 
-            onClick={() => onEditSettings(item.id)}
-            disabled={isSpinning}
-            className="p-2 text-blue-400 hover:text-white bg-blue-500/10 hover:bg-blue-500 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-blue-500/10 disabled:hover:text-blue-400 shadow-sm"
-            title={t('entryItem.sliceSettings')}
-          >
-            <Settings2 size={16} />
-          </button>
-          
-          <label className={`flex items-center justify-center pt-1 transition-colors ${item.enabled !== false ? 'text-blue-400' : 'text-slate-500'} ${isSpinning ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`} title={item.enabled !== false ? t('entryItem.enable') : t('entryItem.disable')}>
-            <input 
-              type="checkbox" 
-              disabled={isSpinning}
-              checked={item.enabled !== false}
-              onChange={(e) => onUpdate(item.id, { enabled: e.target.checked })}
-              className="w-4 h-4 rounded text-blue-500 bg-slate-900 border-slate-700 cursor-pointer disabled:cursor-not-allowed focus:ring-blue-500 focus:ring-offset-slate-800"
-            />
-          </label>
-        </div>
-      </div>
 
+        <button
+          type="button"
+          onClick={() => onEditSettings(item.id)}
+          disabled={isSpinning}
+          className="w-8 h-8 flex items-center justify-center text-[var(--studio-accent-fg)] hover:text-[var(--studio-accent-text)] bg-[var(--studio-accent-soft)] hover:bg-[var(--studio-accent)] rounded-lg transition-colors disabled:opacity-30"
+          title={t('entryItem.sliceSettings')}
+          aria-label={t('entryItem.sliceSettings')}
+        >
+          <Settings2 size={15} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onUpdate(item.id, { enabled: item.enabled === false })}
+          disabled={isSpinning}
+          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30 ${
+            item.enabled !== false
+              ? 'text-[var(--studio-text-secondary)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-accent-soft)]'
+              : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]'
+          }`}
+          title={item.enabled !== false ? t('entryItem.disable') : t('entryItem.enable')}
+          aria-label={item.enabled !== false ? t('entryItem.disable') : t('entryItem.enable')}
+        >
+          {item.enabled !== false ? <Eye size={15} /> : <EyeOff size={15} />}
+        </button>
+      </div>
     </div>
   );
 };

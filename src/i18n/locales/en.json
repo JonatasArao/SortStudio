@@ -330,11 +330,20 @@
     "accept": "Accept"
   },
   "themes": {
-    "default": "Default",
+    "default": "Broadcast Studio",
     "neon": "Neon Cyber",
-    "casino": "Gold Casino",
-    "candy": "Candy",
-    "dark": "Dark Minimal"
+    "casino": "Casino Royale",
+    "candy": "Candy Light",
+    "dark": "Obsidian Mono",
+    "emerald": "Emerald Arena",
+    "descriptions": {
+      "default": "Balanced dark studio blue",
+      "neon": "Deep indigo with cyan glow",
+      "casino": "Royal crimson & warm gold",
+      "candy": "Crisp light pastel interface",
+      "dark": "Pure monochrome carbon",
+      "emerald": "Tournament emerald arena"
+    }
   },
   "addAudioModal": {
     "title": "Add Custom Audio",
@@ -363,8 +372,9 @@
     "edit": "Edit Audio"
   },
   "visualSettings": {
-    "title": "Visual Appearance",
-    "wheelFormat": "Wheel Format",
+    "title": "Appearance Studio",
+    "subtitle": "Customize global interface theme, sizing geometry, color palettes, and center emblem with live preview.",
+    "wheelFormat": "Draw Format",
     "classic": "Classic",
     "slot": "Slot",
     "horizon": "Slot",
@@ -373,14 +383,73 @@
     "race": "Race",
     "penalty_shootout": "Penalties",
     "bingo": "Bingo",
-    "visualTheme": "VISUAL THEME (Skins)",
+    "visualTheme": "Global Interface Theme",
+    "applySuggestedPalette": "Apply suggested palette",
+    "autoApplyPalette": "Sync palette on theme change",
     "textSize": "Text Size",
     "centerSize": "Center Size",
-    "centerImage": "Center Image (URL)",
-    "centerImagePlh": "Paste image URL...",
-    "centerImageHint": "Hint: Use transparent image URLs (PNG) for better results.",
+    "wheelScale": "Stage / Wheel Scale",
+    "sliceBorder": "Slice Border",
+    "pointerStyle": "Pointer Style",
+    "pointers": {
+      "classic": "Classic",
+      "needle": "Sharp Needle",
+      "badge": "Badge"
+    },
+    "uiDensity": "Interface Density",
+    "densities": {
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
+    "proportions": "Proportions & Geometry",
+    "quickSizes": "Size Shortcuts",
+    "sizeS": "Compact (S)",
+    "sizeM": "Default (M)",
+    "sizeL": "Large (L)",
+    "centerImage": "Center Emblem",
+    "centerBgColor": "Emblem Background Color",
+    "centerBgAuto": "Theme (Auto)",
+    "centerBgTransparent": "Transparent",
+    "centerBgCustom": "Custom emblem background color",
+    "centerImagePlh": "Paste image URL or select preset...",
+    "centerImageHint": "Upload a local image (PNG/SVG up to 2MB), pick an emblem, or paste an image URL.",
+    "uploadImage": "Upload File",
+    "clearImage": "Clear",
+    "imageTooLarge": "Image must be 2 MB or smaller.",
+    "imageInvalid": "Please choose a valid image file (PNG, JPG, SVG, or WebP).",
+    "emblems": {
+      "star": "Star",
+      "trophy": "Trophy",
+      "target": "Target",
+      "bolt": "Bolt",
+      "crown": "Crown",
+      "none": "No image"
+    },
     "colorPalette": "Color Palette",
-    "add": "Add"
+    "palettePresets": "Curated Palettes",
+    "customColors": "Active Swatches (click to edit)",
+    "shuffleColors": "Shuffle",
+    "resetPalette": "Reset",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "removeColor": "Remove color",
+    "add": "Add",
+    "livePreview": "Live Preview",
+    "testSpin": "Test Spin",
+    "resetAll": "Reset Defaults",
+    "themePreviewLabel": "UI Surface Preview",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "palettes": {
+      "broadcast": "Broadcast Default",
+      "cyberNeon": "Cyber Neon",
+      "casinoRoyale": "Casino Royale",
+      "candyPastel": "Candy Pastel",
+      "emeraldArena": "Emerald Arena",
+      "sunsetHeat": "Sunset Heat",
+      "highContrast": "High Contrast",
+      "obsidianMono": "Obsidian Minimal"
+    }
   },
   "audioSettings": {
     "title": "Draw Sound",

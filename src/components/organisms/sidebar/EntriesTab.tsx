@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Shuffle, SortAsc, SortDesc, Plus, CheckSquare } from 'lucide-react';
+import { Shuffle, SortAsc, SortDesc, Plus, CheckSquare, ChevronDown, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';
 import { useAppStore } from '../../../store/useAppStore';
@@ -40,10 +40,13 @@ export const EntriesTab = () => {
   }, [balanceScope, activeSeason]);
 
   const { validItems } = useWheelData();
-  const { 
+  const {
     handleShuffle,
     handleToggleSelectAll,
-    handleUpdateItem, handleRemoveItem, handleAddEmptyItem, handleMoveItem
+    handleUpdateItem,
+    handleRemoveItem,
+    handleAddEmptyItem,
+    handleMoveItem,
   } = useWheelActions();
 
   const totalWeight = validItems.reduce((acc, item) => acc + (item.weight !== undefined ? item.weight : 1), 0) || 1;
@@ -75,13 +78,13 @@ export const EntriesTab = () => {
 
   const applySort = () => {
     if (isSpinning || items.length < 2) return;
-    setItems((prev) =>
+    setItems(prev =>
       [...prev].sort((a, b) => {
         const nameA = a.text.trim().toLowerCase();
         const nameB = b.text.trim().toLowerCase();
         const statA = participantStatsMap.get(nameA);
         const statB = participantStatsMap.get(nameB);
-        
+
         if (sortCriteria === 'wins') {
           if (statA && statB) {
             const cmp = compareParticipantsByWins(statA, statB);
@@ -97,15 +100,15 @@ export const EntriesTab = () => {
 
         let valA: any = nameA;
         let valB: any = nameB;
-        
+
         if (sortCriteria === 'current_spell') {
-           valA = statA ? statA.daysWithoutWin : 0;
-           valB = statB ? statB.daysWithoutWin : 0;
+          valA = statA ? statA.daysWithoutWin : 0;
+          valB = statB ? statB.daysWithoutWin : 0;
         } else if (sortCriteria === 'record_spell') {
-           valA = statA ? statA.maxDaysWithoutWin : 0;
-           valB = statB ? statB.maxDaysWithoutWin : 0;
+          valA = statA ? statA.maxDaysWithoutWin : 0;
+          valB = statB ? statB.maxDaysWithoutWin : 0;
         }
-        
+
         if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
         if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
         return nameA.localeCompare(nameB);
@@ -115,46 +118,67 @@ export const EntriesTab = () => {
 
   return (
     <>
-      <div className="flex gap-2 mb-2 shrink-0">
-        <Button onClick={handleShuffle} disabled={isSpinning || items.length < 2} className="flex-1 w-full gap-2 text-xs h-9 bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300">
-          <Shuffle size={14} /> <span>{t('sidebar.entries.shuffle')}</span>
+      {/* Primary list actions */}
+      <div className="grid grid-cols-2 gap-2 mb-2.5 shrink-0">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleShuffle}
+          disabled={isSpinning || items.length < 2}
+          className="w-full"
+        >
+          <Shuffle size={14} />
+          <span>{t('sidebar.entries.shuffle')}</span>
         </Button>
-        <Button onClick={applySort} disabled={isSpinning || items.length < 2} className="flex-1 w-full gap-2 text-xs h-9 bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300">
-          <SortAsc size={14} /> <span>{t('sidebar.entries.sort')}</span>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={applySort}
+          disabled={isSpinning || items.length < 2}
+          className="w-full"
+        >
+          <SortAsc size={14} />
+          <span>{t('sidebar.entries.sort')}</span>
         </Button>
       </div>
-      
-      <div className="flex flex-col gap-2 mb-4 shrink-0 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
-        <button 
+
+      {/* Collapsible Sort Criteria */}
+      <div className="flex flex-col mb-3 shrink-0 bg-[var(--studio-card)] px-3 py-2 rounded-xl border border-[var(--studio-border)]">
+        <button
+          type="button"
           onClick={() => setIsSortExpanded(!isSortExpanded)}
-          className="flex items-center justify-between w-full text-[10px] font-semibold text-slate-500 hover:text-slate-300 uppercase tracking-wider px-1 transition-colors"
+          aria-expanded={isSortExpanded}
+          className="flex items-center justify-between w-full text-xs font-medium text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] transition-colors py-0.5"
         >
-          <span>{t('sidebar.entries.sortOptions', 'Opções de Ordenação')}</span>
-          <svg className={`w-3 h-3 transition-transform duration-200 ${isSortExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <span>{t('sidebar.entries.sortOptions', 'Opções de ordenação')}</span>
+          <ChevronDown
+            size={14}
+            className={`transition-transform duration-150 ${isSortExpanded ? 'rotate-180 text-[var(--studio-accent-fg)]' : ''}`}
+          />
         </button>
-        
+
         {isSortExpanded && (
-          <div className="flex flex-col gap-2.5 mt-2 animate-in slide-in-from-top-1 fade-in duration-200 pb-1">
+          <div className="flex flex-col gap-2 pt-2.5 mt-2 border-t border-[var(--studio-border)]">
             <select
               value={selectedSeasonId}
-              onChange={(e) => setSelectedSeasonId(e.target.value)}
+              onChange={e => setSelectedSeasonId(e.target.value)}
               disabled={isSpinning || items.length < 2}
-              className="w-full h-9 bg-slate-800 border border-slate-700 rounded-lg px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500/80 [color-scheme:dark] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full h-9 bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2.5 text-xs text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)] disabled:opacity-50"
             >
               <option value="all">{t('resultsModal.balanceScopeAll', 'Resultados Gerais (Tudo)')}</option>
               {[...seasons].reverse().map(s => (
-                <option key={s.id} value={s.id}>{s.name} {!s.endDate ? '(Ativa)' : ''}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name} {!s.endDate ? '(Ativa)' : ''}
+                </option>
               ))}
             </select>
-            
+
             <div className="flex gap-2">
               <select
                 value={sortCriteria}
-                onChange={(e) => setSortCriteria(e.target.value)}
+                onChange={e => setSortCriteria(e.target.value)}
                 disabled={isSpinning || items.length < 2}
-                className="flex-1 h-9 min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500/80 [color-scheme:dark] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 h-9 min-w-0 bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2.5 text-xs text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)] disabled:opacity-50"
               >
                 <option value="name">{t('resultsModal.drySpell.sortName')}</option>
                 <option value="wins">{t('resultsModal.drySpell.sortWins')}</option>
@@ -162,92 +186,112 @@ export const EntriesTab = () => {
                 <option value="record_spell">{t('resultsModal.drySpell.sortRecordSpell')}</option>
               </select>
               <button
+                type="button"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 disabled={isSpinning || items.length < 2}
-                className={`w-9 h-9 shrink-0 rounded-lg border transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
-                  sortOrder === 'desc' 
-                    ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700' 
-                    : 'bg-slate-800 border-slate-700 text-blue-400 hover:bg-slate-700'
+                className={`w-9 h-9 shrink-0 rounded-lg border transition-colors disabled:opacity-50 flex items-center justify-center bg-[var(--studio-input)] border-[var(--studio-border-strong)] hover:border-[var(--studio-accent)] ${
+                  sortOrder === 'desc'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-[var(--studio-accent-fg)]'
                 }`}
                 title={sortOrder === 'asc' ? t('resultsModal.drySpell.ascending') : t('resultsModal.drySpell.descending')}
+                aria-label={sortOrder === 'asc' ? t('resultsModal.drySpell.ascending') : t('resultsModal.drySpell.descending')}
               >
-                {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+                {sortOrder === 'asc' ? <SortAsc size={15} /> : <SortDesc size={15} />}
               </button>
             </div>
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center mb-3 shrink-0 px-1 gap-2 flex-wrap sm:flex-nowrap">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleSelectAll}
-            disabled={isSpinning || items.length === 0}
-            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${
-              allSelected 
-                ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 hover:bg-blue-600/30' 
-                : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
-            }`}
-            title={allSelected ? t('sidebar.entries.deselectAll', 'Desmarcar todas') : t('sidebar.entries.selectAll', 'Selecionar todas')}
-          >
-            <CheckSquare size={13} className={allSelected ? 'text-blue-400' : 'text-slate-400'} />
-            <span>{allSelected ? t('sidebar.entries.deselectAll', 'Desmarcar todas') : t('sidebar.entries.selectAll', 'Selecionar todas')}</span>
-          </button>
-          <div className="text-xs font-medium text-slate-400 bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50 whitespace-nowrap">
-            {items.filter(i => i.enabled !== false).length}/{items.length}
-          </div>
-        </div>
-        <label className={`flex items-center gap-2 text-slate-300 font-medium text-xs ${isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-white'}`}>
-          <input 
-            type="checkbox" 
+      {/* Selection & Mode Controls */}
+      <div className="flex justify-between items-center mb-2.5 shrink-0 gap-2">
+        <button
+          type="button"
+          onClick={handleToggleSelectAll}
+          disabled={isSpinning || items.length === 0}
+          className={`flex items-center gap-1.5 text-xs font-medium h-8 px-2.5 rounded-lg border transition-colors whitespace-nowrap disabled:opacity-45 ${
+            allSelected
+              ? 'bg-[var(--studio-accent-soft)] border-[var(--studio-border-strong)] text-[var(--studio-accent-fg)]'
+              : 'bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] border-[var(--studio-border)] text-[var(--studio-text-secondary)]'
+          }`}
+        >
+          <CheckSquare size={13} className={allSelected ? 'text-[var(--studio-accent-fg)]' : 'text-[var(--studio-text-muted)]'} />
+          <span>{allSelected ? t('sidebar.entries.deselectAll', 'Desmarcar todas') : t('sidebar.entries.selectAll', 'Selecionar todas')}</span>
+        </button>
+
+        <label
+          className={`flex items-center gap-2 text-[var(--studio-text-secondary)] font-medium text-xs whitespace-nowrap ${
+            isSpinning ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-[var(--studio-text)]'
+          }`}
+        >
+          <input
+            type="checkbox"
             disabled={isSpinning}
             checked={isAdvancedEntries}
-            onChange={(e) => setIsAdvancedEntries(e.target.checked)}
-            className="w-3.5 h-3.5 rounded text-blue-500 bg-slate-800 border-slate-700 disabled:cursor-not-allowed cursor-pointer" 
+            onChange={e => setIsAdvancedEntries(e.target.checked)}
+            className="w-3.5 h-3.5 rounded accent-[var(--studio-accent)] cursor-pointer"
           />
-          {t('sidebar.entries.advanced')}
+          <span>{t('sidebar.entries.advanced')}</span>
         </label>
       </div>
 
+      {/* Virtualized Entries List or Clean Empty State */}
       <div className="flex-1 min-h-0">
-        <Virtuoso
-          className="custom-scrollbar pr-2"
-          style={{ height: '100%' }}
-          data={items}
-          itemContent={(index, item) => {
-            const validItem = validItems.find(vi => vi.id === item.id);
-            const effectiveWeight = validItem ? validItem.weight : item.weight !== undefined ? item.weight : 1;
-            
-            return (
-              <div className="pb-3">
-                <EntryItem
-                  item={item}
-                  index={index}
-                  totalItems={items.length}
-                  totalWeight={totalWeight}
-                  effectiveWeight={effectiveWeight}
-                  isAdvancedEntries={isAdvancedEntries}
-                  isSpinning={isSpinning}
-                  color={colors[index % (colors.length || 1)] || '#cccccc'}
-                  stat={participantStatsMap.get(item.text.trim().toLowerCase())}
-                  onUpdate={handleUpdateItem}
-                  onRemove={handleRemoveItem}
-                  onMove={handleMoveItem}
-                  onEditSettings={setEditingEntryId}
-                />
-              </div>
-            );
-          }}
-        />
+        {items.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-[var(--studio-border-strong)] rounded-2xl bg-[var(--studio-input)]">
+            <div className="w-11 h-11 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border)] flex items-center justify-center mb-3 text-[var(--studio-text-muted)]">
+              <Users size={20} />
+            </div>
+            <p className="text-sm font-semibold text-[var(--studio-text)]">Nenhum participante na lista</p>
+            <p className="text-xs text-[var(--studio-text-muted)] mt-1 max-w-[220px]">
+              Adicione pelo menos dois participantes abaixo para iniciar o sorteio.
+            </p>
+          </div>
+        ) : (
+          <Virtuoso
+            className="custom-scrollbar pr-1.5"
+            style={{ height: '100%' }}
+            data={items}
+            itemContent={(index, item) => {
+              const validItem = validItems.find(vi => vi.id === item.id);
+              const effectiveWeight = validItem ? validItem.weight : item.weight !== undefined ? item.weight : 1;
+
+              return (
+                <div className="pb-2">
+                  <EntryItem
+                    item={item}
+                    index={index}
+                    totalItems={items.length}
+                    totalWeight={totalWeight}
+                    effectiveWeight={effectiveWeight}
+                    isAdvancedEntries={isAdvancedEntries}
+                    isSpinning={isSpinning}
+                    color={colors[index % (colors.length || 1)] || '#cccccc'}
+                    stat={participantStatsMap.get(item.text.trim().toLowerCase())}
+                    onUpdate={handleUpdateItem}
+                    onRemove={handleRemoveItem}
+                    onMove={handleMoveItem}
+                    onEditSettings={setEditingEntryId}
+                  />
+                </div>
+              );
+            }}
+          />
+        )}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-800 shrink-0">
-        <Button variant="secondary" onClick={handleAddEmptyItem} disabled={isSpinning} className="w-full gap-2">
-          <Plus size={20} /> {t('sidebar.entries.add')}
+      <div className="mt-3 pt-3 border-t border-[var(--studio-border)] shrink-0">
+        <Button
+          variant="primary"
+          onClick={handleAddEmptyItem}
+          disabled={isSpinning}
+          className="w-full"
+        >
+          <Plus size={16} />
+          <span>{t('sidebar.entries.add')}</span>
         </Button>
       </div>
     </>
   );
 };
-

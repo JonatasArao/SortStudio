@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { PlayCircle, Trash2, Plus, Music2, X, Edit2 } from "lucide-react";
+import { PlayCircle, Trash2, Plus, Music2, Edit2, Volume2 } from "lucide-react";
 import { Toggle } from "../../atoms/Toggle";
+import { Button } from "../../atoms/Button";
 import { useAppStore } from "../../../store/useAppStore";
 import { useAudioActions } from "../../../hooks/useAppActions";
 import { playTickSound, playWinSound, playFailureSound } from '../../../utils/audioEngine';
@@ -34,21 +35,32 @@ export const AudioSettings = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="flex justify-between items-center bg-slate-900/40 border border-slate-800/80 backdrop-blur-md p-5 rounded-2xl shadow-xl">
-        <h3 className="font-bold text-white flex items-center gap-3">
-          {t('audioSettings.title')}
-        </h3>
-        <Toggle enabled={soundEnabled} onChange={setSoundEnabled} />
+    <div className="space-y-5">
+      {/* Master Switch */}
+      <div className="flex justify-between items-center bg-[var(--studio-card)] border border-[var(--studio-border)] p-4 sm:p-5 rounded-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[var(--studio-input)] border border-[var(--studio-border)] flex items-center justify-center text-[var(--studio-accent-fg)]">
+            <Volume2 size={18} />
+          </div>
+          <h3 className="text-sm font-semibold text-[var(--studio-text)]">
+            {t('audioSettings.title')}
+          </h3>
+        </div>
+        <Toggle
+          enabled={soundEnabled}
+          onChange={setSoundEnabled}
+          aria-label={t('audioSettings.title')}
+        />
       </div>
 
-      <div className={`space-y-6 transition-opacity ${!soundEnabled && "opacity-50 pointer-events-none"}`}>
-        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 space-y-4 shadow-xl">
+      <div className={`space-y-5 transition-opacity ${!soundEnabled && "opacity-50 pointer-events-none"}`}>
+        {/* Master Volume */}
+        <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl p-4 sm:p-5 space-y-3">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-slate-300">
+            <label className="text-sm font-medium text-[var(--studio-text-secondary)]">
               {t('audioSettings.masterVolume')}
             </label>
-            <span className="text-xs font-bold bg-slate-950 px-2.5 py-1 rounded-md text-slate-300 border border-slate-800/50">
+            <span className="text-xs font-mono tabular-nums font-semibold bg-[var(--studio-input)] px-2.5 py-1 rounded-md text-[var(--studio-text)] border border-[var(--studio-border)]">
               {masterVolume}%
             </span>
           </div>
@@ -58,39 +70,55 @@ export const AudioSettings = () => {
             max="100"
             value={masterVolume}
             onChange={(e) => setMasterVolume(Number(e.target.value))}
-            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            className="w-full h-1.5 bg-[var(--studio-input)] border border-[var(--studio-border)] rounded-lg appearance-none cursor-pointer accent-[var(--studio-accent)]"
           />
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl">
-          <div className="flex border-b border-slate-800/60 bg-slate-950/40">
+        {/* Sound Category Tabs */}
+        <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl overflow-hidden">
+          <div className="flex border-b border-[var(--studio-border)] bg-[var(--studio-surface-elevated)]">
             <button
+              type="button"
               onClick={() => setActiveTab('roleta')}
-              className={`flex-1 py-3.5 text-sm font-semibold transition-all ${activeTab === 'roleta' ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-500/5 shadow-[inset_0_-2px_8px_rgba(59,130,246,0.05)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'}`}
+              className={`flex-1 py-3 px-3 text-xs sm:text-sm font-semibold transition-colors border-b-2 ${
+                activeTab === 'roleta'
+                  ? 'text-[var(--studio-text)] border-[var(--studio-accent)] bg-[var(--studio-accent-soft)]'
+                  : 'text-[var(--studio-text-muted)] border-transparent hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]/40'
+              }`}
             >
               {t('audioSettings.tabWheel')}
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('vencedor')}
-              className={`flex-1 py-3.5 text-sm font-semibold transition-all ${activeTab === 'vencedor' ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-500/5 shadow-[inset_0_-2px_8_rgba(59,130,246,0.05)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'}`}
+              className={`flex-1 py-3 px-3 text-xs sm:text-sm font-semibold transition-colors border-b-2 ${
+                activeTab === 'vencedor'
+                  ? 'text-[var(--studio-text)] border-[var(--studio-accent)] bg-[var(--studio-accent-soft)]'
+                  : 'text-[var(--studio-text-muted)] border-transparent hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]/40'
+              }`}
             >
               {t('audioSettings.tabWin')}
             </button>
             {eliminationMode && (
               <button
+                type="button"
                 onClick={() => setActiveTab('eliminacao')}
-                className={`flex-1 py-3.5 text-sm font-semibold transition-all ${activeTab === 'eliminacao' ? 'text-red-400 border-b-2 border-red-500 bg-red-500/5 shadow-[inset_0_-2px_8px_rgba(239,68,68,0.05)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'}`}
+                className={`flex-1 py-3 px-3 text-xs sm:text-sm font-semibold transition-colors border-b-2 ${
+                  activeTab === 'eliminacao'
+                    ? 'text-red-700 dark:text-red-300 border-red-500 bg-red-500/[0.08]'
+                    : 'text-[var(--studio-text-muted)] border-transparent hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]/40'
+                }`}
               >
                 {t('audioSettings.tabElimination')}
               </button>
             )}
           </div>
 
-          <div className="p-5">
-             {activeTab === 'roleta' && (
-              <div className="space-y-6 animate-in slide-in-from-left-2 fade-in">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-300">
+          <div className="p-4 sm:p-5">
+            {activeTab === 'roleta' && (
+              <div className="space-y-6">
+                <div className="space-y-2.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] block">
                     {t('audioSettings.defaultTickSounds')}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -98,12 +126,17 @@ export const AudioSettings = () => {
                       "click", "beep", "pop", "madeira", "metal", "synth", "drum", "bambu", "vidro"
                     ].map((type) => (
                       <button
+                        type="button"
                         key={type}
                         onClick={() => {
                           setTickSoundType(type);
                           playTickSound(0.5, type, null, masterVolume / 100);
                         }}
-                        className={`py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all ${tickSoundType === type ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-500/50 ring-offset-2 ring-offset-[#252733]" : "bg-[#14151a] text-slate-400 hover:bg-slate-800 border border-slate-700/50"}`}
+                        className={`min-h-[38px] py-2 px-3 rounded-lg text-sm font-medium capitalize transition-colors border ${
+                          tickSoundType === type
+                            ? "bg-[var(--studio-accent-soft)] text-[var(--studio-accent-fg)] border-[var(--studio-accent)]"
+                            : "bg-[var(--studio-surface-elevated)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:bg-[var(--studio-card-hover)] hover:text-[var(--studio-text)]"
+                        }`}
                       >
                         {type}
                       </button>
@@ -112,73 +145,89 @@ export const AudioSettings = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-300">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)]">
                       {t('audioSettings.customAudios')}
                     </label>
-                    <button
+                    <Button
+                      size="sm"
+                      variant="secondary"
                       onClick={() => {
                         setEditingAudio(null);
                         setIsAddAudioModalOpen(true);
                       }}
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-md transition-colors"
+                      className="gap-1.5 text-[var(--studio-accent-fg)] border-[var(--studio-accent)]/35 bg-[var(--studio-accent-soft)]"
                     >
                       <Plus size={14} /> {t('audioSettings.newAudio')}
-                    </button>
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-950/45 rounded-xl border border-slate-800/80 p-3 shadow-inner">
+
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar bg-[var(--studio-input)] rounded-xl border border-[var(--studio-border)] p-2.5">
                     {customTickAudios.map((audio) => (
                       <div
                         key={audio.id}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 ${tickSoundType === audio.id ? "bg-blue-600/15 border-blue-500/40 shadow-[0_0_12px_rgba(59,130,246,0.1)]" : "bg-slate-900/40 border-slate-800/60 hover:border-slate-700/60 hover:bg-slate-900/60"}`}
+                        className={`flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
+                          tickSoundType === audio.id
+                            ? "bg-[var(--studio-accent-soft)] border-[var(--studio-accent)]/50"
+                            : "bg-[var(--studio-surface)] border-[var(--studio-border)] hover:border-[var(--studio-border-strong)]"
+                        }`}
                       >
                         <div
                           className="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer group"
                           onClick={() => setTickSoundType(audio.id)}
                         >
                           <button
-                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all ${tickSoundType === audio.id ? "bg-blue-500 text-white" : "bg-slate-700 text-slate-300 group-hover:bg-slate-600 group-hover:text-white"}`}
+                            type="button"
+                            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                              tickSoundType === audio.id
+                                ? "bg-[var(--studio-accent)] text-[var(--studio-accent-text)]"
+                                : "bg-[var(--studio-card)] text-[var(--studio-text-secondary)] border border-[var(--studio-border)] group-hover:text-[var(--studio-text)]"
+                            }`}
                             onClick={(e) => {
                               e.stopPropagation();
                               playTickSound(0.5, "click", audio, masterVolume / 100);
                             }}
+                            aria-label={audio.name}
                           >
                             <PlayCircle size={16} />
                           </button>
                           <div className="flex flex-col overflow-hidden">
-                            <span className={`text-sm truncate ${tickSoundType === audio.id ? "text-blue-300 font-medium" : "text-slate-300"}`}>
+                            <span className={`text-sm truncate ${tickSoundType === audio.id ? "text-[var(--studio-accent-fg)] font-medium" : "text-[var(--studio-text)]"}`}>
                               {audio.name}
                             </span>
-                            <span className="text-[10px] text-slate-500">
-                              {audio.isFile ? t('audioSettings.localFile') : t('audioSettings.externalURL')} 
-                              {audio.startTime ? ` • Início: ${audio.startTime}s` : ""}
-                              {audio.volume !== undefined ? ` • Vol: ${audio.volume}%` : ""}
+                            <span className="text-[11px] text-[var(--studio-text-muted)] font-mono tabular-nums">
+                              {audio.isFile ? t('audioSettings.localFile') : t('audioSettings.externalURL')}
+                              {audio.startTime ? ` · Início: ${audio.startTime}s` : ""}
+                              {audio.volume !== undefined ? ` · Vol: ${audio.volume}%` : ""}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
+                            type="button"
                             onClick={() => handleEditAudio(audio)}
-                            className="text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 p-2 rounded-md transition-colors"
+                            className="text-[var(--studio-text-muted)] hover:text-[var(--studio-accent-fg)] hover:bg-[var(--studio-accent-soft)] p-2 rounded-lg transition-colors"
                             title={t('audioSettings.edit')}
+                            aria-label={t('audioSettings.edit')}
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={15} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => removeCustomAudio("tick", audio.id)}
-                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2 rounded-md transition-colors shrink-0"
+                            className="text-[var(--studio-text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 p-2 rounded-lg transition-colors"
                             title={t('entryItem.delete')}
+                            aria-label={t('entryItem.delete')}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
                     ))}
                     {customTickAudios.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-6 text-slate-500 space-y-2">
-                        <Music2 size={24} className="opacity-50" />
-                        <p className="text-xs italic">{t('audioSettings.noCustomAudio')}</p>
+                      <div className="flex flex-col items-center justify-center py-6 text-[var(--studio-text-muted)] space-y-2">
+                        <Music2 size={22} className="opacity-50" />
+                        <p className="text-xs">{t('audioSettings.noCustomAudio')}</p>
                       </div>
                     )}
                   </div>
@@ -187,9 +236,9 @@ export const AudioSettings = () => {
             )}
 
             {activeTab === 'vencedor' && (
-              <div className="space-y-6 animate-in slide-in-from-right-2 fade-in">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-300">
+              <div className="space-y-6">
+                <div className="space-y-2.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] block">
                     {t('audioSettings.defaultWinSounds')}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -197,12 +246,17 @@ export const AudioSettings = () => {
                       "tada", "fanfarra", "sino", "harpa", "magia", "orquestra", "aplausos-suaves", "aplausos-fortes", "trombeta", "sino-vitoria", "surpresa"
                     ].map((type) => (
                       <button
+                        type="button"
                         key={type}
                         onClick={() => {
                           setWinSoundType(type);
                           playWinSound(0.6, type, null, masterVolume / 100);
                         }}
-                        className={`py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all ${winSoundType === type ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-500/50 ring-offset-2 ring-offset-[#252733]" : "bg-[#14151a] text-slate-400 hover:bg-slate-800 border border-slate-700/50"}`}
+                        className={`min-h-[38px] py-2 px-3 rounded-lg text-sm font-medium capitalize transition-colors border ${
+                          winSoundType === type
+                            ? "bg-[var(--studio-accent-soft)] text-[var(--studio-accent-fg)] border-[var(--studio-accent)]"
+                            : "bg-[var(--studio-surface-elevated)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:bg-[var(--studio-card-hover)] hover:text-[var(--studio-text)]"
+                        }`}
                       >
                         {type.replace("-", " ")}
                       </button>
@@ -211,73 +265,89 @@ export const AudioSettings = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-300">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)]">
                       {t('audioSettings.customAudios')}
                     </label>
-                    <button
+                    <Button
+                      size="sm"
+                      variant="secondary"
                       onClick={() => {
                         setEditingAudio(null);
                         setIsAddAudioModalOpen(true);
                       }}
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-md transition-colors"
+                      className="gap-1.5 text-[var(--studio-accent-fg)] border-[var(--studio-accent)]/35 bg-[var(--studio-accent-soft)]"
                     >
                       <Plus size={14} /> {t('audioSettings.newAudio')}
-                    </button>
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-950/45 rounded-xl border border-slate-800/80 p-3 shadow-inner">
+
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar bg-[var(--studio-input)] rounded-xl border border-[var(--studio-border)] p-2.5">
                     {customWinAudios.map((audio) => (
                       <div
                         key={audio.id}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 ${winSoundType === audio.id ? "bg-blue-600/15 border-blue-500/40 shadow-[0_0_12px_rgba(59,130,246,0.1)]" : "bg-slate-900/40 border-slate-800/60 hover:border-slate-700/60 hover:bg-slate-900/60"}`}
+                        className={`flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
+                          winSoundType === audio.id
+                            ? "bg-[var(--studio-accent-soft)] border-[var(--studio-accent)]/50"
+                            : "bg-[var(--studio-surface)] border-[var(--studio-border)] hover:border-[var(--studio-border-strong)]"
+                        }`}
                       >
                         <div
                           className="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer group"
                           onClick={() => setWinSoundType(audio.id)}
                         >
                           <button
-                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all ${winSoundType === audio.id ? "bg-blue-500 text-white" : "bg-slate-700 text-slate-300 group-hover:bg-slate-600 group-hover:text-white"}`}
+                            type="button"
+                            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                              winSoundType === audio.id
+                                ? "bg-[var(--studio-accent)] text-[var(--studio-accent-text)]"
+                                : "bg-[var(--studio-card)] text-[var(--studio-text-secondary)] border border-[var(--studio-border)] group-hover:text-[var(--studio-text)]"
+                            }`}
                             onClick={(e) => {
                               e.stopPropagation();
                               playWinSound(0.6, "tada", audio, masterVolume / 100);
                             }}
+                            aria-label={audio.name}
                           >
                             <PlayCircle size={16} />
                           </button>
                           <div className="flex flex-col overflow-hidden">
-                            <span className={`text-sm truncate ${winSoundType === audio.id ? "text-blue-300 font-medium" : "text-slate-300"}`}>
+                            <span className={`text-sm truncate ${winSoundType === audio.id ? "text-[var(--studio-accent-fg)] font-medium" : "text-[var(--studio-text)]"}`}>
                               {audio.name}
                             </span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[11px] text-[var(--studio-text-muted)] font-mono tabular-nums">
                               {audio.isFile ? t('audioSettings.localFile') : t('audioSettings.externalURL')}
-                              {audio.startTime ? ` • Start: ${audio.startTime}s` : ""}
-                              {audio.volume !== undefined ? ` • Vol: ${audio.volume}%` : ""}
+                              {audio.startTime ? ` · Início: ${audio.startTime}s` : ""}
+                              {audio.volume !== undefined ? ` · Vol: ${audio.volume}%` : ""}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
+                            type="button"
                             onClick={() => handleEditAudio(audio)}
-                            className="text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 p-2 rounded-md transition-colors"
+                            className="text-[var(--studio-text-muted)] hover:text-[var(--studio-accent-fg)] hover:bg-[var(--studio-accent-soft)] p-2 rounded-lg transition-colors"
                             title={t('audioSettings.edit')}
+                            aria-label={t('audioSettings.edit')}
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={15} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => removeCustomAudio("win", audio.id)}
-                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2 rounded-md transition-colors shrink-0"
+                            className="text-[var(--studio-text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 p-2 rounded-lg transition-colors"
                             title={t('entryItem.delete')}
+                            aria-label={t('entryItem.delete')}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
                     ))}
                     {customWinAudios.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-6 text-slate-500 space-y-2">
-                        <Music2 size={24} className="opacity-50" />
-                        <p className="text-xs italic">{t('audioSettings.noCustomAudio')}</p>
+                      <div className="flex flex-col items-center justify-center py-6 text-[var(--studio-text-muted)] space-y-2">
+                        <Music2 size={22} className="opacity-50" />
+                        <p className="text-xs">{t('audioSettings.noCustomAudio')}</p>
                       </div>
                     )}
                   </div>
@@ -286,9 +356,9 @@ export const AudioSettings = () => {
             )}
 
             {activeTab === 'eliminacao' && eliminationMode && (
-              <div className="space-y-6 animate-in slide-in-from-right-2 fade-in">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-300">
+              <div className="space-y-6">
+                <div className="space-y-2.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] block">
                     {t('audioSettings.defaultEliminationSounds')}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -296,12 +366,17 @@ export const AudioSettings = () => {
                       "failure", "buzzer", "sad_trombone"
                     ].map((type) => (
                       <button
+                        type="button"
                         key={type}
                         onClick={() => {
                           setEliminationSoundType(type);
                           playFailureSound(masterVolume / 100, type, null);
                         }}
-                        className={`py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all ${eliminationSoundType === type ? "bg-red-600 text-white shadow-md ring-2 ring-red-500/50 ring-offset-2 ring-offset-[#252733]" : "bg-[#14151a] text-slate-400 hover:bg-slate-800 border border-slate-700/50"}`}
+                        className={`min-h-[38px] py-2 px-3 rounded-lg text-sm font-medium capitalize transition-colors border ${
+                          eliminationSoundType === type
+                            ? "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/50"
+                            : "bg-[var(--studio-surface-elevated)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:bg-[var(--studio-card-hover)] hover:text-[var(--studio-text)]"
+                        }`}
                       >
                         {type.replace("_", " ")}
                       </button>
@@ -310,40 +385,56 @@ export const AudioSettings = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-300">
-                      {t('audioSettings.customAudiosShared')}
-                    </label>
-                  </div>
-                  
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-slate-950/45 rounded-xl border border-slate-800/80 p-3 shadow-inner">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] block">
+                    {t('audioSettings.customAudiosShared')}
+                  </label>
+
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar bg-[var(--studio-input)] rounded-xl border border-[var(--studio-border)] p-2.5">
                     {customWinAudios.map((audio) => (
                       <div
                         key={audio.id}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 ${eliminationSoundType === audio.id ? "bg-red-600/15 border-red-500/40 shadow-[0_0_12px_rgba(239,68,68,0.1)]" : "bg-slate-900/40 border-slate-800/60 hover:border-slate-700/60 hover:bg-slate-900/60"}`}
+                        className={`flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
+                          eliminationSoundType === audio.id
+                            ? "bg-red-500/15 border-red-500/40"
+                            : "bg-[var(--studio-surface)] border-[var(--studio-border)] hover:border-[var(--studio-border-strong)]"
+                        }`}
                       >
                         <div
                           className="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer group"
                           onClick={() => setEliminationSoundType(audio.id)}
                         >
                           <button
-                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all ${eliminationSoundType === audio.id ? "bg-red-500 text-white" : "bg-slate-700 text-slate-300 group-hover:bg-slate-600 group-hover:text-white"}`}
+                            type="button"
+                            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                              eliminationSoundType === audio.id
+                                ? "bg-red-500 text-white"
+                                : "bg-[var(--studio-card)] text-[var(--studio-text-secondary)] border border-[var(--studio-border)] group-hover:text-[var(--studio-text)]"
+                            }`}
                             onClick={(e) => {
                               e.stopPropagation();
                               playFailureSound(masterVolume / 100, "failure", audio);
                             }}
+                            aria-label={audio.name}
                           >
                             <PlayCircle size={16} />
                           </button>
                           <div className="flex flex-col overflow-hidden">
-                            <span className={`text-sm truncate ${eliminationSoundType === audio.id ? "text-red-300 font-medium" : "text-slate-300"}`}>
+                            <span className={`text-sm truncate ${eliminationSoundType === audio.id ? "text-red-700 dark:text-red-200 font-medium" : "text-[var(--studio-text)]"}`}>
                               {audio.name}
                             </span>
-                            <span className="text-[10px] text-slate-500">{audio.isFile ? t('audioSettings.localFile') : t('audioSettings.externalURL')}</span>
+                            <span className="text-[11px] text-[var(--studio-text-muted)]">
+                              {audio.isFile ? t('audioSettings.localFile') : t('audioSettings.externalURL')}
+                            </span>
                           </div>
                         </div>
                       </div>
                     ))}
+                    {customWinAudios.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-6 text-[var(--studio-text-muted)] space-y-2">
+                        <Music2 size={22} className="opacity-50" />
+                        <p className="text-xs">{t('audioSettings.noCustomAudio')}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

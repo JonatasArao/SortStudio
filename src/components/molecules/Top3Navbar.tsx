@@ -12,16 +12,13 @@ export const Top3Navbar: React.FC = () => {
   const seasons = useAppStore(s => s.seasons);
   const setIsResultsModalOpen = useAppStore(s => s.setIsResultsModalOpen);
 
-  // Active Season
   const currentSeason = useMemo(() => getCurrentSeason(seasons), [seasons]);
   const seasonName = currentSeason?.name || 'Temporada Atual';
 
-  // Results scoped to current season
   const seasonResults = useMemo(() => {
     return filterResultsByScope(results, seasons, 'current_season');
   }, [results, seasons]);
 
-  // Top 3 Participants in the current season
   const top3 = useMemo(() => {
     const stats = getParticipantStats(items, seasonResults);
     return stats
@@ -40,79 +37,91 @@ export const Top3Navbar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile Only (< sm): Botão simples e limpo de Vencedores */}
+      {/* Mobile (< sm): Compact single-line trigger */}
       <button
         type="button"
         onClick={handleOpenResults}
-        className="flex sm:hidden items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500/30 border border-amber-500/30 text-amber-300 hover:text-amber-200 transition-all font-bold text-xs shadow-sm active:scale-95 group"
-        title={`${t('sidebar.results.winners', 'Vencedores')} - Clique para ver o ranking e histórico`}
+        className="flex sm:hidden items-center gap-1.5 h-9 px-3 rounded-xl bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] border border-[var(--studio-border)] text-amber-700 dark:text-amber-300 transition-colors duration-150 font-semibold text-xs whitespace-nowrap shrink-0"
+        title={`${t('sidebar.results.winners', 'Vencedores')} - Ranking e histórico`}
       >
-        <Trophy size={14} className="text-amber-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 shrink-0" />
-        <span className="leading-none">{t('sidebar.results.winners', 'Vencedores')}</span>
+        <Trophy size={14} className="text-amber-500 dark:text-amber-400 shrink-0" />
+        <span>{t('sidebar.results.winners', 'Vencedores')}</span>
+        {first && (
+          <span className="font-mono tabular-nums text-[11px] text-[var(--studio-text-muted)]">
+            · {first.winsCount}
+          </span>
+        )}
       </button>
 
-      {/* Tablet & Desktop (sm+): Top 3 Completo com Temporada e Pódio */}
+      {/* Tablet & Desktop (sm+): Clean Broadcast Podium Strip (No nested pill boxes) */}
       <button
         type="button"
         onClick={handleOpenResults}
-        className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-xl bg-slate-900/85 hover:bg-slate-800/95 border border-slate-800/90 hover:border-slate-700 text-slate-300 hover:text-white transition-all duration-200 group active:scale-95 shadow-sm max-w-full overflow-hidden"
-        title={`${t('sidebar.results.winners', 'Vencedores')} & Ranking (${seasonName}) - Clique para abrir o painel completo`}
+        className="hidden sm:flex items-center gap-2.5 h-10 px-3.5 rounded-xl bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] border border-[var(--studio-border)] hover:border-[var(--studio-border-strong)] text-[var(--studio-text-secondary)] hover:text-[var(--studio-text)] transition-colors duration-150 group max-w-full overflow-hidden whitespace-nowrap"
+        title={`${t('sidebar.results.winners', 'Vencedores')} & Ranking (${seasonName})`}
       >
-        {/* Current Season Badge */}
-        <div className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg bg-slate-950/90 border border-slate-800 group-hover:border-amber-500/40 text-amber-300 transition-colors shrink-0 shadow-inner">
-          <Calendar size={12} className="text-amber-400 shrink-0" />
-          <span className="text-[10px] sm:text-[11px] font-bold tracking-tight truncate max-w-[80px] sm:max-w-[120px]">
-            {seasonName}
-          </span>
-        </div>
+        {/* Season indicator (unboxed inline metadata) */}
+        <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--studio-text-secondary)] shrink-0">
+          <Calendar size={13} className="text-amber-500 dark:text-amber-400 shrink-0" />
+          <span className="truncate max-w-[110px] lg:max-w-[140px]">{seasonName}</span>
+        </span>
 
-        {/* Vertical Divider */}
-        <div className="w-px h-3.5 bg-slate-800/90 shrink-0" />
+        <span className="w-px h-4 bg-[var(--studio-border-strong)] shrink-0" aria-hidden="true" />
 
-        {/* Top 3 Podium or Empty State */}
+        {/* Podium readout */}
         {top3.length === 0 ? (
-          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-400 font-medium shrink-0">
-            <Crown size={12} className="text-amber-400/60 group-hover:text-amber-400 transition-colors shrink-0" />
-            <span className="font-semibold text-slate-300">Top 3:</span>
-            <span className="text-slate-400">Sem vitórias</span>
-          </div>
+          <span className="flex items-center gap-1.5 text-xs text-[var(--studio-text-muted)] shrink-0">
+            <Crown size={13} className="text-amber-500/80 dark:text-amber-400/70 shrink-0" />
+            <span>Sem vitórias</span>
+          </span>
         ) : (
-          <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-            {/* 1st Place (Gold) */}
+          <div className="flex items-center gap-2.5 min-w-0">
             {first && (
-              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 px-1.5 sm:px-2 py-0.5 rounded-lg border border-amber-500/35 transition-colors shrink-0">
-                <span className="text-xs">🥇</span>
-                <span className="max-w-[60px] sm:max-w-[90px] truncate leading-none">{first.name}</span>
-                <span className="text-[10px] text-amber-400 font-mono font-black leading-none">({first.winsCount})</span>
-              </div>
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200 shrink-0">
+                <span className="font-mono text-[11px] font-bold text-amber-600 dark:text-amber-400">#1</span>
+                <span className="max-w-[75px] md:max-w-[95px] truncate">{first.name}</span>
+                <span className="font-mono tabular-nums text-[11px] text-amber-700 dark:text-amber-400/90">
+                  {first.winsCount}
+                </span>
+              </span>
             )}
 
-            {/* 2nd Place (Silver - hidden on smaller screens < md) */}
             {second && (
-              <div className="hidden md:flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-slate-200 bg-slate-800/90 hover:bg-slate-700/80 px-1.5 sm:px-2 py-0.5 rounded-lg border border-slate-700/70 transition-colors shrink-0">
-                <span className="text-xs">🥈</span>
-                <span className="max-w-[55px] lg:max-w-[80px] truncate leading-none">{second.name}</span>
-                <span className="text-[10px] text-slate-400 font-mono font-bold leading-none">({second.winsCount})</span>
-              </div>
+              <>
+                <span className="hidden md:inline text-[var(--studio-text-muted)] text-xs opacity-60" aria-hidden="true">·</span>
+                <span className="hidden md:flex items-center gap-1.5 text-xs font-medium text-[var(--studio-text)] shrink-0">
+                  <span className="font-mono text-[11px] font-bold text-[var(--studio-text-muted)]">#2</span>
+                  <span className="max-w-[65px] lg:max-w-[85px] truncate">{second.name}</span>
+                  <span className="font-mono tabular-nums text-[11px] text-[var(--studio-text-muted)]">
+                    {second.winsCount}
+                  </span>
+                </span>
+              </>
             )}
 
-            {/* 3rd Place (Bronze - hidden on medium screens < xl) */}
             {third && (
-              <div className="hidden xl:flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-amber-300/90 bg-amber-950/30 hover:bg-amber-950/50 px-1.5 sm:px-2 py-0.5 rounded-lg border border-amber-900/40 transition-colors shrink-0">
-                <span className="text-xs">🥉</span>
-                <span className="max-w-[55px] xl:max-w-[75px] truncate leading-none">{third.name}</span>
-                <span className="text-[10px] text-amber-500/90 font-mono font-bold leading-none">({third.winsCount})</span>
-              </div>
+              <>
+                <span className="hidden xl:inline text-[var(--studio-text-muted)] text-xs opacity-60" aria-hidden="true">·</span>
+                <span className="hidden xl:flex items-center gap-1.5 text-xs font-medium text-[var(--studio-text-secondary)] shrink-0">
+                  <span className="font-mono text-[11px] font-bold text-amber-700 dark:text-amber-600">#3</span>
+                  <span className="max-w-[65px] xl:max-w-[80px] truncate">{third.name}</span>
+                  <span className="font-mono tabular-nums text-[11px] text-[var(--studio-text-muted)]">
+                    {third.winsCount}
+                  </span>
+                </span>
+              </>
             )}
           </div>
         )}
 
-        {/* Action Cue / Indicador de clique para ver vencedores */}
-        <div className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg bg-emerald-500/10 group-hover:bg-emerald-500/20 border border-emerald-500/25 group-hover:border-emerald-500/40 text-emerald-400 text-[10px] sm:text-[11px] font-semibold transition-all shrink-0 ml-0.5 shadow-sm">
-          <Trophy size={11} className="transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 text-emerald-400 shrink-0" />
-          <span className="font-bold tracking-tight">{t('sidebar.results.winners', 'Vencedores')}</span>
-          <ChevronRight size={11} className="text-emerald-400/80 group-hover:translate-x-0.5 transition-transform shrink-0" />
-        </div>
+        <span className="w-px h-4 bg-[var(--studio-border-strong)] shrink-0" aria-hidden="true" />
+
+        {/* Action cue */}
+        <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 group-hover:opacity-85 transition-opacity shrink-0">
+          <Trophy size={13} className="shrink-0" />
+          <span className="hidden md:inline">{t('sidebar.results.winners', 'Vencedores')}</span>
+          <ChevronRight size={13} className="opacity-75 group-hover:translate-x-0.5 transition-transform shrink-0" />
+        </span>
       </button>
     </>
   );

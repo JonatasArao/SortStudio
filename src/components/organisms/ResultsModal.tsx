@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Check, ListOrdered, Trophy, Download, AlertCircle, Trash2, Crown, ChevronDown, ChevronUp, ArrowDown, ArrowUp, Flame, Clock, Search, Sparkles, ArrowUpDown, SortDesc, SortAsc, Users } from 'lucide-react';
+import { X, Check, ListOrdered, Trophy, Download, AlertCircle, Trash2, Crown, ChevronDown, ChevronUp, ArrowDown, ArrowUp, Flame, Clock, Search, Sparkles, SortDesc, SortAsc, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
 import { ResultItem } from '../molecules/ResultItem';
 import { Button } from '../atoms/Button';
+import { Input } from '../atoms/Input';
+import { Toggle } from '../atoms/Toggle';
 import { getParticipantStats, ParticipantStat, compareParticipantsByWins } from '../../utils/statsUtils';
 import { SeasonPosterModal } from './SeasonPosterModal';
 
@@ -25,51 +27,52 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
   const isLongSpell = st.hasWon && st.daysWithoutWin >= 10;
 
   return (
-    <div className={`bg-slate-900/40 transition-colors rounded-lg border flex flex-col shadow-sm overflow-hidden ${
-      isLeader 
-        ? 'border-amber-500/30 bg-gradient-to-br from-slate-900/40 to-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.05)]' 
-        : 'border-slate-800/80'
+    <div className={`bg-[var(--studio-card)] transition-colors rounded-xl border flex flex-col overflow-hidden ${
+      isLeader
+        ? 'border-amber-500/45 bg-amber-500/[0.06]'
+        : 'border-[var(--studio-border)]'
     } ${!isSeasonActive ? 'opacity-90' : ''}`}>
-      <div 
-        className="py-2.5 px-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-900/70"
+      <button
+        type="button"
+        className="w-full py-3 px-3.5 flex items-center justify-between gap-3 text-left hover:bg-[var(--studio-card-hover)]/40 transition-colors"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 border ${
-            isLeader ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
-            isWonToday ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]' :
-            isWonOnLastDay ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' :
-            !st.hasWon ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 font-medium' :
-            isLongSpell ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :
-            'bg-blue-500/15 border-blue-500/30 text-blue-400'
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono tabular-nums font-bold shrink-0 border ${
+            isLeader ? 'bg-amber-500/20 border-amber-500/40 text-amber-800 dark:text-amber-300' :
+            isWonToday ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-700 dark:text-emerald-300' :
+            isWonOnLastDay ? 'bg-blue-500/15 border-blue-500/35 text-blue-700 dark:text-blue-300' :
+            !st.hasWon ? 'bg-[var(--studio-input)] border-[var(--studio-border)] text-[var(--studio-text-muted)]' :
+            isLongSpell ? 'bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300' :
+            'bg-[var(--studio-accent-soft)] border-[var(--studio-accent)]/30 text-[var(--studio-accent-fg)]'
           }`}>
             {index + 1}º
           </div>
 
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`font-semibold text-sm leading-tight truncate ${isLeader ? 'text-amber-200' : 'text-slate-100'}`}>{st.name}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className={`font-semibold text-sm leading-tight truncate ${isLeader ? 'text-amber-800 dark:text-amber-200' : 'text-[var(--studio-text)]'}`}>
+                {st.name}
+              </span>
               {isLeader && (
-                <Crown size={14} className="text-amber-400 fill-amber-400/20" />
-              )}
-              {isSeasonActive && (
-                st.isOnWheel ? (
-                  <span className="text-[10px] leading-none font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {t('resultsModal.drySpell.activeOnWheel')}
-                  </span>
-                ) : (
-                  <span className="text-[10px] leading-none font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/50">
-                    {t('resultsModal.drySpell.inactive')}
-                  </span>
-                )
+                <Crown size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
               )}
             </div>
 
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-              <span>
-                {st.hasWon && st.lastWinTimestamp 
+            <p className="text-xs text-[var(--studio-text-muted)] mt-0.5 truncate">
+              {isSeasonActive && (
+                <>
+                  <span className={st.isOnWheel ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-[var(--studio-text-muted)]'}>
+                    {st.isOnWheel ? t('resultsModal.drySpell.activeOnWheel') : t('resultsModal.drySpell.inactive')}
+                  </span>
+                  <span className="mx-1.5" aria-hidden="true">·</span>
+                </>
+              )}
+              <span className="font-mono tabular-nums">
+                {st.hasWon && st.lastWinTimestamp
                   ? t('resultsModal.drySpell.lastWinDate', { date: new Date(st.lastWinTimestamp).toLocaleDateString(i18n.language) })
-                  : st.firstSeenTimestamp 
+                  : st.firstSeenTimestamp
                   ? t('resultsModal.drySpell.firstSeen', { date: new Date(st.firstSeenTimestamp).toLocaleDateString(i18n.language) })
                   : t('resultsModal.drySpell.neverWon')}
               </span>
@@ -77,99 +80,98 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
           </div>
         </div>
 
-        {/* Counter Badge */}
+        {/* Counter & Status */}
         <div className="shrink-0 flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <span className={`text-xs font-semibold block ${isLeader ? 'text-amber-400' : 'text-slate-400'}`}>
-              {isLeader && !isSeasonActive && <span className="mr-1.5 text-[9px] uppercase tracking-wider">Campeão!</span>}
-              {isLeader && isSeasonActive && <span className="mr-1.5 text-[9px] uppercase tracking-wider">Líder</span>}
+          <div className="text-right">
+            <span className={`text-xs font-semibold block font-mono tabular-nums ${isLeader ? 'text-amber-700 dark:text-amber-300' : 'text-[var(--studio-text)]'}`}>
               {st.winsCount} {st.winsCount === 1 ? t('resultsModal.ranking.win') : t('resultsModal.ranking.wins')}
             </span>
+            {isLeader && (
+              <span className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400/90 font-semibold hidden sm:block">
+                {!isSeasonActive ? 'Campeão' : 'Líder'}
+              </span>
+            )}
           </div>
 
-          {isSeasonActive ? (
-            <div className={`px-2.5 py-1 rounded-md border text-xs flex items-center gap-1.5 shadow-inner transition-colors ${
-              isWonToday 
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+          {isSeasonActive && (
+            <div className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 font-mono tabular-nums ${
+              isWonToday
+                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/35 font-semibold'
                 : !st.hasWon
-                ? 'bg-slate-800/80 text-slate-400 border-slate-700/60 font-medium'
+                ? 'bg-[var(--studio-input)] text-[var(--studio-text-muted)] border-[var(--studio-border)]'
                 : st.daysWithoutWin > 7
-                ? 'bg-amber-500/10 text-amber-300 border-amber-500/20 font-bold'
-                : 'bg-slate-800 text-slate-400 border-slate-700 font-bold'
+                ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 font-semibold'
+                : 'bg-[var(--studio-input)] text-[var(--studio-text-secondary)] border-[var(--studio-border)]'
             }`}>
               {isWonToday ? (
                 t('resultsModal.drySpell.wonToday')
               ) : st.hasWon ? (
                 <>
-                  <Clock size={12} />
+                  <Clock size={11} />
                   {st.daysWithoutWin}d
                 </>
               ) : (
-                "Sem vitórias"
+                "0 vit."
               )}
             </div>
-          ) : (
-            <div className="sm:hidden px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-[11px] font-bold text-slate-300">
-              {st.winsCount} {st.winsCount === 1 ? t('resultsModal.ranking.win') : t('resultsModal.ranking.wins')}
-            </div>
           )}
-          
-          <div className="text-slate-500 ml-1">
-             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </div>
+
+          <span className="text-[var(--studio-text-muted)]">
+            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </span>
         </div>
-      </div>
-      
+      </button>
+
       {expanded && (
-        <div className="px-3 pb-3 pt-3 border-t border-slate-800/50 bg-slate-900/20">
+        <div className="px-3.5 pb-3.5 pt-3 border-t border-[var(--studio-border)] bg-[var(--studio-surface-elevated)]">
           <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {isSeasonActive && st.drawsWithoutWin > 0 && (
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Jejum Atual (Sorteios)</span>
-                  <span className="text-sm text-slate-300 font-medium">{st.drawsWithoutWin} {t('resultsModal.drySpell.drawsCount', { count: st.drawsWithoutWin }).split(' ')[1] || 'vezes'}</span>
+                <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-lg p-2.5 flex flex-col justify-center">
+                  <span className="text-[10px] text-[var(--studio-text-muted)] uppercase tracking-wider font-semibold mb-0.5">Jejum Atual (Sorteios)</span>
+                  <span className="text-sm text-[var(--studio-text)] font-mono tabular-nums font-medium">{st.drawsWithoutWin} {t('resultsModal.drySpell.drawsCount', { count: st.drawsWithoutWin }).split(' ')[1] || 'vezes'}</span>
                 </div>
               )}
               {isSeasonActive && st.maxDaysWithoutWin !== undefined && st.maxDaysWithoutWin > 0 && (
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Jejum Recorde (Dias)</span>
-                  <span className="text-sm text-slate-300 font-medium">{st.maxDaysWithoutWin} {t('resultsModal.drySpell.daysWithoutWin', { count: st.maxDaysWithoutWin }).split(' ')[1] || 'dias'}</span>
+                <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-lg p-2.5 flex flex-col justify-center">
+                  <span className="text-[10px] text-[var(--studio-text-muted)] uppercase tracking-wider font-semibold mb-0.5">Jejum Recorde (Dias)</span>
+                  <span className="text-sm text-[var(--studio-text)] font-mono tabular-nums font-medium">{st.maxDaysWithoutWin} {t('resultsModal.drySpell.daysWithoutWin', { count: st.maxDaysWithoutWin }).split(' ')[1] || 'dias'}</span>
                 </div>
               )}
               {isSeasonActive && st.maxDrawsWithoutWin !== undefined && st.maxDrawsWithoutWin > 0 && (
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Jejum Recorde (Sorteios)</span>
-                  <span className="text-sm text-slate-300 font-medium">{st.maxDrawsWithoutWin} {t('resultsModal.drySpell.drawsCount', { count: st.maxDrawsWithoutWin }).split(' ')[1] || 'vezes'}</span>
+                <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-lg p-2.5 flex flex-col justify-center">
+                  <span className="text-[10px] text-[var(--studio-text-muted)] uppercase tracking-wider font-semibold mb-0.5">Jejum Recorde (Sorteios)</span>
+                  <span className="text-sm text-[var(--studio-text)] font-mono tabular-nums font-medium">{st.maxDrawsWithoutWin} {t('resultsModal.drySpell.drawsCount', { count: st.maxDrawsWithoutWin }).split(' ')[1] || 'vezes'}</span>
                 </div>
               )}
               {st.avgDaysBetweenWins !== null && st.avgDaysBetweenWins > 0 && (
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Tempo Médio p/ Vitória</span>
-                  <span className="text-sm text-slate-300 font-medium">{st.avgDaysBetweenWins} {t('resultsModal.drySpell.daysWithoutWin', { count: Math.ceil(st.avgDaysBetweenWins) }).split(' ')[1] || 'dias'}</span>
+                <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-lg p-2.5 flex flex-col justify-center">
+                  <span className="text-[10px] text-[var(--studio-text-muted)] uppercase tracking-wider font-semibold mb-0.5">Tempo Médio p/ Vitória</span>
+                  <span className="text-sm text-[var(--studio-text)] font-mono tabular-nums font-medium">{st.avgDaysBetweenWins} {t('resultsModal.drySpell.daysWithoutWin', { count: Math.ceil(st.avgDaysBetweenWins) }).split(' ')[1] || 'dias'}</span>
                 </div>
               )}
               {st.winRate !== undefined && st.winRate > 0 && (
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Taxa de Vitória</span>
-                  <span className="text-sm text-emerald-400 font-semibold">{st.winRate}%</span>
+                <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-lg p-2.5 flex flex-col justify-center">
+                  <span className="text-[10px] text-[var(--studio-text-muted)] uppercase tracking-wider font-semibold mb-0.5">Taxa de Vitória</span>
+                  <span className="text-sm text-emerald-700 dark:text-emerald-400 font-mono tabular-nums font-semibold">{st.winRate}%</span>
                 </div>
               )}
               {st.luckiestDayOfWeek !== undefined && st.luckiestDayOfWeek !== null && (
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-md p-2.5 flex flex-col justify-center shadow-sm">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">Dia + Sortudo</span>
-                  <span className="text-sm text-slate-300 font-medium">
-                    {i18n.language === 'en' 
+                <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-lg p-2.5 flex flex-col justify-center">
+                  <span className="text-[10px] text-[var(--studio-text-muted)] uppercase tracking-wider font-semibold mb-0.5">Dia + Sortudo</span>
+                  <span className="text-sm text-[var(--studio-text)] font-medium">
+                    {i18n.language === 'en'
                       ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][st.luckiestDayOfWeek]
                       : ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][st.luckiestDayOfWeek]}
                   </span>
                 </div>
               )}
             </div>
-            
-            <div className="mt-1">
-              <p className="text-xs font-semibold text-slate-300 mb-2.5">Histórico de vitórias:</p>
+
+            <div>
+              <p className="text-xs font-semibold text-[var(--studio-text-secondary)] mb-2">Histórico de vitórias:</p>
               {st.winTimestamps && st.winTimestamps.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-y-3">
+                <div className="flex flex-wrap items-center gap-y-2.5">
                   {st.winTimestamps.map((ts: number, idx: number) => {
                     const isLast = idx === st.winTimestamps.length - 1;
                     let diffText = "";
@@ -180,13 +182,16 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
                     }
                     return (
                       <React.Fragment key={idx}>
-                        <span title={new Date(ts).toLocaleString(i18n.language)} className="text-xs px-2 py-1 rounded-md bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-colors cursor-default">
+                        <span
+                          title={new Date(ts).toLocaleString(i18n.language)}
+                          className="text-xs font-mono tabular-nums px-2 py-1 rounded-md bg-[var(--studio-card)] text-[var(--studio-text)] border border-[var(--studio-border)]"
+                        >
                           {new Date(ts).toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', year: '2-digit' })}
                         </span>
                         {!isLast && (
                           <div className="flex flex-col items-center mx-2">
-                            <span className="text-[10px] font-medium text-slate-500 leading-none mb-1" title="Diferença">{diffText}</span>
-                            <div className="h-[1px] w-8 bg-slate-700/50"></div>
+                            <span className="text-[10px] font-mono tabular-nums text-[var(--studio-text-muted)] leading-none mb-1" title="Diferença">{diffText}</span>
+                            <div className="h-[1px] w-7 bg-[var(--studio-border-strong)]" />
                           </div>
                         )}
                       </React.Fragment>
@@ -194,8 +199,8 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500 italic">
-                   Nenhuma vitória registrada.
+                <p className="text-xs text-[var(--studio-text-muted)]">
+                  Nenhuma vitória registrada.
                 </p>
               )}
             </div>
@@ -204,7 +209,7 @@ const RankingItem = ({ st, index, t, i18n, isSeasonActive, isLeader }: { st: Par
       )}
     </div>
   );
-}
+};
 
 export const ResultsModal = () => {
   const { t, i18n } = useTranslation();
@@ -219,7 +224,7 @@ export const ResultsModal = () => {
       const activeSeason = seasons.find(s => !s.endDate);
       setSelectedSeasonId(activeSeason ? activeSeason.id : 'all');
     }
-  }, [isResultsModalOpen]); // Removed seasons dependency so it only resets when opening
+  }, [isResultsModalOpen]);
 
   const setResults = useAppStore(s => s.setResults);
   const items = useAppStore(s => s.items);
@@ -227,6 +232,16 @@ export const ResultsModal = () => {
 
   const [activeTab, setActiveTab] = useState<'historico' | 'ranking' | 'importar'>('historico');
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isResultsModalOpen || isPosterModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsResultsModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isResultsModalOpen, isPosterModalOpen, setIsResultsModalOpen]);
+
   const filteredBySeason = useMemo(() => {
     if (selectedSeasonId === "all") return results;
     const season = seasons.find(s => s.id === selectedSeasonId);
@@ -234,6 +249,7 @@ export const ResultsModal = () => {
     const end = season.endDate || Infinity;
     return results.filter(r => (r.timestamp || 0) >= season.startDate && (r.timestamp || 0) <= end);
   }, [results, seasons, selectedSeasonId]);
+
   const currentSeason = useMemo(() => {
     if (selectedSeasonId === 'all') return null;
     return seasons.find(s => s.id === selectedSeasonId) || null;
@@ -273,34 +289,34 @@ export const ResultsModal = () => {
   const filteredResults = useMemo(() => {
     return filteredBySeason.filter((r, i) => {
       const originalIndex = filteredBySeason.length - i;
-      
+
       if (filterMode === 'draw') {
-        let start = parseInt(customStartDraw, 10);
-        let end = parseInt(customEndDraw, 10);
+        const start = parseInt(customStartDraw, 10);
+        const end = parseInt(customEndDraw, 10);
         const min = Math.min(start, end);
         const max = Math.max(start, end);
-        
+
         if (!isNaN(min) && originalIndex < min) return false;
         if (!isNaN(max) && originalIndex > max) return false;
       }
-      
+
       if (filterMode === 'date') {
         if (customStartDate && r.timestamp) {
           const itemDate = new Date(r.timestamp);
           itemDate.setHours(0, 0, 0, 0);
           const startDate = new Date(customStartDate);
           startDate.setHours(0, 0, 0, 0);
-          
+
           const localStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
           if (itemDate < localStartDate) return false;
         }
-        
+
         if (customEndDate && r.timestamp) {
           const itemDate = new Date(r.timestamp);
           itemDate.setHours(0, 0, 0, 0);
           const endDate = new Date(customEndDate);
           endDate.setHours(0, 0, 0, 0);
-          
+
           const localEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
           if (itemDate > localEndDate) return false;
         }
@@ -320,14 +336,6 @@ export const ResultsModal = () => {
     }
     return getParticipantStats(items, filteredResults, refTimestamp, isSeasonFinished);
   }, [items, filteredResults, selectedSeasonId, seasons, isSeasonFinished]);
-
-  const statsMap = useMemo(() => {
-    const map = new Map<string, ParticipantStat>();
-    allParticipantStats.forEach(st => {
-      map.set(st.name.toLowerCase(), st);
-    });
-    return map;
-  }, [allParticipantStats]);
 
   const longestDrySpellParticipant = useMemo(() => {
     let list = [...allParticipantStats];
@@ -385,7 +393,7 @@ export const ResultsModal = () => {
       } else if (drySpellSort === 'name') {
         comp = a.name.localeCompare(b.name);
       }
-      
+
       return drySpellOrder === 'desc' ? -comp : comp;
     });
 
@@ -394,12 +402,12 @@ export const ResultsModal = () => {
 
   const exportResults = () => {
     if (filteredBySeason.length === 0) return;
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + "Posição,Nome,Status,ID_do_Sorteio,Data\n"
       + filteredBySeason.map((r, i) => {
-          const dateStr = r.timestamp ? new Date(r.timestamp).toLocaleDateString('pt-BR') : '';
-          return `${filteredBySeason.length - i},"${r.text.replace(/"/g, '""')}","${r.type || 'winner'}","${r.drawId}","${dateStr}"`;
-        }).join("\n");
+        const dateStr = r.timestamp ? new Date(r.timestamp).toLocaleDateString('pt-BR') : '';
+        return `${filteredBySeason.length - i},"${r.text.replace(/"/g, '""')}","${r.type || 'winner'}","${r.drawId}","${dateStr}"`;
+      }).join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -420,7 +428,7 @@ export const ResultsModal = () => {
       let inQuotes = false;
       for (let i = 0; i < str.length; i++) {
         const char = str[i];
-        if (char === '"' && str[i+1] === '"' && inQuotes) {
+        if (char === '"' && str[i + 1] === '"' && inQuotes) {
           current += '"';
           i++;
         } else if (char === '"') {
@@ -438,7 +446,7 @@ export const ResultsModal = () => {
 
     const isCSV = lines[0].includes('Posição,Nome,Status') || lines[0].includes('Posição,Text,Status');
     const startIndex = isCSV ? 1 : 0;
-    
+
     const newResults = [];
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i];
@@ -449,13 +457,13 @@ export const ResultsModal = () => {
           const type = cols[2] === 'loser' ? 'loser' : 'winner';
           const drawId = cols[3] || `imported-${crypto.randomUUID()}`;
           const dateStr = cols[4];
-          
+
           let timestamp = Date.now();
           if (dateStr) {
             const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})(?:[ ,]+(\d{2}):(\d{2}):(\d{2}))?/);
             if (parts) {
               const [_, d, m, y, h, min, s] = parts;
-              timestamp = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h || '0'), parseInt(min || '0'), parseInt(s || '0')).getTime();
+              timestamp = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h || '0'), parseInt(min || '0'), parseInt(s || '0')).getTime();
             } else {
               const parsed = Date.parse(dateStr);
               if (!isNaN(parsed)) timestamp = parsed;
@@ -475,17 +483,16 @@ export const ResultsModal = () => {
       } else {
         let text = line;
         let timestamp = Date.now();
-        
-        // Try to extract date from the end of the line (e.g. "Maria, 12/05/2023 14:30:00" or "João 12/05/2023")
+
         const dateMatch = line.match(/(.*?)(?:,?\s*)(\d{2}\/\d{2}\/\d{4}(?:[ ,]+\d{2}:\d{2}:\d{2})?)$/);
-        
+
         if (dateMatch) {
           text = dateMatch[1].trim();
           const dateStr = dateMatch[2];
           const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})(?:[ ,]+(\d{2}):(\d{2}):(\d{2}))?/);
           if (parts) {
             const [_, d, m, y, h, min, s] = parts;
-            timestamp = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h || '0'), parseInt(min || '0'), parseInt(s || '0')).getTime();
+            timestamp = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h || '0'), parseInt(min || '0'), parseInt(s || '0')).getTime();
           }
         }
 
@@ -523,27 +530,27 @@ export const ResultsModal = () => {
 
     const itemDate = new Date(res.timestamp);
     itemDate.setHours(0, 0, 0, 0);
-    
+
     if (customStartDate) {
       const startDate = new Date(customStartDate);
       startDate.setHours(0, 0, 0, 0);
       const localStartDate = new Date(startDate.getTime() + startDate.getTimezoneOffset() * 60000);
       if (itemDate < localStartDate) return false;
     }
-    
+
     if (customEndDate) {
       const endDate = new Date(customEndDate);
       endDate.setHours(0, 0, 0, 0);
       const localEndDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60000);
       if (itemDate > localEndDate) return false;
     }
-    
+
     return true;
   };
 
   const isBoxSelected = (index: number) => {
-    let start = parseInt(customStartDraw, 10);
-    let end = parseInt(customEndDraw, 10);
+    const start = parseInt(customStartDraw, 10);
+    const end = parseInt(customEndDraw, 10);
     if (isNaN(start) && isNaN(end)) {
       return true;
     }
@@ -581,7 +588,7 @@ export const ResultsModal = () => {
   const quickSelects = useMemo(() => {
     if (filteredBySeason.length === 0) return [];
     const options = [];
-    
+
     options.push({
       label: 'Todos',
       start: 1,
@@ -589,7 +596,7 @@ export const ResultsModal = () => {
     });
 
     const intervalSize = Math.max(1, parseInt(customInterval, 10) || 10);
-    
+
     const chunks = Math.ceil(filteredBySeason.length / intervalSize);
     if (intervalOrder === 'asc') {
       for (let i = 0; i < chunks; i++) {
@@ -618,39 +625,46 @@ export const ResultsModal = () => {
   if (!isResultsModalOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md"
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
       onClick={() => setIsResultsModalOpen(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('resultsModal.title')}
     >
-      <div 
-        className="w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] bg-slate-950/80 border border-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      <div
+        className="w-full max-w-3xl max-h-[90vh] sm:max-h-[86vh] bg-[var(--studio-surface)] border border-[var(--studio-border-strong)] text-[var(--studio-text)] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800/60 bg-slate-900/40 shrink-0">
-          <div className="flex items-center gap-3.5">
-            <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20 shadow-inner">
-              <Trophy size={20} className="text-blue-400" />
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--studio-border)] bg-[var(--studio-surface-elevated)] shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[var(--studio-card)] border border-[var(--studio-border)] flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+              <Trophy size={18} />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-100 leading-tight">{t('resultsModal.title')}</h2>
-              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">{t('resultsModal.subtitle')}</p>
+              <h2 className="text-base sm:text-lg font-semibold text-[var(--studio-text)] leading-tight">{t('resultsModal.title')}</h2>
+              <p className="text-xs text-[var(--studio-text-muted)] mt-0.5">{t('resultsModal.subtitle')}</p>
             </div>
           </div>
-          <button 
+          <button
+            type="button"
             onClick={() => setIsResultsModalOpen(false)}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl transition-colors focus:outline-none"
+            className="p-2 text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)] rounded-lg transition-colors"
+            aria-label="Fechar"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <div className="px-4 py-2 border-b border-slate-800/60 flex flex-wrap gap-2 justify-between items-center bg-slate-900/20 shrink-0">
+        {/* Season Toolbar */}
+        <div className="px-4 sm:px-6 py-2.5 border-b border-[var(--studio-border)] flex flex-wrap gap-2.5 justify-between items-center bg-[var(--studio-input)]/70 shrink-0">
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-            <div className="text-sm font-semibold text-slate-300 shrink-0">Temporada:</div>
+            <span className="text-xs font-medium text-[var(--studio-text-muted)] shrink-0">Temporada:</span>
             <select
               value={selectedSeasonId}
               onChange={(e) => setSelectedSeasonId(e.target.value)}
-              className="bg-[#0f1015] border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 w-full sm:max-w-[240px]"
+              className="bg-[var(--studio-card)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-1.5 text-xs sm:text-sm text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)] w-full sm:max-w-[250px]"
             >
               <option value="all">Resultados Gerais (Tudo)</option>
               {seasons.map(s => (
@@ -659,180 +673,205 @@ export const ResultsModal = () => {
             </select>
           </div>
 
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="success"
             onClick={() => setIsPosterModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 text-emerald-300 border border-emerald-500/35 hover:border-emerald-500/50 text-xs font-bold transition-all shadow-sm active:scale-95 group shrink-0"
+            className="gap-1.5 shrink-0"
             title="Escolha as opções e baixe a imagem oficial de resultados"
           >
-            <Sparkles size={14} className="text-emerald-400 transition-transform group-hover:scale-110" />
+            <Sparkles size={14} />
             <span>Exportar Pôster</span>
-          </button>
+          </Button>
         </div>
 
-        <div className="flex w-full bg-slate-950/40 border-b border-slate-800/60 shrink-0 overflow-x-auto no-scrollbar">
-          <button 
+        {/* Navigation Tabs */}
+        <div className="flex w-full bg-[var(--studio-surface-elevated)] border-b border-[var(--studio-border)] shrink-0 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
             onClick={() => setActiveTab('historico')}
-            className={`flex-1 min-w-[120px] text-xs sm:text-sm font-semibold py-3 transition-all border-b-2 ${activeTab === 'historico' ? 'text-white border-blue-500 bg-blue-500/5 shadow-[inset_0_-2px_10px_rgba(59,130,246,0.05)]' : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/20'}`}
+            className={`flex-1 min-w-[110px] text-xs sm:text-sm font-semibold py-3 px-3 transition-colors border-b-2 whitespace-nowrap ${
+              activeTab === 'historico'
+                ? 'text-[var(--studio-text)] border-[var(--studio-accent)] bg-[var(--studio-accent-soft)]'
+                : 'text-[var(--studio-text-muted)] border-transparent hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]/40'
+            }`}
           >
             {t('resultsModal.tabs.history')}
           </button>
-          <button 
+          <button
+            type="button"
             onClick={() => setActiveTab('ranking')}
-            className={`flex-1 min-w-[140px] sm:min-w-[150px] text-xs sm:text-sm font-semibold py-3 transition-all border-b-2 flex items-center justify-center gap-1.5 ${activeTab === 'ranking' ? 'text-amber-400 border-amber-500 bg-amber-500/5 shadow-[inset_0_-2px_10px_rgba(245,158,11,0.05)]' : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/20'}`}
+            className={`flex-1 min-w-[130px] text-xs sm:text-sm font-semibold py-3 px-3 transition-colors border-b-2 flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'ranking'
+                ? 'text-amber-700 dark:text-amber-300 border-amber-500 bg-amber-500/[0.08]'
+                : 'text-[var(--studio-text-muted)] border-transparent hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]/40'
+            }`}
           >
-            <Trophy size={14} className={activeTab === 'ranking' ? "text-amber-400 shrink-0" : "text-slate-400 shrink-0"} />
+            <Trophy size={14} className={activeTab === 'ranking' ? "text-amber-600 dark:text-amber-400 shrink-0" : "text-[var(--studio-text-muted)] shrink-0"} />
             {t('resultsModal.tabs.ranking')}
           </button>
-          <button 
+          <button
+            type="button"
             onClick={() => setActiveTab('importar')}
-            className={`flex-1 min-w-[120px] text-xs sm:text-sm font-semibold py-3 transition-all border-b-2 ${activeTab === 'importar' ? 'text-white border-blue-500 bg-blue-500/5 shadow-[inset_0_-2px_10px_rgba(59,130,246,0.05)]' : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/20'}`}
+            className={`flex-1 min-w-[110px] text-xs sm:text-sm font-semibold py-3 px-3 transition-colors border-b-2 whitespace-nowrap ${
+              activeTab === 'importar'
+                ? 'text-[var(--studio-text)] border-[var(--studio-accent)] bg-[var(--studio-accent-soft)]'
+                : 'text-[var(--studio-text-muted)] border-transparent hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]/40'
+            }`}
           >
             {t('resultsModal.tabs.import')}
           </button>
         </div>
 
+        {/* Body */}
         <div className="p-4 sm:p-5 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4">
-          
+
           {!isSeasonActive && currentSeason && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/5 border border-amber-500/10 rounded-lg shrink-0 -mt-2 mb-1">
-              <Clock size={12} className="text-amber-500/70" />
-              <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-wider">
-                Temporada Encerrada ({new Date(currentSeason.endDate!).toLocaleDateString(i18n.language)})
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/[0.08] border border-amber-500/25 rounded-lg shrink-0">
+              <Clock size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-xs font-medium text-amber-800 dark:text-amber-300 font-mono tabular-nums">
+                Temporada encerrada em {new Date(currentSeason.endDate!).toLocaleDateString(i18n.language)}
               </span>
             </div>
           )}
-          
+
           {(activeTab === 'historico' || activeTab === 'ranking') && (
-            <div className="flex flex-col pb-2 border-b border-slate-800/50 shrink-0 relative z-20">
-              <button 
+            <div className="flex flex-col pb-2 border-b border-[var(--studio-border)] shrink-0">
+              <button
+                type="button"
                 onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}
-                className="flex items-center justify-between w-full py-2 px-1 text-slate-400 hover:text-slate-300 transition-colors"
+                className="flex items-center justify-between w-full py-1.5 text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <ListOrdered size={18} />
-                  <span className="text-sm font-medium">{t('resultsModal.filter.title')}</span>
+                  <ListOrdered size={16} />
+                  <span className="text-xs sm:text-sm font-medium">{t('resultsModal.filter.title')}</span>
                 </div>
-                {isFilterCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                {isFilterCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
               </button>
 
               {!isFilterCollapsed && (
-                <div className="flex flex-col gap-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/80 mt-2 shadow-inner">
-                  <div className="flex flex-col sm:flex-row gap-6">
-                    <div className="flex flex-col gap-4 sm:w-64 shrink-0">
-                      <div className="flex bg-slate-950/50 p-1 rounded-xl border border-slate-800/80">
-                        <button 
+                <div className="flex flex-col gap-3 bg-[var(--studio-surface-elevated)] p-4 rounded-xl border border-[var(--studio-border)] mt-2">
+                  <div className="flex flex-col sm:flex-row gap-5">
+                    <div className="flex flex-col gap-3 sm:w-64 shrink-0">
+                      <div className="flex bg-[var(--studio-input)] p-1 rounded-lg border border-[var(--studio-border)]">
+                        <button
+                          type="button"
                           onClick={() => setFilterMode('draw')}
-                          className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-lg transition-all ${filterMode === 'draw' ? 'bg-blue-600/15 text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                          className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-md transition-colors ${filterMode === 'draw' ? 'bg-[var(--studio-card)] text-[var(--studio-accent-fg)] border border-[var(--studio-border-strong)]' : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)]'}`}
                         >
                           {t('resultsModal.filter.typeDraw')}
                         </button>
-                        <button 
+                        <button
+                          type="button"
                           onClick={() => setFilterMode('date')}
-                          className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-lg transition-all ${filterMode === 'date' ? 'bg-blue-600/15 text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                          className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-md transition-colors ${filterMode === 'date' ? 'bg-[var(--studio-card)] text-[var(--studio-accent-fg)] border border-[var(--studio-border-strong)]' : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)]'}`}
                         >
                           {t('resultsModal.filter.typeDate')}
                         </button>
                       </div>
 
                       {filterMode === 'draw' && (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2.5">
                           <div className="flex items-center gap-2 w-full">
-                            <label className="text-xs font-medium text-slate-400 flex-1">{t('resultsModal.filter.groupBy')}</label>
+                            <label className="text-xs font-medium text-[var(--studio-text-muted)] flex-1">{t('resultsModal.filter.groupBy')}</label>
                             <div className="flex items-center gap-1.5">
-                              <input 
-                                type="number" 
+                              <input
+                                type="number"
                                 min="1"
                                 value={customInterval}
                                 onChange={(e) => setCustomInterval(e.target.value)}
-                                className="bg-slate-950/45 border border-slate-800 rounded-lg px-2.5 py-1 w-16 text-xs text-white focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30"
+                                className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2.5 py-1 w-16 text-xs text-[var(--studio-text)] font-mono tabular-nums focus:outline-none focus:border-[var(--studio-accent)]"
                               />
                               <button
+                                type="button"
                                 onClick={() => setIntervalOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                                className="p-1.5 bg-slate-950/50 border border-slate-800 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition-all"
+                                className="p-1.5 bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] transition-colors"
+                                aria-label="Inverter ordem"
                               >
                                 {intervalOrder === 'asc' ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
                               </button>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 w-full">
-                            <label className="text-xs font-medium text-slate-400 flex-1">{t('resultsModal.filter.start')}</label>
-                            <input 
-                              type="number" 
+                            <label className="text-xs font-medium text-[var(--studio-text-muted)] flex-1">{t('resultsModal.filter.start')}</label>
+                            <input
+                              type="number"
                               min="1"
                               placeholder="20"
                               value={customStartDraw}
                               onChange={(e) => setCustomStartDraw(e.target.value)}
-                              className="bg-slate-950/45 border border-slate-800 rounded-lg px-2 py-1 w-28 text-xs text-white focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30"
+                              className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2.5 py-1 w-24 text-xs text-[var(--studio-text)] font-mono tabular-nums focus:outline-none focus:border-[var(--studio-accent)]"
                             />
                           </div>
-                          
+
                           <div className="flex items-center gap-2 w-full">
-                            <label className="text-xs font-medium text-slate-400 flex-1">{t('resultsModal.filter.end')}</label>
-                            <input 
-                              type="number" 
+                            <label className="text-xs font-medium text-[var(--studio-text-muted)] flex-1">{t('resultsModal.filter.end')}</label>
+                            <input
+                              type="number"
                               min="1"
                               placeholder="30"
                               value={customEndDraw}
                               onChange={(e) => setCustomEndDraw(e.target.value)}
-                              className="bg-slate-950/45 border border-slate-800 rounded-lg px-2 py-1 w-28 text-xs text-white focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30"
+                              className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2.5 py-1 w-24 text-xs text-[var(--studio-text)] font-mono tabular-nums focus:outline-none focus:border-[var(--studio-accent)]"
                             />
                           </div>
                         </div>
                       )}
 
                       {filterMode === 'date' && (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2.5">
                           <div className="flex items-center gap-2 w-full">
-                            <label className="text-xs font-medium text-slate-400 flex-1">{t('resultsModal.filter.startDate')}</label>
-                            <input 
-                              type="date" 
+                            <label className="text-xs font-medium text-[var(--studio-text-muted)] flex-1">{t('resultsModal.filter.startDate')}</label>
+                            <input
+                              type="date"
                               value={customStartDate}
                               onChange={(e) => setCustomStartDate(e.target.value)}
-                              className="bg-slate-950/45 border border-slate-800 rounded-lg px-2 py-1 w-28 text-xs text-white focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 [color-scheme:dark]"
+                              className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2 py-1 w-32 text-xs text-[var(--studio-text)] font-mono focus:outline-none focus:border-[var(--studio-accent)]"
                             />
                           </div>
-                          
+
                           <div className="flex items-center gap-2 w-full">
-                            <label className="text-xs font-medium text-slate-400 flex-1">{t('resultsModal.filter.endDate')}</label>
-                            <input 
-                              type="date" 
+                            <label className="text-xs font-medium text-[var(--studio-text-muted)] flex-1">{t('resultsModal.filter.endDate')}</label>
+                            <input
+                              type="date"
                               value={customEndDate}
                               onChange={(e) => setCustomEndDate(e.target.value)}
-                              className="bg-slate-950/45 border border-slate-800 rounded-lg px-2 py-1 w-28 text-xs text-white focus:outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 [color-scheme:dark]"
+                              className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2 py-1 w-32 text-xs text-[var(--studio-text)] font-mono focus:outline-none focus:border-[var(--studio-accent)]"
                             />
                           </div>
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex flex-col gap-3 flex-1">
                       {filterMode === 'draw' && quickSelects.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {quickSelects.map((opt, idx) => (
                             <button
+                              type="button"
                               key={idx}
                               onClick={() => {
                                 setCustomStartDraw(opt.start.toString());
                                 setCustomEndDraw(opt.end.toString());
                               }}
-                              className="px-2.5 py-1 text-[11px] font-semibold bg-slate-950/50 text-slate-300 rounded-lg hover:bg-slate-900 hover:text-white transition-colors border border-slate-800/80"
+                              className="px-2.5 py-1 text-[11px] font-mono tabular-nums font-semibold bg-[var(--studio-input)] text-[var(--studio-text-secondary)] rounded-md hover:bg-[var(--studio-card)] hover:text-[var(--studio-text)] transition-colors border border-[var(--studio-border)]"
                             >
                               {opt.label}
                             </button>
                           ))}
                         </div>
                       )}
-                      
+
                       {filteredBySeason.length > 0 && (
                         <div className="flex flex-col">
                           {filterMode === 'date' && (
-                            <div className="text-[11px] font-medium text-slate-400 mb-2 flex items-center gap-1.5 px-0.5">
-                               <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                               <span>
-                                 {t('resultsModal.filter.selected')} <strong className="text-white ml-1">{filteredBySeason.filter(r => isBoxSelectedByDate(r)).length}</strong>
-                               </span>
+                            <div className="text-[11px] font-medium text-[var(--studio-text-muted)] mb-2">
+                              {t('resultsModal.filter.selected')}{' '}
+                              <strong className="text-[var(--studio-text)] font-mono tabular-nums ml-1">
+                                {filteredBySeason.filter(r => isBoxSelectedByDate(r)).length}
+                              </strong>
                             </div>
                           )}
                           <div className="flex flex-wrap gap-1 p-0.5">
@@ -842,22 +881,23 @@ export const ResultsModal = () => {
                               const selected = filterMode === 'draw' ? isBoxSelected(index) : isBoxSelectedByDate(res);
                               return (
                                 <button
+                                  type="button"
                                   key={index}
                                   onClick={() => {
                                     if (filterMode === 'date') setFilterMode('draw');
                                     handleBoxClick(index);
                                   }}
-                                  className={`w-4 h-4 rounded-[3px] transition-all duration-200 ${
-                                    selected 
-                                      ? 'ring-1 ring-blue-500 ring-offset-1 ring-offset-slate-900 scale-110 opacity-100 z-10 shadow-sm' 
-                                      : 'opacity-40 hover:opacity-100 hover:scale-105'
+                                  className={`w-4 h-4 rounded-[3px] transition-all duration-150 ${
+                                    selected
+                                      ? 'ring-1 ring-[var(--studio-text)]/80 ring-offset-1 ring-offset-[var(--studio-surface-elevated)] opacity-100 z-10'
+                                      : 'opacity-35 hover:opacity-90'
                                   }`}
-                                  style={{ 
-                                    backgroundColor: res.color || '#4a72ff'
+                                  style={{
+                                    backgroundColor: res.color || '#3b82f6'
                                   }}
                                   title={`${t("resultsModal.draw")} ${index}: ${res.text}`}
                                 />
-                              )
+                              );
                             })}
                           </div>
                         </div>
@@ -871,62 +911,76 @@ export const ResultsModal = () => {
 
           {activeTab === 'historico' && (
             <div className="flex flex-col">
-              <div className="flex justify-between items-center mb-3 px-1">
-                <span className="text-sm font-medium text-slate-400">
-                  {t('resultsModal.history.showing')} {filteredResults.length} {t('resultsModal.history.results')}
+              <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+                <span className="text-xs sm:text-sm font-medium text-[var(--studio-text-muted)] font-mono tabular-nums">
+                  {t('resultsModal.history.showing')} <strong className="text-[var(--studio-text)]">{filteredResults.length}</strong> {t('resultsModal.history.results')}
                 </span>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
                   {filteredBySeason.length > 0 && (
-                    <button onClick={exportResults} className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-semibold flex items-center gap-1">
-                      <Download size={16} /> {t('resultsModal.history.export')}
+                    <button
+                      type="button"
+                      onClick={exportResults}
+                      className="text-xs sm:text-sm text-[var(--studio-accent-fg)] hover:opacity-80 transition-opacity font-semibold flex items-center gap-1.5"
+                    >
+                      <Download size={15} /> {t('resultsModal.history.export')}
                     </button>
                   )}
                   {filteredBySeason.length > 0 && (
                     isConfirmingClearAll ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-red-400 font-medium">Limpar tudo?</span>
-                        <button onClick={confirmClearAll} className="p-1 text-red-400 hover:text-white hover:bg-red-500 rounded transition-colors" title="Sim">
-                          <Check size={16} />
+                      <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 rounded-lg px-2 py-1">
+                        <span className="text-xs text-red-700 dark:text-red-300 font-medium">Limpar tudo?</span>
+                        <button
+                          type="button"
+                          onClick={confirmClearAll}
+                          className="p-1 text-red-600 dark:text-red-400 hover:text-white hover:bg-red-600 rounded transition-colors"
+                          title="Sim"
+                        >
+                          <Check size={14} />
                         </button>
-                        <button onClick={() => setIsConfirmingClearAll(false)} className="p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors" title="Não">
-                          <X size={16} />
+                        <button
+                          type="button"
+                          onClick={() => setIsConfirmingClearAll(false)}
+                          className="p-1 text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)] rounded transition-colors"
+                          title="Não"
+                        >
+                          <X size={14} />
                         </button>
                       </div>
                     ) : (
-                      <button onClick={handleClearResults} className="text-sm text-red-400 hover:text-red-300 transition-colors font-semibold flex items-center gap-1">
-                        <Trash2 size={16} /> {t('resultsModal.history.clearAll')}
+                      <button
+                        type="button"
+                        onClick={handleClearResults}
+                        className="text-xs sm:text-sm text-red-600 dark:text-red-400 hover:opacity-80 transition-opacity font-semibold flex items-center gap-1.5"
+                      >
+                        <Trash2 size={15} /> {t('resultsModal.history.clearAll')}
                       </button>
                     )
                   )}
                 </div>
               </div>
-              
-              <div className="space-y-3 pb-2 flex flex-col">
+
+              <div className="space-y-2 pb-2 flex flex-col">
                 {filteredResults.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-slate-500 gap-4 py-8 opacity-70">
-                    <div className="p-4 bg-slate-800/50 rounded-full border border-slate-700/50">
-                      <ListOrdered size={48} className="text-slate-600" />
+                  <div className="flex flex-col items-center justify-center text-[var(--studio-text-muted)] gap-3 py-10">
+                    <div className="p-3.5 bg-[var(--studio-card)] rounded-xl border border-[var(--studio-border)]">
+                      <ListOrdered size={32} />
                     </div>
-                    <p className="text-lg">{t('resultsModal.history.empty')}</p>
+                    <p className="text-sm font-medium">{t('resultsModal.history.empty')}</p>
                   </div>
                 ) : (
-                  filteredResults.map((result, i) => {
+                  filteredResults.map((result) => {
                     const originalIndex = filteredBySeason.length - filteredBySeason.findIndex(r => r.drawId === result.drawId);
                     const dateLabel = result.timestamp ? new Date(result.timestamp).toLocaleDateString(i18n.language) : t('resultsModal.history.unknownDate');
                     return (
-                      <div key={result.drawId} className="relative group">
-                        <ResultItem 
-                          result={result} 
-                          index={originalIndex}
-                          onRemove={(resultToRemove) => {
-                            console.log("Removing result with drawId:", resultToRemove.drawId);
-                            setResults(prev => prev.filter(r => r.drawId !== resultToRemove.drawId));
-                          }}
-                        />
-                        <div className="absolute right-12 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 px-2.5 py-1.5 rounded shadow-lg border border-slate-700 pointer-events-none">
-                          {dateLabel}
-                        </div>
-                      </div>
+                      <ResultItem
+                        key={result.drawId}
+                        result={result}
+                        index={originalIndex}
+                        dateLabel={dateLabel}
+                        onRemove={(resultToRemove) => {
+                          setResults(prev => prev.filter(r => r.drawId !== resultToRemove.drawId));
+                        }}
+                      />
                     );
                   })
                 )}
@@ -937,74 +991,76 @@ export const ResultsModal = () => {
           {activeTab === 'ranking' && (
             <div className="flex flex-col gap-3">
               {/* Summary Header Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 shrink-0">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 shrink-0">
                 {isSeasonFinished ? (
                   <>
-                    <div className="bg-gradient-to-br from-amber-500/15 to-yellow-500/5 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-inner">
-                      <div className="p-1.5 bg-amber-500/20 rounded-lg border border-amber-500/30 text-amber-400 shrink-0">
-                        <Crown size={16} />
+                    <div className="bg-amber-500/[0.08] border border-amber-500/35 rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-amber-500/15 rounded-lg border border-amber-500/30 text-amber-600 dark:text-amber-400 shrink-0">
+                        <Crown size={15} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-amber-400/90 font-medium truncate leading-tight">Campeão</p>
-                        <p className="text-sm font-bold text-white truncate leading-tight">
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300/90 font-medium truncate">Campeão</p>
+                        <p className="text-sm font-semibold text-[var(--studio-text)] truncate font-mono tabular-nums">
                           {allParticipantStats[0] ? `${allParticipantStats[0].name} (${allParticipantStats[0].winsCount})` : '-'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5 hidden sm:flex">
-                      <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400 shrink-0">
-                        <ListOrdered size={16} />
+                    <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl px-3 py-2.5 items-center gap-2.5 hidden sm:flex">
+                      <div className="p-1.5 bg-[var(--studio-accent-soft)] rounded-lg border border-[var(--studio-accent)]/25 text-[var(--studio-accent-fg)] shrink-0">
+                        <ListOrdered size={15} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">Total Sorteios</p>
-                        <p className="text-sm font-bold text-white truncate leading-tight font-mono tabular-nums">{filteredResults.length}</p>
+                        <p className="text-[11px] text-[var(--studio-text-muted)] font-medium truncate">Total Sorteios</p>
+                        <p className="text-sm font-semibold text-[var(--studio-text)] truncate font-mono tabular-nums">{filteredResults.length}</p>
                       </div>
                     </div>
 
-                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5">
-                      <div className="p-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-400 shrink-0">
-                        <Trophy size={16} />
+                    <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-emerald-500/12 rounded-lg border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 shrink-0">
+                        <Trophy size={15} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">Total Contemplados</p>
-                        <p className="text-sm font-bold text-emerald-400 truncate leading-tight font-mono tabular-nums">{allParticipantStats.length}</p>
+                        <p className="text-[11px] text-[var(--studio-text-muted)] font-medium truncate">Contemplados</p>
+                        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 truncate font-mono tabular-nums">{allParticipantStats.length}</p>
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-inner">
-                      <div className="p-1.5 bg-amber-500/20 rounded-lg border border-amber-500/30 text-amber-400 shrink-0">
-                        <Flame size={16} />
+                    <div className="bg-amber-500/[0.08] border border-amber-500/30 rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-amber-500/15 rounded-lg border border-amber-500/30 text-amber-600 dark:text-amber-400 shrink-0">
+                        <Flame size={15} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-amber-400/90 font-medium truncate leading-tight">{t('resultsModal.drySpell.longestSpell')}</p>
-                        <p className="text-sm font-bold text-white truncate leading-tight">
-                          {longestDrySpellParticipant 
-                            ? `${longestDrySpellParticipant.name} (${longestDrySpellParticipant.daysWithoutWin}d)` 
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300/90 font-medium truncate">{t('resultsModal.drySpell.longestSpell')}</p>
+                        <p className="text-sm font-semibold text-[var(--studio-text)] truncate font-mono tabular-nums">
+                          {longestDrySpellParticipant
+                            ? `${longestDrySpellParticipant.name} (${longestDrySpellParticipant.daysWithoutWin}d)`
                             : '-'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5 hidden sm:flex">
-                      <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400 shrink-0">
-                        <Clock size={16} />
+                    <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl px-3 py-2.5 items-center gap-2.5 hidden sm:flex">
+                      <div className="p-1.5 bg-[var(--studio-accent-soft)] rounded-lg border border-[var(--studio-accent)]/25 text-[var(--studio-accent-fg)] shrink-0">
+                        <Clock size={15} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">{t('resultsModal.drySpell.averageSpell')}</p>
-                        <p className="text-sm font-bold text-white truncate leading-tight">{averageDrySpell} {t('resultsModal.drySpell.daysWithoutWin', { count: averageDrySpell }).split(' ')[1] || 'dias'}</p>
+                        <p className="text-[11px] text-[var(--studio-text-muted)] font-medium truncate">{t('resultsModal.drySpell.averageSpell')}</p>
+                        <p className="text-sm font-semibold text-[var(--studio-text)] truncate font-mono tabular-nums">
+                          {averageDrySpell} {t('resultsModal.drySpell.daysWithoutWin', { count: averageDrySpell }).split(' ')[1] || 'dias'}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-2.5">
-                      <div className="p-1.5 bg-slate-800 rounded-lg border border-slate-700/60 text-slate-400 shrink-0">
-                        <Users size={16} />
+                    <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <div className="p-1.5 bg-[var(--studio-input)] rounded-lg border border-[var(--studio-border)] text-[var(--studio-text-muted)] shrink-0">
+                        <Users size={15} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-slate-400 font-medium truncate leading-tight">{t('resultsModal.drySpell.neverWonCount')}</p>
-                        <p className="text-sm font-bold text-slate-300 truncate leading-tight font-mono tabular-nums">{neverWonCount}</p>
+                        <p className="text-[11px] text-[var(--studio-text-muted)] font-medium truncate">{t('resultsModal.drySpell.neverWonCount')}</p>
+                        <p className="text-sm font-semibold text-[var(--studio-text)] truncate font-mono tabular-nums">{neverWonCount}</p>
                       </div>
                     </div>
                   </>
@@ -1012,45 +1068,46 @@ export const ResultsModal = () => {
               </div>
 
               {/* Search & Sort Controls */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0 bg-[var(--studio-surface-elevated)] p-2.5 rounded-xl border border-[var(--studio-border)]">
                 <div className="relative flex-1">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--studio-text-muted)]" />
+                  <Input
                     type="text"
                     value={drySpellSearch}
                     onChange={(e) => setDrySpellSearch(e.target.value)}
                     placeholder={t('resultsModal.drySpell.searchPlaceholder')}
-                    className="w-full bg-slate-900/80 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/80"
+                    className="pl-8 py-1.5 text-xs min-h-[36px]"
                   />
                 </div>
 
                 <div className="flex items-center flex-wrap gap-3 shrink-0">
                   {!isSeasonFinished && (
                     <>
-                      <label className="flex items-center gap-1.5 cursor-pointer group">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            className="peer sr-only" 
-                            checked={drySpellOnlyOnWheel}
-                            onChange={(e) => setDrySpellOnlyOnWheel(e.target.checked)}
-                          />
-                          <div className="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 border border-slate-700/50"></div>
-                        </div>
-                        <span className="text-[11px] text-slate-300 font-medium group-hover:text-white transition-colors select-none">{t('resultsModal.drySpell.onlyOnWheel')}</span>
-                      </label>
-                      
-                      <div className="w-px h-4 bg-slate-800/80 mx-0.5 hidden sm:block"></div>
+                      <div className="flex items-center gap-2">
+                        <Toggle
+                          enabled={drySpellOnlyOnWheel}
+                          onChange={setDrySpellOnlyOnWheel}
+                          aria-label={t('resultsModal.drySpell.onlyOnWheel')}
+                        />
+                        <span
+                          onClick={() => setDrySpellOnlyOnWheel(!drySpellOnlyOnWheel)}
+                          className="text-xs text-[var(--studio-text-secondary)] font-medium cursor-pointer select-none"
+                        >
+                          {t('resultsModal.drySpell.onlyOnWheel')}
+                        </span>
+                      </div>
+
+                      <div className="w-px h-4 bg-[var(--studio-border)] hidden sm:block" />
                     </>
                   )}
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <label className="text-[11px] text-slate-400 font-medium whitespace-nowrap hidden sm:block">{t('resultsModal.drySpell.sortBy')}</label>
+                    <label className="text-xs text-[var(--studio-text-muted)] font-medium whitespace-nowrap hidden sm:block">{t('resultsModal.drySpell.sortBy')}</label>
                     <div className="flex items-center gap-1">
                       <select
                         value={drySpellSort}
                         onChange={(e: any) => setDrySpellSort(e.target.value)}
-                        className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-amber-500/80 [color-scheme:dark]"
+                        className="bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--studio-text)] focus:outline-none focus:border-amber-500"
                       >
                         <option value="wins">{t('resultsModal.drySpell.sortWins')}</option>
                         {!isSeasonFinished && (
@@ -1061,17 +1118,17 @@ export const ResultsModal = () => {
                         )}
                         <option value="name">{t('resultsModal.drySpell.sortName')}</option>
                       </select>
-                      
+
                       <button
+                        type="button"
                         onClick={() => setDrySpellOrder(drySpellOrder === 'asc' ? 'desc' : 'asc')}
-                        className={`p-1.5 rounded-lg border transition-all ${
-                          drySpellOrder === 'desc' 
-                            ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700' 
-                            : 'bg-slate-800 border-slate-700 text-blue-400 hover:bg-slate-700'
+                        className={`p-1.5 rounded-lg border transition-colors bg-[var(--studio-input)] border-[var(--studio-border-strong)] hover:bg-[var(--studio-card)] ${
+                          drySpellOrder === 'desc' ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--studio-accent-fg)]'
                         }`}
                         title={drySpellOrder === 'asc' ? t('resultsModal.drySpell.ascending') : t('resultsModal.drySpell.descending')}
+                        aria-label={drySpellOrder === 'asc' ? t('resultsModal.drySpell.ascending') : t('resultsModal.drySpell.descending')}
                       >
-                        {drySpellOrder === 'asc' ? <SortAsc size={14} /> : <SortDesc size={14} />}
+                        {drySpellOrder === 'asc' ? <SortAsc size={15} /> : <SortDesc size={15} />}
                       </button>
                     </div>
                   </div>
@@ -1079,29 +1136,29 @@ export const ResultsModal = () => {
               </div>
 
               {/* List of participants */}
-              <div className="space-y-2 pb-1 flex flex-col pr-1">
+              <div className="space-y-2 pb-1 flex flex-col">
                 {filteredDrySpellList.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-slate-500 gap-3 py-8 opacity-70">
-                    <Clock size={40} className="text-slate-600" />
+                  <div className="flex flex-col items-center justify-center text-[var(--studio-text-muted)] gap-3 py-10">
+                    <Clock size={32} />
                     <p className="text-sm">{t('resultsModal.drySpell.noParticipants')}</p>
                   </div>
                 ) : (
                   (() => {
-                    const maxWins = filteredDrySpellList.length > 0 
-                      ? Math.max(...filteredDrySpellList.map(p => p.winsCount)) 
+                    const maxWins = filteredDrySpellList.length > 0
+                      ? Math.max(...filteredDrySpellList.map(p => p.winsCount))
                       : 0;
-                      
+
                     return filteredDrySpellList.map((st, index) => {
                       const isLeader = st.winsCount > 0 && st.winsCount === maxWins;
-                      
+
                       return (
-                        <RankingItem 
-                          key={st.name} 
-                          st={st} 
-                          index={index} 
-                          t={t} 
-                          i18n={i18n} 
-                          isSeasonActive={isSeasonActive} 
+                        <RankingItem
+                          key={st.name}
+                          st={st}
+                          index={index}
+                          t={t}
+                          i18n={i18n}
+                          isSeasonActive={isSeasonActive}
                           isLeader={isLeader}
                         />
                       );
@@ -1109,53 +1166,52 @@ export const ResultsModal = () => {
                   })()
                 )}
               </div>
-
             </div>
           )}
 
           {activeTab === 'importar' && (
-            <div className="flex flex-col gap-6 text-slate-300 pb-2">
-              <div className="flex flex-col min-h-[250px]">
-                <label className="text-base font-semibold text-slate-300 mb-3 block">
+            <div className="flex flex-col gap-5 text-[var(--studio-text-secondary)] pb-2">
+              <div className="flex flex-col min-h-[240px]">
+                <label className="text-sm font-medium text-[var(--studio-text)] mb-2 block">
                   {t('resultsModal.import.title')}
                 </label>
-                <div className="flex-1 bg-slate-950/45 p-1.5 rounded-2xl border border-slate-800/80 shadow-inner">
+                <div className="flex-1 bg-[var(--studio-input)] p-1 rounded-xl border border-[var(--studio-border-strong)] focus-within:border-[var(--studio-accent)] transition-colors">
                   <textarea
-                    className="w-full h-full bg-transparent p-3 text-sm text-white resize-none focus:outline-none placeholder-slate-600 custom-scrollbar"
+                    className="w-full h-full min-h-[220px] bg-transparent p-3 text-sm text-[var(--studio-text)] resize-none focus:outline-none placeholder-[var(--studio-text-muted)] custom-scrollbar font-mono"
                     placeholder={t('resultsModal.import.placeholder')}
                     value={importText}
                     onChange={(e) => setImportText(e.target.value)}
                   />
                 </div>
               </div>
-              
+
               <div className="shrink-0 space-y-4">
-                <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-2xl flex items-start gap-3">
-                  <AlertCircle size={20} className="text-blue-400 shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-200/90 leading-relaxed">
-                    {t('resultsModal.import.info1')}<b>{t('sidebar.tabs.results')}</b>{t('resultsModal.import.info2')}<b>{t('resultsModal.tabs.ranking')}</b>. <br/>{t('resultsModal.import.info3')}
+                <div className="bg-[var(--studio-accent-soft)] border border-[var(--studio-accent)]/30 p-3.5 rounded-xl flex items-start gap-3">
+                  <AlertCircle size={18} className="text-[var(--studio-accent-fg)] shrink-0 mt-0.5" />
+                  <p className="text-xs sm:text-sm text-[var(--studio-text-secondary)] leading-relaxed">
+                    {t('resultsModal.import.info1')}<strong className="text-[var(--studio-text)]">{t('sidebar.tabs.results')}</strong>{t('resultsModal.import.info2')}<strong className="text-[var(--studio-text)]">{t('resultsModal.tabs.ranking')}</strong>. <br />{t('resultsModal.import.info3')}
                   </p>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-2 gap-3">
                   {filteredBySeason.length > 0 ? (
                     isConfirmingClearAll ? (
                       <div className="flex gap-2 w-full">
-                        <Button variant="danger" onClick={confirmClearAll} className="flex-1 gap-1 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs" title="Confirmar">
-                          <Check size={16} /> Sim
+                        <Button variant="danger" onClick={confirmClearAll} className="flex-1 gap-1.5 text-xs">
+                          <Check size={15} /> Sim
                         </Button>
-                        <Button variant="secondary" onClick={() => setIsConfirmingClearAll(false)} className="flex-1 gap-1 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white text-xs" title="Cancelar">
-                          <X size={16} /> Não
+                        <Button variant="secondary" onClick={() => setIsConfirmingClearAll(false)} className="flex-1 gap-1.5 text-xs">
+                          <X size={15} /> Não
                         </Button>
                       </div>
                     ) : (
-                      <Button variant="danger" onClick={handleClearResults} className="w-full gap-2 py-3 rounded-2xl border border-red-500/20 bg-red-950/15 hover:bg-red-950/25 text-red-400">
-                        <Trash2 size={18} /> {t('resultsModal.history.clearAll')}
+                      <Button variant="danger" onClick={handleClearResults} className="w-full gap-2">
+                        <Trash2 size={16} /> {t('resultsModal.history.clearAll')}
                       </Button>
                     )
-                  ) : <div></div>}
-                  <Button onClick={handleImport} disabled={!importText.trim()} className="w-full gap-2 py-3 rounded-2xl shadow-lg bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-indigo-500/20">
-                    <Download size={18} /> {t('resultsModal.import.btn')}
+                  ) : <div />}
+                  <Button onClick={handleImport} disabled={!importText.trim()} className="w-full gap-2">
+                    <Download size={16} /> {t('resultsModal.import.btn')}
                   </Button>
                 </div>
               </div>
@@ -1163,7 +1219,6 @@ export const ResultsModal = () => {
           )}
 
         </div>
-
       </div>
 
       <SeasonPosterModal

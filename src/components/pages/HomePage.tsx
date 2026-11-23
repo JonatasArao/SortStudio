@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { applyThemeToDocument } from '../../constants/themes';
 import { Header } from '../organisms/Header';
 import { EliminationHUD } from '../organisms/EliminationHUD';
 import { WheelDisplay } from '../organisms/WheelDisplay';
@@ -28,11 +29,26 @@ export const HomePage = () => {
   const isAddAudioModalOpen = useAppStore(s => s.isAddAudioModalOpen);
   const setIsAddAudioModalOpen = useAppStore(s => s.setIsAddAudioModalOpen);
   const wheelType = useAppStore(s => s.wheelType);
+  const wheelTheme = useAppStore(s => s.wheelTheme);
+  const uiDensity = useAppStore(s => s.uiDensity);
+
+  useEffect(() => {
+    applyThemeToDocument(wheelTheme);
+  }, [wheelTheme]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.density = uiDensity;
+    }
+  }, [uiDensity]);
 
   useGameLoop();
 
   return (
-    <div className="h-[100dvh] w-full bg-[#14151a] text-slate-200 flex flex-col font-sans overflow-hidden">
+    <div
+      data-density={uiDensity}
+      className="h-[100dvh] w-full bg-[var(--studio-canvas)] text-[var(--studio-text)] flex flex-col overflow-hidden transition-colors duration-300"
+    >
       <Header />
       <EliminationHUD />
       <main className="flex flex-1 flex-row overflow-hidden min-h-0 relative">
@@ -64,9 +80,6 @@ export const HomePage = () => {
       <GraveyardModal />
       <EliminationPopup />
       {winner && showConfetti && winner.isEliminated !== true && <Confetti />}
-
-      {/* Global CSS scrollbar styling */}
-      <style dangerouslySetInnerHTML={{__html: `.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } .custom-scrollbar::-webkit-scrollbar { width: 8px; } .custom-scrollbar::-webkit-scrollbar-track { background: #1a1b23; border-radius: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d303e; border-radius: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #474f6b; }`}} />
     </div>
   );
 };

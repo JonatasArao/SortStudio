@@ -1369,7 +1369,7 @@ const LeaderboardUpdater = ({ slices, positionsRef, leaderPosRef, isSpinning, ac
             el.style.borderLeft = "2px solid rgba(16, 185, 129, 1)";
             el.style.opacity = "1";
           } else {
-            el.style.backgroundColor = "rgba(15, 23, 42, 0.6)";
+            el.style.backgroundColor = "var(--studio-surface)";
             el.style.borderLeft = "none";
             el.style.opacity = "0.6";
           }
@@ -1841,64 +1841,64 @@ export const RaceDisplay = () => {
   }, [isSpinning, soundEnabled, masterVolume]);
 
   return (
-    <div className="relative flex-1 h-full bg-slate-950 overflow-hidden shadow-2xl">
+    <div className="relative flex-1 h-full bg-[var(--studio-canvas)] overflow-hidden">
       {/* Race Leaderboard Sidebar HUD */}
-      <div className="absolute top-12 left-8 z-10 w-48 bg-slate-900/95 backdrop-blur-md border-t-2 border-t-red-600 rounded-b-lg overflow-hidden shadow-2xl pointer-events-none">
-        <div className="bg-slate-800 px-3 py-2 text-white font-black text-[10px] tracking-widest uppercase border-b border-slate-700 flex justify-between items-center">
+      <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-10 w-40 sm:w-48 bg-[var(--studio-surface)]/92 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-red-500 rounded-xl overflow-hidden shadow-2xl pointer-events-none">
+        <div className="bg-[var(--studio-card)] px-3 py-2 text-[var(--studio-text)] font-semibold text-[11px] tracking-wider uppercase border-b border-[var(--studio-border)] flex justify-between items-center">
           <span>{t('race.pos', 'POS')}</span>
-          <span id="sector-display" className="text-red-500 font-bold">{t('race.lap', 'LAP')} 1/{TOTAL_LAPS}</span>
+          <span id="sector-display" className="text-red-500 dark:text-red-400 font-mono tabular-nums font-bold">{t('race.lap', 'LAP')} 1/{TOTAL_LAPS}</span>
         </div>
         <div className="relative pb-1 transition-all duration-300" style={{ height: `${slices.length * 32}px` }}>
           {slices.map((slice, i) => (
             <div
               key={slice.item.id}
               id={`leaderboard-racer-${slice.item.id}`}
-              className="absolute left-0 right-0 flex items-center gap-2 bg-slate-900 border-b border-slate-800/80 px-2 py-1.5 transition-transform duration-300 ease-out"
+              className="absolute left-0 right-0 flex items-center gap-2 bg-[var(--studio-surface)]/90 border-b border-[var(--studio-border)] px-2.5 py-1.5 transition-transform duration-300 ease-out"
               style={{ top: 0, transform: `translateY(${i * 32}px)` }}
             >
-              <div id={`leaderboard-rank-${slice.item.id}`} className="w-5 text-center text-[10px] font-black text-white/50">
+              <div id={`leaderboard-rank-${slice.item.id}`} className="w-5 text-center text-[11px] font-mono tabular-nums font-bold text-[var(--studio-text-muted)]">
                 {i + 1}
               </div>
-              <div className="w-1.5 h-3.5 rounded-sm" style={{ backgroundColor: slice.color }}></div>
-              <div className="text-[11px] font-black tracking-wide uppercase text-white/90 truncate flex-1">{slice.item.text}</div>
+              <div className="w-1.5 h-3.5 rounded-sm shrink-0" style={{ backgroundColor: slice.color }}></div>
+              <div className="text-xs font-semibold tracking-tight text-[var(--studio-text)] truncate flex-1">{slice.item.text}</div>
               <div id={`leaderboard-status-${slice.item.id}`} className="ml-auto"></div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Authentic TV Broadcast Graphics Overlay System */}
+      {/* Broadcast Graphics Lower-Third Overlay */}
       <div
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-20 transition-all duration-300 flex flex-col items-center max-w-lg w-full px-4 ${
+        className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-20 transition-all duration-300 flex flex-col items-center max-w-lg w-full px-4 ${
           isSpinning ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
         }`}
       >
         {/* CAMERA TYPE 1: ONBOARD COCKPIT & REAR MIRROR TELEMETRY HUD */}
         {(cameraMode === 'bumper' || cameraMode === 'rear') && (
-          <div className="bg-slate-950/95 backdrop-blur-md border-b-2 border-b-amber-500 rounded-lg overflow-hidden shadow-2xl flex items-center justify-between px-3.5 py-1.5 border border-slate-800 w-full gap-3">
+          <div className="bg-[var(--studio-surface)]/95 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-amber-500 rounded-xl overflow-hidden shadow-2xl flex items-center justify-between px-3.5 py-2 w-full gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span id="onboard-driver-pos" className="bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded text-[10px] shadow flex-shrink-0">
+              <span id="onboard-driver-pos" className="bg-amber-500 text-slate-950 font-mono tabular-nums font-bold px-1.5 py-0.5 rounded text-[11px] shrink-0">
                 P1
               </span>
-              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm flex-shrink-0" />
-              <span id="onboard-driver-name" className="text-xs text-white font-black uppercase tracking-wide truncate max-w-[130px]">
+              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm shrink-0" />
+              <span id="onboard-driver-name" className="text-xs text-[var(--studio-text)] font-semibold uppercase tracking-wide truncate max-w-[130px]">
                 {t('race.driver_placeholder', 'PILOTO')}
               </span>
-              <span className="text-[9px] font-black uppercase text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 flex-shrink-0">
-                {cameraMode === 'rear' ? 'ESPELHO TRASEIRO' : 'ONBOARD FRONTAL'}
+              <span className="text-[10px] font-semibold uppercase text-amber-600 dark:text-amber-400 shrink-0 hidden sm:inline">
+                · {cameraMode === 'rear' ? 'Espelho Traseiro' : 'Onboard'}
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <div className="hidden sm:flex items-center gap-1">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} id={`rpm-led-${i}`} className="w-2 h-2.5 rounded-sm bg-slate-800 transition-all duration-75" />
+                  <div key={i} id={`rpm-led-${i}`} className="w-2 h-2.5 rounded-sm bg-[var(--studio-card)] transition-all duration-75" />
                 ))}
               </div>
-              <div className="flex items-center gap-1.5 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                <span id="onboard-driver-gear" className="text-amber-400 font-black text-xs">M1</span>
-                <span className="text-slate-700 text-[10px]">•</span>
-                <span id="onboard-driver-speed" className="text-white font-mono font-bold text-xs">0 KM/H</span>
+              <div className="flex items-center gap-1.5 bg-[var(--studio-input)] px-2 py-0.5 rounded-md border border-[var(--studio-border)] font-mono tabular-nums">
+                <span id="onboard-driver-gear" className="text-amber-600 dark:text-amber-400 font-bold text-xs">M1</span>
+                <span className="text-[var(--studio-text-muted)] text-[10px]">·</span>
+                <span id="onboard-driver-speed" className="text-[var(--studio-text)] font-semibold text-xs">0 KM/H</span>
               </div>
             </div>
           </div>
@@ -1906,67 +1906,67 @@ export const RaceDisplay = () => {
 
         {/* CAMERA TYPE 2: BATTLE & DUEL MODE (ACTION) */}
         {cameraMode === 'action' && (
-          <div className="bg-slate-950/95 backdrop-blur-md border-l-4 border-l-amber-500 rounded-r-lg overflow-hidden shadow-2xl flex items-center justify-between px-3.5 py-1.5 border border-slate-800 w-full gap-3">
+          <div className="bg-[var(--studio-surface)]/95 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-amber-500 rounded-xl overflow-hidden shadow-2xl flex items-center justify-between px-3.5 py-2 w-full gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[9px] font-black tracking-widest uppercase text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 flex-shrink-0">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400 shrink-0">
                 DISPUTA
               </span>
-              <span id="onboard-driver-pos" className="bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded text-[10px] flex-shrink-0">
+              <span id="onboard-driver-pos" className="bg-amber-500 text-slate-950 font-mono tabular-nums font-bold px-1.5 py-0.5 rounded text-[11px] shrink-0">
                 P1
               </span>
-              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm flex-shrink-0" />
-              <span id="onboard-driver-name" className="text-xs text-white font-black uppercase tracking-wide truncate">
+              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm shrink-0" />
+              <span id="onboard-driver-name" className="text-xs text-[var(--studio-text)] font-semibold uppercase tracking-wide truncate">
                 {t('race.driver_placeholder', 'PILOTO')}
               </span>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span id="onboard-driver-gap" className="text-[10px] font-mono font-bold text-amber-300">
+            <div className="flex items-center gap-2 shrink-0 font-mono tabular-nums">
+              <span id="onboard-driver-gap" className="text-[11px] font-semibold text-amber-600 dark:text-amber-300">
                 +0.0m
               </span>
-              <span id="onboard-driver-speed" className="text-white font-mono font-bold text-xs bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+              <span id="onboard-driver-speed" className="text-[var(--studio-text)] font-semibold text-xs bg-[var(--studio-input)] px-2 py-0.5 rounded-md border border-[var(--studio-border)]">
                 0 KM/H
               </span>
             </div>
           </div>
         )}
 
-        {/* CAMERA TYPE 3: AERIAL HELICOPTER BIRD'S-EYE BUG */}
+        {/* CAMERA TYPE 3: AERIAL HELICOPTER */}
         {cameraMode === 'helicopter' && (
-          <div className="bg-slate-950/95 backdrop-blur-md border-t-2 border-t-cyan-500 rounded-lg px-3.5 py-1.5 shadow-2xl flex items-center justify-between border border-slate-800 w-full gap-3">
+          <div className="bg-[var(--studio-surface)]/95 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-cyan-500 rounded-xl px-3.5 py-2 shadow-2xl flex items-center justify-between w-full gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[9px] font-black tracking-widest uppercase text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 flex-shrink-0">
-                AÉREA 🚁
+              <span className="text-[10px] font-bold tracking-wider uppercase text-cyan-600 dark:text-cyan-400 shrink-0">
+                CAM AÉREA
               </span>
-              <span id="onboard-driver-pos" className="bg-cyan-500 text-slate-950 font-black px-1.5 py-0.5 rounded text-[10px] flex-shrink-0">
+              <span id="onboard-driver-pos" className="bg-cyan-500 text-slate-950 font-mono tabular-nums font-bold px-1.5 py-0.5 rounded text-[11px] shrink-0">
                 P1
               </span>
-              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm flex-shrink-0" />
-              <span id="onboard-driver-name" className="text-xs text-white font-black uppercase truncate">
+              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm shrink-0" />
+              <span id="onboard-driver-name" className="text-xs text-[var(--studio-text)] font-semibold uppercase truncate">
                 {t('race.driver_placeholder', 'PILOTO')}
               </span>
             </div>
-            <span id="onboard-driver-speed" className="text-white font-mono font-bold text-xs bg-slate-900 px-2 py-0.5 rounded border border-slate-800 flex-shrink-0">
+            <span id="onboard-driver-speed" className="text-[var(--studio-text)] font-mono tabular-nums font-semibold text-xs bg-[var(--studio-input)] px-2 py-0.5 rounded-md border border-[var(--studio-border)] shrink-0">
               0 KM/H
             </span>
           </div>
         )}
 
-        {/* CAMERA TYPE 3B: TV CRANE / JIB CAMERA BUG */}
+        {/* CAMERA TYPE 3B: TV CRANE / JIB CAMERA */}
         {cameraMode === 'crane' && (
-          <div className="bg-slate-950/95 backdrop-blur-md border-t-2 border-t-purple-500 rounded-lg px-3.5 py-1.5 shadow-2xl flex items-center justify-between border border-slate-800 w-full gap-3">
+          <div className="bg-[var(--studio-surface)]/95 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-purple-500 rounded-xl px-3.5 py-2 shadow-2xl flex items-center justify-between w-full gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[9px] font-black tracking-widest uppercase text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 flex-shrink-0">
-                GRUA 🎥
+              <span className="text-[10px] font-bold tracking-wider uppercase text-purple-600 dark:text-purple-400 shrink-0">
+                CAM GRUA
               </span>
-              <span id="onboard-driver-pos" className="bg-purple-500 text-slate-950 font-black px-1.5 py-0.5 rounded text-[10px] flex-shrink-0">
+              <span id="onboard-driver-pos" className="bg-purple-500 text-white font-mono tabular-nums font-bold px-1.5 py-0.5 rounded text-[11px] shrink-0">
                 P1
               </span>
-              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm flex-shrink-0" />
-              <span id="onboard-driver-name" className="text-xs text-white font-black uppercase truncate">
+              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm shrink-0" />
+              <span id="onboard-driver-name" className="text-xs text-[var(--studio-text)] font-semibold uppercase truncate">
                 {t('race.driver_placeholder', 'PILOTO')}
               </span>
             </div>
-            <span id="onboard-driver-speed" className="text-white font-mono font-bold text-xs bg-slate-900 px-2 py-0.5 rounded border border-slate-800 flex-shrink-0">
+            <span id="onboard-driver-speed" className="text-[var(--studio-text)] font-mono tabular-nums font-semibold text-xs bg-[var(--studio-input)] px-2 py-0.5 rounded-md border border-[var(--studio-border)] shrink-0">
               0 KM/H
             </span>
           </div>
@@ -1974,34 +1974,30 @@ export const RaceDisplay = () => {
 
         {/* CAMERA TYPE 4: START GRID PROCEDURE */}
         {cameraMode === 'grid' && (
-          <div className="bg-slate-950/95 backdrop-blur-md border-l-4 border-l-red-600 rounded-r-lg px-3.5 py-1.5 shadow-2xl flex items-center justify-between border border-slate-800 w-full">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-              <span className="text-xs text-white font-bold tracking-wide uppercase">
-                GRID DE LARGADA
-              </span>
-            </div>
+          <div className="bg-[var(--studio-surface)]/95 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-red-500 rounded-xl px-4 py-2 shadow-2xl flex items-center justify-center w-full">
+            <span className="text-xs text-[var(--studio-text)] font-bold tracking-wider uppercase">
+              Grid de Largada
+            </span>
           </div>
         )}
 
-        {/* CAMERA TYPE 5: OFFICIAL BROADCAST TV, TRACKSIDE & LOW-SIDE LOWER-THIRD */}
+        {/* CAMERA TYPE 5: OFFICIAL BROADCAST LOWER-THIRD */}
         {(cameraMode === 'tv' || cameraMode === 'trackside' || cameraMode === 'low_side' || cameraMode === 'finish' || cameraMode === 'idle') && (
-          <div className="bg-slate-950/95 backdrop-blur-md border-l-4 border-l-red-600 rounded-r-lg overflow-hidden shadow-2xl flex items-center justify-between px-3.5 py-1.5 border border-slate-800 w-full gap-3">
+          <div className="bg-[var(--studio-surface)]/95 backdrop-blur-md border border-[var(--studio-border)] border-t-2 border-t-red-500 rounded-xl overflow-hidden shadow-2xl flex items-center justify-between px-3.5 py-2 w-full gap-3">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
-              <span id="onboard-driver-pos" className="bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded text-[10px] flex-shrink-0">
+              <span id="onboard-driver-pos" className="bg-amber-500 text-slate-950 font-mono tabular-nums font-bold px-1.5 py-0.5 rounded text-[11px] shrink-0">
                 P1
               </span>
-              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm flex-shrink-0" />
-              <span id="onboard-driver-name" className="text-xs text-white font-black uppercase tracking-wide truncate">
+              <div id="onboard-driver-color" className="w-2.5 h-3.5 rounded-sm shrink-0" />
+              <span id="onboard-driver-name" className="text-xs text-[var(--studio-text)] font-semibold uppercase tracking-wide truncate">
                 {t('race.driver_placeholder', 'PILOTO')}
               </span>
-              <span id="onboard-driver-gap" className="text-[10px] text-amber-400 font-mono font-bold truncate">
+              <span id="onboard-driver-gap" className="text-[11px] text-amber-600 dark:text-amber-400 font-mono tabular-nums font-semibold truncate">
                 LÍDER
               </span>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span id="onboard-driver-speed" className="text-white font-mono font-bold text-xs bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+            <div className="flex items-center gap-2 shrink-0">
+              <span id="onboard-driver-speed" className="text-[var(--studio-text)] font-mono tabular-nums font-semibold text-xs bg-[var(--studio-input)] px-2 py-0.5 rounded-md border border-[var(--studio-border)]">
                 0 KM/H
               </span>
             </div>
@@ -2010,15 +2006,15 @@ export const RaceDisplay = () => {
       </div>
 
       {!isSpinning && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-4">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 w-full max-w-xs px-4">
           <button
+            type="button"
             onClick={() => handleSpinClick()}
             disabled={!canSpin}
-            className="w-full py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-black rounded-lg shadow-2xl border border-red-500/50 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-[0.2em] text-lg relative overflow-hidden group flex items-center justify-center gap-3 skew-x-[-5deg]"
+            className="w-full py-3.5 px-6 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-2xl border border-red-400/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-45 disabled:cursor-not-allowed uppercase tracking-[0.16em] text-sm sm:text-base flex items-center justify-center gap-2.5"
           >
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out" />
-            <Flag className="w-6 h-6 text-white skew-x-[5deg]" />
-            <span className="skew-x-[5deg] font-black italic">{t('race.start', 'START RACE')}</span>
+            <Flag className="w-5 h-5 text-white" />
+            <span>{t('race.start', 'START RACE')}</span>
           </button>
         </div>
       )}

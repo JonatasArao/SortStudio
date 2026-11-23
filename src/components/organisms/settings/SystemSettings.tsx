@@ -30,19 +30,21 @@ export const SystemSettings = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1">{t('settings.system.language')}</h3>
-        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 shadow-xl">
-          <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-[var(--studio-text-muted)] uppercase tracking-wider mb-3">
+          {t('settings.system.language')}
+        </h3>
+        <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Globe size={16} /> {t('settings.system.interfaceLanguage')}
-              </label>
-              <p className="text-xs text-slate-500 mt-1">{t('settings.system.languageDesc')}</p>
+              <div className="text-sm font-medium text-[var(--studio-text)] flex items-center gap-2">
+                <Globe size={16} className="text-[var(--studio-accent-fg)]" /> {t('settings.system.interfaceLanguage')}
+              </div>
+              <p className="text-xs text-[var(--studio-text-muted)] mt-1">{t('settings.system.languageDesc')}</p>
             </div>
-            <Button onClick={toggleLanguage} variant="secondary" className="gap-2 px-4 py-2">
-              <Globe size={16} />
+            <Button onClick={toggleLanguage} variant="secondary" className="gap-2 shrink-0">
+              <Globe size={15} />
               {i18n.language === 'pt-BR' ? 'Português (BR)' : 'English'}
             </Button>
           </div>
@@ -50,37 +52,39 @@ export const SystemSettings = () => {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1">{t('settings.system.data')}</h3>
-        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 flex flex-col gap-6 shadow-xl">
-          <input 
-            type="file" 
-            accept=".wheel,application/json" 
-            ref={fileInputRef} 
-            style={{ display: 'none' }} 
-            onChange={handleFileChange} 
+        <h3 className="text-xs font-semibold text-[var(--studio-text-muted)] uppercase tracking-wider mb-3">
+          {t('settings.system.data')}
+        </h3>
+        <div className="bg-[var(--studio-card)] border border-[var(--studio-border)] rounded-xl p-4 sm:p-5 flex flex-col gap-5">
+          <input
+            type="file"
+            accept=".wheel,application/json"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
           />
-          
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-[var(--studio-border)]">
             <div>
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Download size={16} /> {t('settings.system.export')}
-              </label>
-              <p className="text-xs text-slate-500 mt-1">{t('settings.system.exportDesc')}</p>
+              <div className="text-sm font-medium text-[var(--studio-text)] flex items-center gap-2">
+                <Download size={16} className="text-[var(--studio-accent-fg)]" /> {t('settings.system.export')}
+              </div>
+              <p className="text-xs text-[var(--studio-text-muted)] mt-1">{t('settings.system.exportDesc')}</p>
             </div>
-            <Button onClick={() => setIsExportModalOpen(true)} variant="secondary" className="gap-2">
-              <Download size={16} /> {t('settings.system.exportBtn')}
+            <Button onClick={() => setIsExportModalOpen(true)} variant="secondary" className="gap-2 shrink-0">
+              <Download size={15} /> {t('settings.system.exportBtn')}
             </Button>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Upload size={16} /> {t('settings.system.import')}
-              </label>
-              <p className="text-xs text-slate-500 mt-1">{t('settings.system.importDesc')}</p>
+              <div className="text-sm font-medium text-[var(--studio-text)] flex items-center gap-2">
+                <Upload size={16} className="text-[var(--studio-accent-fg)]" /> {t('settings.system.import')}
+              </div>
+              <p className="text-xs text-[var(--studio-text-muted)] mt-1">{t('settings.system.importDesc')}</p>
             </div>
-            <Button onClick={handleImportClick} variant="secondary" className="gap-2">
-              <Upload size={16} /> {t('settings.system.importBtn')}
+            <Button onClick={handleImportClick} variant="secondary" className="gap-2 shrink-0">
+              <Upload size={15} /> {t('settings.system.importBtn')}
             </Button>
           </div>
         </div>

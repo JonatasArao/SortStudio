@@ -3,18 +3,30 @@ import React from 'react';
 interface ToggleProps {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
+  ariaLabel?: string;
 }
 
-export const Toggle: React.FC<ToggleProps> = ({ enabled, onChange }) => {
+export const Toggle: React.FC<ToggleProps> = ({ enabled, onChange, ariaLabel }) => {
   return (
     <button
       onClick={() => onChange(!enabled)}
       type="button"
       role="switch"
       aria-checked={enabled}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-slate-950 hover:opacity-95 ${enabled ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md shadow-blue-500/20" : "bg-slate-700 border border-slate-600/40"}`}
+      aria-label={ariaLabel}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-150 ${
+        enabled
+          ? 'bg-[var(--studio-accent)] border-transparent'
+          : 'bg-[var(--studio-card)] border-[var(--studio-border-strong)] hover:border-[var(--studio-accent)]'
+      }`}
     >
-      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${enabled ? "translate-x-6" : "translate-x-1"}`} />
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full shadow-sm transition-transform duration-150 ${
+          enabled
+            ? 'translate-x-6 bg-[var(--studio-accent-text)]'
+            : 'translate-x-1 bg-[var(--studio-text-muted)] dark:bg-slate-200'
+        }`}
+      />
     </button>
   );
 };

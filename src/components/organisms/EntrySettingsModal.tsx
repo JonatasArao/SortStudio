@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   X,
   ArrowLeft,
@@ -8,13 +8,15 @@ import {
   Trash,
   Settings2,
   PlayCircle,
-  Music2
-} from "lucide-react";
-import { useAppStore } from "../../store/useAppStore";
-import { useWheelData } from "../../hooks/useWheelData";
-import { useAudioActions } from "../../hooks/useAppActions";
-import { useTranslation } from "react-i18next";
-import { Item } from "../../types";
+  Music2,
+} from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
+import { useWheelData } from '../../hooks/useWheelData';
+import { useAudioActions } from '../../hooks/useAppActions';
+import { useTranslation } from 'react-i18next';
+import { Item } from '../../types';
+import { Button } from '../atoms/Button';
+import { Input } from '../atoms/Input';
 
 export const EntrySettingsModal = () => {
   const { t } = useTranslation();
@@ -25,7 +27,7 @@ export const EntrySettingsModal = () => {
   const isSpinning = useAppStore(s => s.isSpinning);
   const customWinAudios = useAppStore(s => s.customWinAudios);
   const setIsAddAudioModalOpen = useAppStore(s => s.setIsAddAudioModalOpen);
-  
+
   const { validItems } = useWheelData();
   const { removeCustomAudio } = useAudioActions();
 
@@ -33,7 +35,7 @@ export const EntrySettingsModal = () => {
 
   useEffect(() => {
     if (editingEntryId) {
-      const item = items.find((i) => i.id === editingEntryId);
+      const item = items.find(i => i.id === editingEntryId);
       if (item) setTempItem({ ...item });
       else setEditingEntryId(null);
     } else {
@@ -41,12 +43,25 @@ export const EntrySettingsModal = () => {
     }
   }, [editingEntryId, items, setEditingEntryId]);
 
+  useEffect(() => {
+    if (!editingEntryId) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setEditingEntryId(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editingEntryId, setEditingEntryId]);
+
   if (!editingEntryId || !tempItem) return null;
 
-  const itemIndex = items.findIndex((i) => i.id === editingEntryId);
+  const itemIndex = items.findIndex(i => i.id === editingEntryId);
   const currentValidItem = validItems.find(vi => vi.id === editingEntryId);
   const totalWeight = validItems.reduce((acc, i) => acc + (i.weight !== undefined ? i.weight : 1), 0);
-  const effectiveWeight = currentValidItem ? currentValidItem.weight : (tempItem.weight !== undefined ? tempItem.weight : 1);
+  const effectiveWeight = currentValidItem
+    ? currentValidItem.weight
+    : tempItem.weight !== undefined
+    ? tempItem.weight
+    : 1;
   const weightPercentage =
     tempItem.enabled !== false && totalWeight > 0
       ? Math.round((effectiveWeight / totalWeight) * 100)
@@ -54,7 +69,7 @@ export const EntrySettingsModal = () => {
 
   const handleSave = () => {
     if (isSpinning) return;
-    setItems((prev) => prev.map((i) => (i.id === tempItem.id ? tempItem : i)));
+    setItems(prev => prev.map(i => (i.id === tempItem.id ? tempItem : i)));
     setEditingEntryId(null);
   };
 
@@ -64,18 +79,14 @@ export const EntrySettingsModal = () => {
 
   const handlePrev = () => {
     if (itemIndex > 0) {
-      setItems((prev) =>
-        prev.map((i) => (i.id === tempItem.id ? tempItem : i)),
-      );
+      setItems(prev => prev.map(i => (i.id === tempItem.id ? tempItem : i)));
       setEditingEntryId(items[itemIndex - 1].id);
     }
   };
 
   const handleNext = () => {
     if (itemIndex < items.length - 1) {
-      setItems((prev) =>
-        prev.map((i) => (i.id === tempItem.id ? tempItem : i)),
-      );
+      setItems(prev => prev.map(i => (i.id === tempItem.id ? tempItem : i)));
       setEditingEntryId(items[itemIndex + 1].id);
     }
   };
@@ -83,12 +94,12 @@ export const EntrySettingsModal = () => {
   const handleAdd = () => {
     const newItem = {
       id: crypto.randomUUID(),
-      text: "Nova Entrada",
+      text: 'Nova Entrada',
       weight: 1,
       enabled: true,
     };
-    setItems((prev) => {
-      const updated = prev.map((i) => (i.id === tempItem.id ? tempItem : i));
+    setItems(prev => {
+      const updated = prev.map(i => (i.id === tempItem.id ? tempItem : i));
       return [...updated, newItem];
     });
     setEditingEntryId(newItem.id);
@@ -98,9 +109,9 @@ export const EntrySettingsModal = () => {
     const newItem = {
       ...tempItem,
       id: crypto.randomUUID(),
-      text: tempItem.text + " (Cópia)",
+      text: tempItem.text + ' (Cópia)',
     };
-    setItems((prev) => {
+    setItems(prev => {
       const newItems = [...prev];
       newItems.splice(itemIndex + 1, 0, newItem);
       return newItems;
@@ -109,154 +120,150 @@ export const EntrySettingsModal = () => {
   };
 
   const handleDelete = () => {
-    setItems((prev) => prev.filter((i) => i.id !== editingEntryId));
+    setItems(prev => prev.filter(i => i.id !== editingEntryId));
     setEditingEntryId(null);
   };
 
   const winSoundOptions = [
-    "tada",
-    "fanfarra",
-    "sino",
-    "harpa",
-    "magia",
-    "orquestra",
-    "aplausos-suaves",
-    "aplausos-fortes",
-    "trombeta",
-    "sino-vitoria",
-    "surpresa",
+    'tada',
+    'fanfarra',
+    'sino',
+    'harpa',
+    'magia',
+    'orquestra',
+    'aplausos-suaves',
+    'aplausos-fortes',
+    'trombeta',
+    'sino-vitoria',
+    'surpresa',
   ];
 
   const hasCustomAudio = customWinAudios && customWinAudios.length > 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-      <div className="bg-[#1a1b23] border border-slate-700 w-[600px] max-w-full rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#22242f]">
-          <div className="flex items-center gap-2 text-white font-semibold">
-            <Settings2 size={20} className="text-blue-400" /> {t('entrySettings.customizeEntry')}
+    <div
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[200] flex items-center justify-center p-4"
+      onClick={handleCancel}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="bg-[var(--studio-surface)] border border-[var(--studio-border-strong)] text-[var(--studio-text)] w-[600px] max-w-full rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[var(--studio-border)] bg-[var(--studio-surface-elevated)]">
+          <div className="flex items-center gap-2.5 text-[var(--studio-text)] font-display font-bold text-base">
+            <Settings2 size={18} className="text-[var(--studio-accent-fg)]" />
+            <span>{t('entrySettings.customizeEntry')}</span>
           </div>
           <button
+            type="button"
             onClick={handleCancel}
-            className="text-slate-400 hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+            className="w-8 h-8 rounded-lg bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] border border-[var(--studio-border-strong)] flex items-center justify-center transition-colors"
+            aria-label={t('common.close', 'Fechar')}
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-0 custom-scrollbar">
-          {/* Top nav */}
-          <div className="flex items-center justify-between px-6 py-3 border-b border-slate-700/50 bg-[#1e2029]">
-            <div className="flex items-center gap-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {/* Item Navigator */}
+          <div className="flex items-center justify-between px-5 sm:px-6 py-3 border-b border-[var(--studio-border)] bg-[var(--studio-input)]">
+            <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={handlePrev}
                 disabled={itemIndex === 0}
-                className="bg-slate-700/50 hover:bg-slate-600 p-1.5 rounded-full text-white disabled:opacity-30 transition-colors"
+                className="w-8 h-8 rounded-lg bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] border border-[var(--studio-border-strong)] flex items-center justify-center text-[var(--studio-text)] disabled:opacity-30 transition-colors"
+                aria-label="Anterior"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={14} />
               </button>
-              <div className="text-slate-300 font-medium text-xs">
+              <span className="text-[var(--studio-text-secondary)] font-mono tabular-nums font-medium text-xs">
                 {itemIndex + 1} {t('entrySettings.of')} {items.length}
-              </div>
+              </span>
               <button
+                type="button"
                 onClick={handleNext}
                 disabled={itemIndex === items.length - 1}
-                className="bg-slate-700/50 hover:bg-slate-600 p-1.5 rounded-full text-white disabled:opacity-30 transition-colors"
+                className="w-8 h-8 rounded-lg bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] border border-[var(--studio-border-strong)] flex items-center justify-center text-[var(--studio-text)] disabled:opacity-30 transition-colors"
+                aria-label="Próximo"
               >
-                <ArrowRight size={16} />
+                <ArrowRight size={14} />
               </button>
             </div>
-            <button
-              onClick={handleAdd}
-              className="flex items-center gap-1.5 text-xs font-medium bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-full transition-colors"
-            >
-              <Plus size={14} /> {t('sidebar.entries.add')}
-            </button>
+            <Button variant="secondary" size="sm" onClick={handleAdd}>
+              <Plus size={14} />
+              <span>{t('sidebar.entries.add')}</span>
+            </Button>
           </div>
 
-          <div className="p-6 space-y-8">             {/* Quick Actions */}
-            <div className="flex justify-between items-center bg-[#252733] p-3 rounded-xl border border-slate-700/50">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center w-5 h-5 rounded border border-slate-600 bg-slate-800 group-hover:border-blue-500 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={tempItem.enabled !== false}
-                    onChange={(e) =>
-                      setTempItem({ ...tempItem, enabled: e.target.checked })
-                    }
-                    className="absolute opacity-0 w-full h-full cursor-pointer"
-                  />
-                  {tempItem.enabled !== false && (
-                    <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm" />
-                  )}
-                </div>
-                <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+          <div className="p-5 sm:p-6 space-y-6">
+            {/* Quick Actions */}
+            <div className="flex flex-wrap justify-between items-center gap-3 bg-[var(--studio-card)] p-3.5 rounded-xl border border-[var(--studio-border)]">
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={tempItem.enabled !== false}
+                  onChange={e => setTempItem({ ...tempItem, enabled: e.target.checked })}
+                  className="w-4 h-4 rounded text-[var(--studio-accent)] bg-[var(--studio-input)] border-[var(--studio-border-strong)] cursor-pointer accent-[var(--studio-accent)]"
+                />
+                <span className="text-sm font-medium text-[var(--studio-text)]">
                   {t('entrySettings.visibleOnWheel')}
                 </span>
               </label>
 
               <div className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={handleDuplicate}>
+                  <Copy size={13} />
+                  <span>{t('entrySettings.duplicate')}</span>
+                </Button>
                 <button
-                  onClick={handleDuplicate}
-                  className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                >
-                  <Copy size={14} /> {t('entrySettings.duplicate')}
-                </button>
-                <button
+                  type="button"
                   onClick={handleDelete}
-                  className="flex items-center gap-1.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-red-500/15 hover:bg-red-600 text-red-700 dark:text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold transition-colors"
                 >
-                  <Trash size={14} /> {t('entrySettings.delete')}
+                  <Trash size={13} />
+                  <span>{t('entrySettings.delete')}</span>
                 </button>
               </div>
             </div>
 
-            {/* Texto & Peso */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
+            {/* Text & Weight */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 flex flex-col">
+                <label className="text-sm font-medium text-[var(--studio-text-secondary)]">
                   {t('entrySettings.text')}
                 </label>
-                <input
+                <Input
                   type="text"
                   value={tempItem.text}
-                  onChange={(e) =>
-                    setTempItem({ ...tempItem, text: e.target.value })
-                  }
-                  className="w-full bg-[#252733] text-white border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 transition-colors"
+                  onChange={e => setTempItem({ ...tempItem, text: e.target.value })}
                 />
               </div>
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium text-slate-300">
-                    {t('entryItem.weight')}{" "}
+                  <label className="text-sm font-medium text-[var(--studio-text-secondary)]">
+                    {t('entryItem.weight')}{' '}
                     {weightPercentage > 0 && (
-                      <span className="text-xs text-blue-400 ml-1">
+                      <span className="text-xs font-mono tabular-nums text-[var(--studio-accent-fg)] ml-1">
                         ({weightPercentage}% {t('entrySettings.chance')})
                       </span>
                     )}
                   </label>
-                  {currentValidItem && currentValidItem.weight !== (tempItem.weight !== undefined ? tempItem.weight : 1) && (
-                    <span 
-                      className={`text-xs font-semibold px-2 py-0.5 rounded border ${
-                        currentValidItem.weight === 0
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      }`}
-                    >
-                      {t('entryItem.effectiveWeight')}: {currentValidItem.weight.toFixed(2)}
-                    </span>
-                  )}
                 </div>
-                <div className="flex items-center bg-[#252733] border border-slate-700 rounded-xl overflow-hidden h-[42px]">
+                <div className="flex items-center bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-xl overflow-hidden h-[var(--studio-control-h)]">
                   <button
+                    type="button"
                     onClick={() =>
                       setTempItem({
                         ...tempItem,
-                        weight: Math.max(0.1, Number((tempItem.weight !== undefined ? tempItem.weight : 1)) - 1),
+                        weight: Math.max(0.1, Number(tempItem.weight !== undefined ? tempItem.weight : 1) - 1),
                       })
                     }
-                    className="w-10 h-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                    className="w-10 h-full flex items-center justify-center text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)] transition-colors"
                   >
                     −
                   </button>
@@ -264,9 +271,9 @@ export const EntrySettingsModal = () => {
                     type="number"
                     min="0.1"
                     step="0.1"
-                    className="flex-1 bg-transparent text-center text-white font-medium border-none focus:outline-none focus:ring-0"
+                    className="flex-1 bg-transparent text-center text-[var(--studio-text)] font-mono tabular-nums font-medium border-none focus:outline-none focus:ring-0 text-sm"
                     value={tempItem.weight !== undefined ? tempItem.weight : 1}
-                    onChange={(e) =>
+                    onChange={e =>
                       setTempItem({
                         ...tempItem,
                         weight: Math.max(0.1, parseFloat(e.target.value) || 0.1),
@@ -274,13 +281,14 @@ export const EntrySettingsModal = () => {
                     }
                   />
                   <button
+                    type="button"
                     onClick={() =>
                       setTempItem({
                         ...tempItem,
-                        weight: Number((tempItem.weight !== undefined ? tempItem.weight : 1)) + 1,
+                        weight: Number(tempItem.weight !== undefined ? tempItem.weight : 1) + 1,
                       })
                     }
-                    className="w-10 h-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                    className="w-10 h-full flex items-center justify-center text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)] transition-colors"
                   >
                     +
                   </button>
@@ -288,142 +296,133 @@ export const EntrySettingsModal = () => {
               </div>
             </div>
 
-            {/* Cor da Fatia */}
-            <div className="space-y-3 bg-[#252733] p-4 rounded-xl border border-slate-700/50">
-              <label className="text-sm font-medium text-slate-300">
+            {/* Slice Color */}
+            <div className="space-y-2.5 bg-[var(--studio-card)] p-4 rounded-xl border border-[var(--studio-border)]">
+              <label className="text-sm font-medium text-[var(--studio-text)] block">
                 {t('entrySettings.sliceColor', 'Cor da Fatia')}
               </label>
-              <p className="text-xs text-slate-500 mb-2">{t('entrySettings.appearanceDesc', 'Personalize a cor da fatia na roleta.')}</p>
-              
               <div className="flex items-center gap-4">
-                <div className="relative w-28 h-12 rounded-lg overflow-hidden border-2 border-slate-700 hover:border-blue-500 transition-colors group cursor-pointer">
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity pointer-events-none z-10">
-                    <span className="text-xs font-medium text-white drop-shadow-md">{t('entrySettings.cropColor', 'Escolher')}</span>
-                  </div>
+                <div className="relative w-24 h-10 rounded-lg overflow-hidden border border-[var(--studio-border-strong)] hover:border-[var(--studio-accent)] transition-colors cursor-pointer">
                   <input
                     type="color"
                     className="absolute inset-0 w-full h-[150%] -translate-y-1/4 cursor-pointer"
-                    value={tempItem.color || "#cccccc"}
-                    onChange={(e) =>
-                      setTempItem({ ...tempItem, color: e.target.value })
-                    }
+                    value={tempItem.color || '#cccccc'}
+                    onChange={e => setTempItem({ ...tempItem, color: e.target.value })}
                   />
                   {tempItem.color && (
                     <button
-                      onClick={(e) => {
+                      type="button"
+                      onClick={e => {
                         e.preventDefault();
                         e.stopPropagation();
                         setTempItem({ ...tempItem, color: undefined });
                       }}
-                      className="absolute top-1 right-1 bg-black/60 text-white p-1 rounded hover:bg-red-500 transition-colors z-20"
+                      className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded hover:bg-red-600 transition-colors z-20"
                       title={t('entrySettings.removeColor', 'Remover Cor')}
                     >
-                      <X size={12} />
+                      <X size={11} />
                     </button>
                   )}
                 </div>
-                <span className="text-xs font-mono text-slate-400">
+                <span className="text-xs font-mono text-[var(--studio-text-muted)]">
                   {tempItem.color || t('entrySettings.defaultColor', 'Cor padrão')}
                 </span>
               </div>
             </div>
 
-            {/* Mensagem Pop-up */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">
+            {/* Win Message */}
+            <div className="space-y-2 flex flex-col">
+              <label className="text-sm font-medium text-[var(--studio-text-secondary)]">
                 {t('entrySettings.winMessage')}
               </label>
-              <input
+              <Input
                 type="text"
-                placeholder={t("entrySettings.winMessagePlh")}
-                value={tempItem.message || ""}
-                onChange={(e) =>
-                  setTempItem({ ...tempItem, message: e.target.value })
-                }
-                className="w-full bg-[#252733] text-white border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600"
+                placeholder={t('entrySettings.winMessagePlh')}
+                value={tempItem.message || ''}
+                onChange={e => setTempItem({ ...tempItem, message: e.target.value })}
               />
             </div>
 
-            {/* Som de Vitória */}
-            <div className="space-y-4">
+            {/* Custom Win Sound */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-300">
+                <label className="text-sm font-medium text-[var(--studio-text-secondary)]">
                   {t('entrySettings.customSound')}
                 </label>
                 {tempItem.sound && (
                   <button
-                    onClick={() =>
-                      setTempItem({ ...tempItem, sound: undefined })
-                    }
-                    className="text-xs text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                    type="button"
+                    onClick={() => setTempItem({ ...tempItem, sound: undefined })}
+                    className="text-xs text-[var(--studio-accent-fg)] hover:underline"
                   >
                     {t('entrySettings.useDefaultSound')}
                   </button>
                 )}
               </div>
 
-              {/* Grid of predefined sounds */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {winSoundOptions.map((type) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {winSoundOptions.map(type => (
                   <button
                     key={type}
+                    type="button"
                     onClick={() => setTempItem({ ...tempItem, sound: type })}
-                    className={`px-2 py-2 rounded-lg text-xs font-medium capitalize transition-all border ${
+                    className={`h-9 px-2.5 rounded-lg text-xs font-medium capitalize transition-colors border ${
                       tempItem.sound === type
-                        ? "bg-blue-600 text-white border-blue-500 ring-2 ring-blue-500/50"
-                        : "bg-[#252733] text-slate-400 hover:text-slate-200 hover:bg-slate-800 border-slate-700"
+                        ? 'bg-[var(--studio-accent)] text-[var(--studio-accent-text)] border-[var(--studio-accent)]'
+                        : 'bg-[var(--studio-card)] text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] border-[var(--studio-border)]'
                     }`}
                   >
-                    {type.replace("-", " ")}
+                    {type.replace('-', ' ')}
                   </button>
                 ))}
               </div>
 
-              {/* Custom audios list if any exist */}
-              <div className="bg-[#252733] rounded-xl border border-slate-700/50 p-4 space-y-4">
+              <div className="bg-[var(--studio-card)] rounded-xl border border-[var(--studio-border)] p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-300">{t('entrySettings.uploadedAudios')}</p>
-                  <button
-                    onClick={() => setIsAddAudioModalOpen(true)}
-                    className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-md transition-colors"
-                  >
-                    <Plus size={14} /> {t('entrySettings.newAudio')}
-                  </button>
+                  <p className="text-sm font-medium text-[var(--studio-text)]">{t('entrySettings.uploadedAudios')}</p>
+                  <Button variant="secondary" size="sm" onClick={() => setIsAddAudioModalOpen(true)}>
+                    <Plus size={13} />
+                    <span>{t('entrySettings.newAudio')}</span>
+                  </Button>
                 </div>
                 {hasCustomAudio ? (
-                  <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2">
-                    {customWinAudios.map((audio) => (
+                  <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+                    {customWinAudios.map(audio => (
                       <div
                         key={audio.id}
-                        className={`flex items-center justify-between p-2 rounded-md transition-all border ${
+                        className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
                           tempItem.sound === audio.id
-                            ? "bg-blue-600/20 border-blue-500/50"
-                            : "bg-[#1e2029] border-slate-700"
+                            ? 'bg-[var(--studio-accent-soft)] border-[var(--studio-accent)]/50'
+                            : 'bg-[var(--studio-input)] border-[var(--studio-border)]'
                         }`}
                       >
                         <div
-                          className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer"
+                          className="flex items-center gap-2.5 overflow-hidden flex-1 cursor-pointer"
                           onClick={() => setTempItem({ ...tempItem, sound: audio.id })}
                         >
-                           <button
-                             className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${tempItem.sound === audio.id ? "bg-blue-500 text-white" : "bg-slate-700 text-slate-300"}`}
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               if (audio.audioObj) {
-                                 audio.audioObj.currentTime = 0;
-                                 audio.audioObj.play().catch(() => {});
-                               }
-                             }}
-                           >
-                            <PlayCircle size={12} />
+                          <button
+                            type="button"
+                            className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                              tempItem.sound === audio.id
+                                ? 'bg-[var(--studio-accent)] text-[var(--studio-accent-text)]'
+                                : 'bg-[var(--studio-card)] text-[var(--studio-text-secondary)]'
+                            }`}
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (audio.audioObj) {
+                                audio.audioObj.currentTime = 0;
+                                audio.audioObj.play().catch(() => {});
+                              }
+                            }}
+                          >
+                            <PlayCircle size={14} />
                           </button>
-                          <span className={`text-xs truncate ${tempItem.sound === audio.id ? "text-blue-300 font-medium" : "text-slate-300"}`}>
-                            {audio.name}
-                          </span>
+                          <span className="text-xs truncate text-[var(--studio-text)]">{audio.name}</span>
                         </div>
                         <button
-                          onClick={() => removeCustomAudio("win", audio.id)}
-                          className="text-slate-500 hover:text-red-400 p-1 shrink-0 ml-2"
+                          type="button"
+                          onClick={() => removeCustomAudio('win', audio.id)}
+                          className="text-[var(--studio-text-muted)] hover:text-red-600 dark:hover:text-red-400 p-1.5 shrink-0 ml-2"
                         >
                           <Trash size={14} />
                         </button>
@@ -431,30 +430,23 @@ export const EntrySettingsModal = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-4 text-slate-500 space-y-1">
-                    <Music2 size={20} className="opacity-50" />
-                    <p className="text-[10px] italic">{t('entrySettings.noAudio')}</p>
+                  <div className="flex flex-col items-center justify-center py-4 text-[var(--studio-text-muted)] space-y-1">
+                    <Music2 size={18} className="opacity-50" />
+                    <p className="text-xs">{t('entrySettings.noAudio')}</p>
                   </div>
                 )}
-                
               </div>
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-700/50 flex justify-end gap-3 bg-[#1e2029]">
-          <button
-            onClick={handleCancel}
-            className="px-6 py-2 rounded-lg font-medium text-slate-300 hover:bg-white/5 transition-colors"
-          >
+        <div className="px-5 sm:px-6 py-4 border-t border-[var(--studio-border)] flex justify-end gap-3 bg-[var(--studio-surface-elevated)]">
+          <Button variant="ghost" onClick={handleCancel}>
             {t('entrySettings.cancel')}
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-8 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20"
-          >
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
             {t('entrySettings.saveBtn')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

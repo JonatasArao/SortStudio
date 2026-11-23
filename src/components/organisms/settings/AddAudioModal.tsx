@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { X, Upload, Plus, Music, PlayCircle, StopCircle, Save, Scissors, Volume2 } from "lucide-react";
+import { X, Upload, Plus, Music, PlayCircle, StopCircle, Save, Scissors, Volume2, AlertCircle } from "lucide-react";
 import { useAudioActions } from "../../../hooks/useAppActions";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../../../store/useAppStore";
 import { extractYouTubeId } from "../../../utils/youtubeUtils";
 import { YouTubeAudio } from "../../../utils/youtubePlayer";
+import { Button } from "../../atoms/Button";
+import { Input } from "../../atoms/Input";
 
 interface AddAudioModalProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
   const [volume, setVolume] = useState<number>(100);
   const [duration, setDuration] = useState<number>(0);
   const [isPreviewing, setIsPreviewing] = useState<boolean>(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -37,48 +40,6 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
   const sliderContainerRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRangeRef = useRef(false);
   const dragStartRef = useRef<{ x: number; startVal: number; duration: number }>({ x: 0, startVal: 0, duration: 0 });
-
-  const handleRangePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-    isDraggingRangeRef.current = true;
-    const currentDuration = Math.max(0.1, numEnd - numStart);
-    dragStartRef.current = {
-      x: e.clientX,
-      startVal: numStart,
-      duration: currentDuration,
-    };
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch (_) {}
-  };
-
-  const handleRangePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRangeRef.current || !sliderContainerRef.current) return;
-    const containerWidth = sliderContainerRef.current.getBoundingClientRect().width;
-    if (containerWidth <= 0) return;
-
-    const deltaX = e.clientX - dragStartRef.current.x;
-    const deltaTime = (deltaX / containerWidth) * maxVal;
-    
-    const sliceDur = dragStartRef.current.duration;
-    let newStart = dragStartRef.current.startVal + deltaTime;
-
-    newStart = Math.max(0, Math.min(maxVal - sliceDur, newStart));
-    const newEnd = newStart + sliceDur;
-
-    setStartTime(String(Math.round(newStart * 10) / 10));
-    setEndTime(String(Math.round(newEnd * 10) / 10));
-  };
-
-  const handleRangePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDraggingRangeRef.current) {
-      isDraggingRangeRef.current = false;
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch (_) {}
-    }
-  };
 
   const stopPreview = () => {
     if (previewAudioRef.current) {
@@ -102,7 +63,25 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
     }
   };
 
+  const handleClose = () => {
+    stopPreview();
+    cleanupYtPlayer();
+    setEditingAudio(null);
+    setValidationError(null);
+    onClose();
+  };
+
   useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
+    setValidationError(null);
     if (editingAudio) {
       setName(editingAudio.name);
       setUrl(editingAudio.url);
@@ -111,7 +90,7 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
       setEndTime(String(editingAudio.endTime || 0));
       setVolume(editingAudio.volume !== undefined ? editingAudio.volume : 100);
       setInputType(editingAudio.isFile ? "file" : "url");
-      
+
       const cats: ("tick" | "win")[] = [];
       if (customTickAudios.some(a => a.id === editingAudio.id)) cats.push("tick");
       if (customWinAudios.some(a => a.id === editingAudio.id)) cats.push("win");
@@ -132,7 +111,6 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
     cleanupYtPlayer();
   }, [editingAudio, isOpen]);
 
-  // Load duration dynamically for both standard audio files and YouTube URLs
   useEffect(() => {
     let objectUrlToRevoke: string | null = null;
     let audioSrc = "";
@@ -155,7 +133,6 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
     const ytId = extractYouTubeId(audioSrc);
 
     if (ytId) {
-      // Handle YouTube Audio
       cleanupYtPlayer();
       const ytAudio = new YouTubeAudio(ytId);
       ytPlayerRef.current = ytAudio;
@@ -182,7 +159,6 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
         if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
       };
     } else {
-      // Handle HTML5 Audio
       cleanupYtPlayer();
       const audio = new Audio(audioSrc);
       const onLoaded = () => {
@@ -204,23 +180,70 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
 
   if (!isOpen) return null;
 
+  const maxVal = duration > 0 ? duration : 300;
+  const numStart = Math.min(parseFloat(startTime) || 0, maxVal);
+  const rawEnd = parseFloat(endTime);
+  const numEnd = rawEnd === 0 || rawEnd > maxVal ? maxVal : Math.max(rawEnd, numStart);
+
+  const handleRangePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    isDraggingRangeRef.current = true;
+    const currentDuration = Math.max(0.1, numEnd - numStart);
+    dragStartRef.current = {
+      x: e.clientX,
+      startVal: numStart,
+      duration: currentDuration,
+    };
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch (_) {}
+  };
+
+  const handleRangePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRangeRef.current || !sliderContainerRef.current) return;
+    const containerWidth = sliderContainerRef.current.getBoundingClientRect().width;
+    if (containerWidth <= 0) return;
+
+    const deltaX = e.clientX - dragStartRef.current.x;
+    const deltaTime = (deltaX / containerWidth) * maxVal;
+
+    const sliceDur = dragStartRef.current.duration;
+    let newStart = dragStartRef.current.startVal + deltaTime;
+
+    newStart = Math.max(0, Math.min(maxVal - sliceDur, newStart));
+    const newEnd = newStart + sliceDur;
+
+    setStartTime(String(Math.round(newStart * 10) / 10));
+    setEndTime(String(Math.round(newEnd * 10) / 10));
+  };
+
+  const handleRangePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingRangeRef.current) {
+      isDraggingRangeRef.current = false;
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch (_) {}
+    }
+  };
+
   const handleSave = () => {
+    setValidationError(null);
     if (!name.trim()) {
-      alert(t("addAudioModal.alertNoName"));
+      setValidationError(t("addAudioModal.alertNoName"));
       return;
     }
     if (categories.length === 0) {
-      alert(t("addAudioModal.alertNoCategory"));
+      setValidationError(t("addAudioModal.alertNoCategory"));
       return;
     }
 
     const sTime = parseFloat(startTime) || 0;
     const eTime = parseFloat(endTime) || 0;
 
-    stopPreview();
-    cleanupYtPlayer();
-
     if (editingAudio) {
+      stopPreview();
+      cleanupYtPlayer();
       updateCustomAudio(editingAudio.id, {
         name: name.trim(),
         mode,
@@ -232,15 +255,19 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
     } else {
       if (inputType === "file") {
         if (!file) {
-          alert(t("addAudioModal.alertNoFile"));
+          setValidationError(t("addAudioModal.alertNoFile"));
           return;
         }
+        stopPreview();
+        cleanupYtPlayer();
         addCustomAudio(categories, file, name.trim(), true, mode, sTime, eTime, volume);
       } else {
         if (!url.trim()) {
-          alert(t("addAudioModal.alertNoURL"));
+          setValidationError(t("addAudioModal.alertNoURL"));
           return;
         }
+        stopPreview();
+        cleanupYtPlayer();
         addCustomAudio(categories, url.trim(), name.trim(), false, mode, sTime, eTime, volume);
       }
     }
@@ -248,14 +275,8 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
     handleClose();
   };
 
-  const handleClose = () => {
-    stopPreview();
-    cleanupYtPlayer();
-    setEditingAudio(null);
-    onClose();
-  };
-
   const toggleCategory = (cat: "tick" | "win") => {
+    setValidationError(null);
     setCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
@@ -267,11 +288,6 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
     const s = (secs % 60).toFixed(1);
     return m > 0 ? `${m}m ${s}s` : `${s}s`;
   };
-
-  const maxVal = duration > 0 ? duration : 300;
-  const numStart = Math.min(parseFloat(startTime) || 0, maxVal);
-  const rawEnd = parseFloat(endTime);
-  const numEnd = rawEnd === 0 || rawEnd > maxVal ? maxVal : Math.max(rawEnd, numStart);
 
   const activeSrc = editingAudio ? editingAudio.url : (inputType === "file" && file ? URL.createObjectURL(file) : url);
   const activeYtId = extractYouTubeId(activeSrc);
@@ -319,48 +335,87 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-slate-950/80 border border-slate-800/80 backdrop-blur-xl w-full max-w-lg rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/60 bg-slate-900/40">
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <Music size={18} className="text-blue-400" /> 
+    <div
+      className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={editingAudio ? t('audioSettings.edit') : t('addAudioModal.title')}
+    >
+      <div
+        className="bg-[var(--studio-surface)] border border-[var(--studio-border-strong)] text-[var(--studio-text)] w-full max-w-lg rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--studio-border)] bg-[var(--studio-surface-elevated)]">
+          <h2 className="text-[var(--studio-text)] font-semibold flex items-center gap-2.5 text-base">
+            <Music size={18} className="text-[var(--studio-accent-fg)]" />
             {editingAudio ? t('audioSettings.edit') : t('addAudioModal.title')}
           </h2>
-          <button onClick={handleClose} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors">
-            <X size={20} />
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-1.5 text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)] rounded-lg transition-colors"
+            aria-label="Fechar"
+          >
+            <X size={18} />
           </button>
         </div>
 
-        <div className="p-5 space-y-5 overflow-y-auto max-h-[70vh]">
-          {/* Nome do Áudio */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">{t('addAudioModal.audioName')}</label>
-            <input
+        <div className="p-5 space-y-5 overflow-y-auto custom-scrollbar max-h-[72vh]">
+          {validationError && (
+            <div className="flex items-center gap-2.5 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-700 dark:text-red-300">
+              <AlertCircle size={15} className="text-red-600 dark:text-red-400 shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          )}
+
+          {/* Audio Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--studio-text-secondary)] block">{t('addAudioModal.audioName')}</label>
+            <Input
               type="text"
               placeholder={t('addAudioModal.audioNamePlh')}
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-950/45 text-sm text-white px-3.5 py-2.5 rounded-xl border border-slate-800 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all shadow-inner"
+              onChange={(e) => {
+                setValidationError(null);
+                setName(e.target.value);
+              }}
             />
           </div>
 
           {!editingAudio && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-slate-300">{t('addAudioModal.uploadFile')}</label>
-              <div className="flex gap-4 mb-2">
-                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                  <input type="radio" checked={inputType === 'file'} onChange={() => setInputType('file')} />
+            <div className="space-y-2.5">
+              <label className="text-xs font-medium text-[var(--studio-text-secondary)] block">{t('addAudioModal.uploadFile')}</label>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-[var(--studio-input)] rounded-lg border border-[var(--studio-border)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValidationError(null);
+                    setInputType('file');
+                  }}
+                  className={`py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    inputType === 'file' ? 'bg-[var(--studio-card)] text-[var(--studio-text)] border border-[var(--studio-border-strong)]' : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)]'
+                  }`}
+                >
                   {t('addAudioModal.localFile')}
-                </label>
-                <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                  <input type="radio" checked={inputType === 'url'} onChange={() => setInputType('url')} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValidationError(null);
+                    setInputType('url');
+                  }}
+                  className={`py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    inputType === 'url' ? 'bg-[var(--studio-card)] text-[var(--studio-text)] border border-[var(--studio-border-strong)]' : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)]'
+                  }`}
+                >
                   {t('addAudioModal.externalURL')}
-                </label>
+                </button>
               </div>
 
               {inputType === "file" ? (
                 <div
-                  className="bg-slate-950/30 border-2 border-dashed border-slate-800/80 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-900/40 hover:border-blue-500/50 transition-all duration-300 group/drop"
+                  className="bg-[var(--studio-input)] border border-dashed border-[var(--studio-border-strong)] rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer hover:bg-[var(--studio-card)] hover:border-[var(--studio-accent)] transition-colors group"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input
@@ -371,79 +426,77 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (f) {
+                        setValidationError(null);
                         setFile(f);
                         if (!name) setName(f.name.replace(/\.[^/.]+$/, ""));
                       }
                     }}
                   />
-                  <Upload size={20} className="text-slate-500 group-hover/drop:text-blue-400 mb-2 transition-colors" />
-                  <span className="text-xs font-medium text-slate-500 group-hover/drop:text-slate-400 transition-colors">
+                  <Upload size={20} className="text-[var(--studio-text-muted)] group-hover:text-[var(--studio-accent-fg)] mb-2 transition-colors" />
+                  <span className="text-xs font-medium text-[var(--studio-text-muted)] group-hover:text-[var(--studio-text)] transition-colors text-center break-all">
                     {file ? file.name : t('addAudioModal.clickToSelect')}
                   </span>
                 </div>
               ) : (
-                <input
+                <Input
                   type="url"
                   placeholder="URL (ex: https://www.youtube.com/watch?v=... ou .mp3)"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="w-full bg-slate-950/45 text-sm text-white px-3.5 py-2.5 rounded-xl border border-slate-800 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all shadow-inner"
+                  onChange={(e) => {
+                    setValidationError(null);
+                    setUrl(e.target.value);
+                  }}
                 />
               )}
             </div>
           )}
 
-          {/* Dual-Handle Range Slider para Cortar o Trecho do Som */}
-          <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800/80">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Scissors size={14} className="text-blue-400" />
-                Ajustar Trecho do Áudio (Início e Fim)
+          {/* Dual-Handle Range Slider */}
+          <div className="space-y-3.5 bg-[var(--studio-card)] p-4 rounded-xl border border-[var(--studio-border)]">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-[var(--studio-text)] flex items-center gap-1.5">
+                <Scissors size={14} className="text-[var(--studio-accent-fg)]" />
+                Ajustar Trecho do Áudio
               </label>
               {activeSrc && (
                 <button
                   type="button"
                   onClick={handlePreviewSlice}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors border ${
                     isPreviewing
-                      ? "bg-red-500/20 text-red-400 border border-red-500/40"
-                      : "bg-blue-600/20 text-blue-400 border border-blue-500/40 hover:bg-blue-600/30"
+                      ? "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40"
+                      : "bg-[var(--studio-accent-soft)] text-[var(--studio-accent-fg)] border-[var(--studio-accent)]/40 hover:opacity-90"
                   }`}
                 >
-                  {isPreviewing ? <StopCircle size={14} /> : <PlayCircle size={14} />}
-                  {isPreviewing ? "Parar Teste" : "Ouvir Trecho"}
+                  {isPreviewing ? <StopCircle size={13} /> : <PlayCircle size={13} />}
+                  {isPreviewing ? "Parar" : "Ouvir Trecho"}
                 </button>
               )}
             </div>
 
-            {/* Marcadores de Tempo */}
-            <div className="flex justify-between text-xs text-slate-300 font-medium">
-              <span>Início: <strong className="text-blue-400 font-mono">{formatTime(numStart)}</strong></span>
-              <span>Fim: <strong className="text-blue-400 font-mono">{numEnd >= maxVal ? `${formatTime(maxVal)} (Total)` : formatTime(numEnd)}</strong></span>
+            <div className="flex justify-between text-xs text-[var(--studio-text-secondary)] font-medium">
+              <span>Início: <strong className="text-[var(--studio-accent-fg)] font-mono tabular-nums">{formatTime(numStart)}</strong></span>
+              <span>Fim: <strong className="text-[var(--studio-accent-fg)] font-mono tabular-nums">{numEnd >= maxVal ? `${formatTime(maxVal)} (Total)` : formatTime(numEnd)}</strong></span>
             </div>
 
-            {/* Slider Único com 2 Pontos e Barra Arrastável */}
             <div ref={sliderContainerRef} className="relative w-full h-7 flex items-center select-none py-2">
-              {/* Trilha de Fundo */}
-              <div className="absolute inset-x-0 h-2 bg-slate-800 rounded-lg overflow-hidden" />
+              <div className="absolute inset-x-0 h-2 bg-[var(--studio-input)] rounded-lg overflow-hidden border border-[var(--studio-border)]" />
 
-              {/* Trilha Ativa (Entre Início e Fim) - Arrastável para mover o trecho inteiro sem mudar a duração */}
               <div
                 onPointerDown={handleRangePointerDown}
                 onPointerMove={handleRangePointerMove}
                 onPointerUp={handleRangePointerUp}
                 onPointerCancel={handleRangePointerUp}
-                className="absolute h-3 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 rounded-lg cursor-grab active:cursor-grabbing pointer-events-auto z-20 flex items-center justify-center shadow-md transition-colors group"
+                className="absolute h-3 bg-[var(--studio-accent)] hover:bg-[var(--studio-accent-hover)] rounded-md cursor-grab active:cursor-grabbing pointer-events-auto z-20 flex items-center justify-center transition-colors"
                 style={{
                   left: `${(numStart / maxVal) * 100}%`,
                   width: `${Math.max(0, ((numEnd - numStart) / maxVal) * 100)}%`,
                 }}
-                title="Clique e arraste esta barra azul para mover o trecho mantendo a mesma duração"
+                title="Arraste para mover o trecho mantendo a duração"
               >
-                <div className="w-3 h-1 bg-white/70 rounded-full group-hover:scale-125 transition-transform" />
+                <div className="w-3 h-1 bg-white/80 rounded-full" />
               </div>
 
-              {/* Input do Ponto Inicial */}
               <input
                 type="range"
                 min={0}
@@ -457,10 +510,9 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
                     setEndTime(String(Math.min(maxVal, val + 0.1)));
                   }
                 }}
-                className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none z-30 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-400 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer"
+                className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none z-30 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-400 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer"
               />
 
-              {/* Input do Ponto Final */}
               <input
                 type="range"
                 min={0}
@@ -471,24 +523,24 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
                   const val = Math.max(numStart + 0.1, Math.min(parseFloat(e.target.value), maxVal));
                   setEndTime(String(val));
                 }}
-                className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none z-40 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-400 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer"
+                className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none z-40 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-400 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer"
               />
             </div>
 
-            <div className="flex justify-between items-center text-[11px] text-slate-400 italic pt-1">
-              <span>
+            <div className="flex justify-between items-center text-[11px] text-[var(--studio-text-muted)] pt-1">
+              <span className="font-mono tabular-nums">
                 {activeYtId ? "YouTube: " : "Duração: "}
                 {duration > 0 ? formatTime(duration) : (activeYtId ? "Detectando..." : "Desconhecida")}
               </span>
               <div className="flex items-center gap-2">
-                <span>Trecho: <strong className="text-blue-400 font-mono not-italic">{formatTime(Math.max(0, numEnd - numStart))}</strong></span>
+                <span>Trecho: <strong className="text-[var(--studio-accent-fg)] font-mono tabular-nums">{formatTime(Math.max(0, numEnd - numStart))}</strong></span>
                 <button
                   type="button"
                   onClick={() => setEndTime(String(Math.min(maxVal, numStart + wheelTime)))}
-                  className="not-italic text-[10px] px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 font-medium transition-all"
+                  className="text-[11px] px-2 py-0.5 rounded bg-[var(--studio-accent-soft)] text-[var(--studio-accent-fg)] border border-[var(--studio-accent)]/35 hover:opacity-90 font-medium transition-colors font-mono tabular-nums"
                   title="Ajustar duração do trecho para o tempo de rotação da roleta"
                 >
-                  Max Roleta ({wheelTime}s)
+                  Max ({wheelTime}s)
                 </button>
               </div>
             </div>
@@ -496,9 +548,9 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
 
           {/* Volume Slider */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5 justify-between">
-              <span className="flex items-center gap-1.5"><Volume2 size={12} /> {t('audioSettings.volume')}</span>
-              <span className="text-blue-400 font-mono">{volume}%</span>
+            <label className="text-xs font-medium text-[var(--studio-text-secondary)] flex items-center justify-between">
+              <span className="flex items-center gap-1.5"><Volume2 size={13} className="text-[var(--studio-text-muted)]" /> {t('audioSettings.volume')}</span>
+              <span className="text-[var(--studio-accent-fg)] font-mono tabular-nums font-semibold">{volume}%</span>
             </label>
             <input
               type="range"
@@ -506,30 +558,32 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
               max="200"
               value={volume}
               onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-1.5 bg-[var(--studio-input)] border border-[var(--studio-border)] rounded-lg appearance-none cursor-pointer accent-[var(--studio-accent)]"
             />
           </div>
 
           {!editingAudio && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-slate-300">{t('addAudioModal.whereToUse')}</label>
-              <div className="flex gap-2">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-[var(--studio-text-secondary)] block">{t('addAudioModal.whereToUse')}</label>
+              <div className="grid grid-cols-2 gap-2">
                 <button
+                  type="button"
                   onClick={() => toggleCategory("tick")}
-                  className={`flex-1 py-2 px-1 rounded-xl text-xs sm:text-sm border font-medium transition-all ${
+                  className={`py-2 px-3 rounded-lg text-xs sm:text-sm border font-medium transition-colors ${
                     categories.includes("tick")
-                      ? "bg-blue-600/15 text-blue-400 border-blue-500/50 shadow-md"
-                      : "bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700 hover:bg-slate-900/70"
+                      ? "bg-[var(--studio-accent-soft)] text-[var(--studio-accent-fg)] border-[var(--studio-accent)]/50"
+                      : "bg-[var(--studio-card)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:text-[var(--studio-text)]"
                   }`}
                 >
                   {t('addAudioModal.spin')}
                 </button>
                 <button
+                  type="button"
                   onClick={() => toggleCategory("win")}
-                  className={`flex-1 py-2 px-1 rounded-xl text-xs sm:text-sm border font-medium transition-all ${
+                  className={`py-2 px-3 rounded-lg text-xs sm:text-sm border font-medium transition-colors ${
                     categories.includes("win")
-                      ? "bg-blue-600/15 text-blue-400 border-blue-500/50 shadow-md"
-                      : "bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700 hover:bg-slate-900/70"
+                      ? "bg-[var(--studio-accent-soft)] text-[var(--studio-accent-fg)] border-[var(--studio-accent)]/50"
+                      : "bg-[var(--studio-card)] text-[var(--studio-text-muted)] border-[var(--studio-border)] hover:text-[var(--studio-text)]"
                   }`}
                 >
                   {t('addAudioModal.win')}
@@ -539,17 +593,14 @@ export const AddAudioModal: React.FC<AddAudioModalProps> = ({ isOpen, onClose })
           )}
         </div>
 
-        <div className="p-4 border-t border-slate-800/60 bg-slate-900/40 flex justify-end gap-3 shrink-0">
-          <button onClick={handleClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+        <div className="p-4 border-t border-[var(--studio-border)] bg-[var(--studio-surface-elevated)] flex justify-end gap-2.5 shrink-0">
+          <Button type="button" variant="secondary" onClick={handleClose}>
             {t('addAudioModal.cancel')}
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md transition-all active:scale-95 flex items-center gap-2"
-          >
-            {editingAudio ? <Save size={16} /> : <Plus size={16} />}
+          </Button>
+          <Button type="button" variant="primary" onClick={handleSave} className="gap-2">
+            {editingAudio ? <Save size={15} /> : <Plus size={15} />}
             {editingAudio ? t('addAudioModal.save') : t('addAudioModal.add')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

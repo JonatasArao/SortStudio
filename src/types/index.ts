@@ -113,6 +113,11 @@ export interface AppSettings {
   eliminationSoundType?: string;
   eliminationSpinTime?: number;
   wheelTheme?: string;
+  wheelScale?: number;
+  sliceBorderWidth?: number;
+  pointerStyle?: 'classic' | 'needle' | 'badge';
+  uiDensity?: 'comfortable' | 'compact';
+  centerBgColor?: string;
   penaltySaveWins?: boolean;
   testModeEnabled?: boolean;
 }

@@ -1,22 +1,19 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Skull, 
-  X, 
-  RotateCcw, 
-  Search, 
-  Flame, 
-  ShieldAlert, 
-  Users, 
-  Sparkles, 
-  Swords, 
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Skull,
+  X,
+  RotateCcw,
+  Search,
+  Users,
+  Sparkles,
+  Swords,
   CheckCircle2,
-  Clock
+  Clock,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
+import { Button } from '../atoms/Button';
 
 export const GraveyardModal = () => {
-  const { t } = useTranslation();
   const isGraveyardOpen = useAppStore(s => s.isGraveyardOpen);
   const setIsGraveyardOpen = useAppStore(s => s.setIsGraveyardOpen);
   const eliminatedHistory = useAppStore(s => s.eliminatedHistory);
@@ -28,12 +25,19 @@ export const GraveyardModal = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [justRevivedId, setJustRevivedId] = useState<string | null>(null);
 
-  // Survivors currently active
+  useEffect(() => {
+    if (!isGraveyardOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsGraveyardOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isGraveyardOpen, setIsGraveyardOpen]);
+
   const survivors = useMemo(() => {
-    return items.filter(i => i.enabled && i.text.trim() !== "");
+    return items.filter(i => i.enabled && i.text.trim() !== '');
   }, [items]);
 
-  // Filtered eliminated records
   const filteredRecords = useMemo(() => {
     if (!searchQuery.trim()) return eliminatedHistory;
     const q = searchQuery.toLowerCase();
@@ -49,7 +53,6 @@ export const GraveyardModal = () => {
       setJustRevivedId(null);
     }, 1500);
 
-    // Audio cue if sound is enabled
     if (soundEnabled) {
       try {
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -64,9 +67,7 @@ export const GraveyardModal = () => {
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
-      } catch (e) {
-        // audio context fallback
-      }
+      } catch (_) {}
     }
   };
 
@@ -86,207 +87,195 @@ export const GraveyardModal = () => {
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.45);
-      } catch (e) {
-        // audio fallback
-      }
+      } catch (_) {}
     }
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
       onClick={() => setIsGraveyardOpen(false)}
     >
-      <div 
-        className="relative w-full max-w-4xl max-h-[90vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-2 border-red-500/40 rounded-3xl shadow-[0_0_80px_rgba(239,68,68,0.25)] flex flex-col overflow-hidden text-slate-200"
-        onClick={(e) => e.stopPropagation()}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-4xl max-h-[88vh] bg-[var(--studio-surface)] border border-[var(--studio-border-strong)] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[var(--studio-text)]"
+        onClick={e => e.stopPropagation()}
       >
-        {/* Subtle Eerie Flame Glow Top Aura */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-28 bg-red-600/15 blur-3xl pointer-events-none rounded-full" />
-        <div className="absolute -top-12 right-12 w-48 h-48 bg-purple-600/10 blur-3xl pointer-events-none rounded-full" />
-
-        {/* Crypt Header */}
-        <div className="relative px-5 sm:px-8 pt-6 pb-4 border-b border-slate-800 flex items-start justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-950 to-slate-900 border border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.35)] shrink-0">
-              <Skull className="w-6 h-6 text-red-400 drop-shadow animate-pulse" />
+        {/* Header */}
+        <div className="px-5 sm:px-6 py-4 border-b border-[var(--studio-border)] flex items-center justify-between gap-4 shrink-0 bg-[var(--studio-surface-elevated)]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+              <Skull className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase flex items-center gap-2">
-                  <span>Cemitério dos Eliminados</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-950 text-red-400 border border-red-500/40 font-mono font-bold">
-                    {eliminatedHistory.length}
-                  </span>
+                <h2 className="font-display text-lg font-bold text-[var(--studio-text)] truncate">
+                  Cemitério dos Eliminados
                 </h2>
+                <span className="text-xs font-mono tabular-nums text-red-600 dark:text-red-400 font-semibold">
+                  · {eliminatedHistory.length}
+                </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Cripta dos guerreiros que tombaram na batalha. Reviva combatentes individualmente ou ressuscite todos.
+              <p className="text-xs text-[var(--studio-text-muted)] truncate">
+                Reviva combatentes individualmente ou restaure todos para a arena.
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsGraveyardOpen(false)}
-            className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors shrink-0"
+            className="w-9 h-9 rounded-xl bg-[var(--studio-card)] hover:bg-[var(--studio-card-hover)] text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] border border-[var(--studio-border-strong)] flex items-center justify-center transition-colors shrink-0"
             title="Fechar Cemitério"
+            aria-label="Fechar Cemitério"
           >
-            <X className="w-5 h-5" />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Battle Stats Bar */}
-        <div className="px-5 sm:px-8 py-3 bg-slate-950/60 border-b border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 shrink-0">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-900/80 border border-slate-800">
-            <Skull className="w-4 h-4 text-red-400 shrink-0" />
+        {/* Stats Strip */}
+        <div className="px-5 sm:px-6 py-3 bg-[var(--studio-input)] border-b border-[var(--studio-border)] grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border)]">
+            <Skull className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Tombados</p>
-              <p className="text-sm sm:text-base font-black text-red-300 font-mono leading-none mt-0.5">
+              <p className="text-[11px] text-[var(--studio-text-muted)]">Tombados</p>
+              <p className="text-sm font-bold text-red-700 dark:text-red-300 font-mono tabular-nums leading-tight">
                 {eliminatedHistory.length}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-900/80 border border-slate-800">
-            <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border)]">
+            <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Vivos na Arena</p>
-              <p className="text-sm sm:text-base font-black text-emerald-300 font-mono leading-none mt-0.5">
+              <p className="text-[11px] text-[var(--studio-text-muted)]">Vivos na arena</p>
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 font-mono tabular-nums leading-tight">
                 {survivors.length}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-900/80 border border-slate-800">
-            <Swords className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border)]">
+            <Swords className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Status Geral</p>
-              <p className="text-sm sm:text-base font-black text-amber-300 font-mono leading-none mt-0.5 truncate">
-                {survivors.length <= 1 ? 'Batalha Concluída' : `${survivors.length} em combate`}
+              <p className="text-[11px] text-[var(--studio-text-muted)]">Situação</p>
+              <p className="text-sm font-bold text-amber-700 dark:text-amber-300 leading-tight truncate">
+                {survivors.length <= 1 ? 'Concluída' : `${survivors.length} ativos`}
               </p>
             </div>
           </div>
 
           <div className="flex items-center justify-end col-span-2 sm:col-span-1">
-            <button
+            <Button
+              variant="success"
+              size="sm"
               onClick={handleReviveAll}
               disabled={eliminatedHistory.length === 0}
-              className="w-full sm:w-auto h-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md shadow-emerald-950/40 transition-all active:scale-95 border border-emerald-400/40"
-              title="Ressuscitar todos os guerreiros caídos de volta para a roleta"
+              className="w-full h-full min-h-[40px]"
             >
-              <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin" />
+              <Sparkles size={14} />
               <span>Ressuscitar Todos</span>
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* Search Filter Bar */}
-        <div className="px-5 sm:px-8 py-3 flex items-center gap-3 shrink-0">
+        {/* Search Bar */}
+        <div className="px-5 sm:px-6 py-3 flex items-center gap-2 shrink-0 border-b border-[var(--studio-border)]">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[var(--studio-text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar guerreiro tombado pelo nome..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500/50 transition-colors"
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Buscar participante eliminado..."
+              className="w-full h-10 pl-10 pr-3 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border-strong)] text-sm text-[var(--studio-text)] placeholder-[var(--studio-text-muted)] focus:outline-none focus:border-[var(--studio-accent)] transition-colors"
             />
           </div>
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="px-2.5 py-2 text-xs text-slate-400 hover:text-white rounded-lg bg-slate-900 border border-slate-800"
-            >
+            <Button variant="secondary" size="sm" onClick={() => setSearchQuery('')}>
               Limpar
-            </button>
+            </Button>
           )}
         </div>
 
-        {/* Tombstone Grid (Lápides dos Caídos) */}
-        <div className="flex-1 overflow-y-auto px-5 sm:px-8 pb-6 custom-scrollbar min-h-[280px]">
+        {/* Grid */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 custom-scrollbar min-h-[260px]">
           {filteredRecords.length === 0 ? (
-            <div className="h-64 flex flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-slate-800 bg-slate-950/40">
-              <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3 text-slate-500">
-                <Skull className="w-7 h-7" />
+            <div className="h-60 flex flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-[var(--studio-border-strong)] bg-[var(--studio-input)]/60">
+              <div className="w-12 h-12 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border-strong)] flex items-center justify-center mb-3 text-[var(--studio-text-muted)]">
+                <Skull className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-300">
-                {searchQuery ? 'Nenhum guerreiro encontrado' : 'A Cripta está Vazia'}
+              <h3 className="text-sm font-semibold text-[var(--studio-text)]">
+                {searchQuery ? 'Nenhum participante encontrado' : 'Nenhum eliminado ainda'}
               </h3>
-              <p className="text-xs text-slate-500 max-w-sm mt-1">
-                {searchQuery 
-                  ? 'Nenhum participante eliminado corresponde à busca digitada.' 
-                  : 'Nenhum guerreiro tombou até o momento. Todos continuam sobrevivendo na arena da roleta!'}
+              <p className="text-xs text-[var(--studio-text-muted)] max-w-sm mt-1">
+                {searchQuery
+                  ? 'Nenhum participante eliminado corresponde à busca digitada.'
+                  : 'Todos os participantes seguem ativos na disputa.'}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-              {filteredRecords.map((record) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {filteredRecords.map(record => {
                 const isRecentlyRevived = justRevivedId === record.itemId;
-                const formattedTime = new Date(record.eliminatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const formattedTime = new Date(record.eliminatedAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                });
 
                 return (
                   <div
                     key={record.id}
-                    className="relative bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 hover:border-red-500/40 rounded-2xl p-4 shadow-lg transition-all duration-200 group flex flex-col justify-between overflow-hidden"
+                    className="bg-[var(--studio-card)] border border-[var(--studio-border)] hover:border-red-500/35 rounded-xl p-4 transition-colors flex flex-col justify-between gap-3"
                   >
-                    {/* Gravestone Cut Top Outline */}
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500/30 to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />
-
                     <div>
-                      {/* Lápide Header */}
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-950/80 border border-red-500/30 text-red-300 text-[10px] font-bold uppercase tracking-wider">
-                          <span>🪦 Rodada {record.round}</span>
-                        </div>
+                      <div className="flex items-center justify-between gap-2 text-xs text-[var(--studio-text-muted)] mb-2">
+                        <span className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium font-mono tabular-nums">
+                          <Skull size={12} />
+                          <span>Rodada {record.round}</span>
+                        </span>
                         {record.rank && (
-                          <span className="text-[10px] font-mono text-slate-400 font-semibold">
-                            #{record.rank}º Lugar
+                          <span className="font-mono tabular-nums text-[var(--studio-text-muted)]">
+                            #{record.rank}º
                           </span>
                         )}
                       </div>
 
-                      {/* Participant Name & Color */}
-                      <div className="flex items-center gap-2.5 my-2">
-                        {record.color ? (
-                          <span 
-                            className="w-3.5 h-3.5 rounded-full border border-white/30 shrink-0 shadow-sm"
-                            style={{ backgroundColor: record.color }}
-                          />
-                        ) : (
-                          <span className="w-3.5 h-3.5 rounded-full bg-slate-700 shrink-0" />
-                        )}
-                        <h4 className="text-base font-extrabold text-white truncate drop-shadow-sm group-hover:text-red-200 transition-colors">
-                          {record.text}
-                        </h4>
+                      <div className="flex items-center gap-2.5 my-1.5">
+                        <span
+                          className="w-3 h-3 rounded-full border border-[var(--studio-border-strong)] shrink-0"
+                          style={{ backgroundColor: record.color || '#64748b' }}
+                        />
+                        <h4 className="text-sm font-bold text-[var(--studio-text)] truncate">{record.text}</h4>
                       </div>
 
-                      {/* Timestamp & Epitaph */}
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1 mb-4 font-mono">
-                        <Clock className="w-3 h-3 text-slate-500 shrink-0" />
-                        <span>Tombou às {formattedTime}</span>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[var(--studio-text-muted)] font-mono tabular-nums">
+                        <Clock className="w-3 h-3 shrink-0" />
+                        <span>{formattedTime}</span>
                       </div>
                     </div>
 
-                    {/* Revive Button */}
                     <button
+                      type="button"
                       onClick={() => handleReviveSingle(record)}
                       disabled={isRecentlyRevived}
-                      className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-all active:scale-95 border ${
+                      className={`w-full h-9 flex items-center justify-center gap-1.5 px-3 rounded-lg font-semibold text-xs transition-colors border ${
                         isRecentlyRevived
-                          ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300'
-                          : 'bg-slate-800/90 hover:bg-emerald-600/90 text-slate-200 hover:text-white border-slate-700/80 hover:border-emerald-500/60'
+                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-[var(--studio-surface-elevated)] hover:bg-emerald-600 text-[var(--studio-text)] hover:text-white border-[var(--studio-border-strong)] hover:border-emerald-500/40'
                       }`}
-                      title={`Ressuscitar ${record.text} de volta para a roleta`}
                     >
                       {isRecentlyRevived ? (
                         <>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Ressuscitado!</span>
+                          <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>Ressuscitado</span>
                         </>
                       ) : (
                         <>
-                          <RotateCcw className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-180 transition-transform duration-300" />
-                          <span>Ressuscitar Guerreiro</span>
+                          <RotateCcw size={14} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>Ressuscitar</span>
                         </>
                       )}
                     </button>

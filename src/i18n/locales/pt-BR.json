@@ -330,11 +330,20 @@
     "accept": "Aceitar"
   },
   "themes": {
-    "default": "Padrão",
+    "default": "Estúdio Broadcast",
     "neon": "Neon Cyber",
-    "casino": "Casino Ouro",
-    "candy": "Candy",
-    "dark": "Escuro Minimal"
+    "casino": "Cassino Royale",
+    "candy": "Candy Claro",
+    "dark": "Obsidiana Mono",
+    "emerald": "Esmeralda Arena",
+    "descriptions": {
+      "default": "Contraste azul escuro equilibrado",
+      "neon": "Gradiente violeta com brilho ciano",
+      "casino": "Bordô real com destaque dourado",
+      "candy": "Interface clara e vibrante",
+      "dark": "Monocromático puro e neutro",
+      "emerald": "Verde arena de competição"
+    }
   },
   "addAudioModal": {
     "title": "Adicionar Áudio Personalizado",
@@ -363,8 +372,9 @@
     "edit": "Editar Áudio"
   },
   "visualSettings": {
-    "title": "Aparência Visual",
-    "wheelFormat": "Formato da Roleta",
+    "title": "Estúdio de Aparência",
+    "subtitle": "Personalize tema global, proporções, paleta de cores e emblema central com prévia ao vivo.",
+    "wheelFormat": "Formato do Sorteio",
     "classic": "Clássica",
     "slot": "Slot",
     "horizon": "Slot",
@@ -373,14 +383,73 @@
     "race": "Corrida",
     "penalty_shootout": "Pênaltis",
     "bingo": "Bingo",
-    "visualTheme": "TEMA VISUAL (Skins)",
+    "visualTheme": "Tema Global da Interface",
+    "applySuggestedPalette": "Aplicar paleta sugerida",
+    "autoApplyPalette": "Sincronizar paleta ao trocar tema",
     "textSize": "Tamanho do Texto",
     "centerSize": "Tamanho do Centro",
-    "centerImage": "Imagem Central (URL)",
-    "centerImagePlh": "Cole o URL da imagem...",
-    "centerImageHint": "Dica: Use URLs de imagens transparentes (PNG) para um melhor resultado.",
+    "wheelScale": "Escala do Palco / Roleta",
+    "sliceBorder": "Borda das Fatias",
+    "pointerStyle": "Estilo do Ponteiro",
+    "pointers": {
+      "classic": "Clássico",
+      "needle": "Agulha Fina",
+      "badge": "Emblema"
+    },
+    "uiDensity": "Densidade da Interface",
+    "densities": {
+      "comfortable": "Confortável",
+      "compact": "Compacta"
+    },
+    "proportions": "Proporções e Geometria",
+    "quickSizes": "Atalhos de Tamanho",
+    "sizeS": "Compacto (P)",
+    "sizeM": "Padrão (M)",
+    "sizeL": "Destaque (G)",
+    "centerImage": "Emblema Central",
+    "centerBgColor": "Cor de Fundo do Emblema",
+    "centerBgAuto": "Tema (Auto)",
+    "centerBgTransparent": "Transparente",
+    "centerBgCustom": "Cor personalizada do fundo do emblema",
+    "centerImagePlh": "Cole o URL da imagem ou escolha acima...",
+    "centerImageHint": "Envie uma imagem local (PNG/SVG até 2MB), escolha um emblema pronto ou cole um link.",
+    "uploadImage": "Enviar Arquivo",
+    "clearImage": "Limpar",
+    "imageTooLarge": "A imagem deve ter no máximo 2 MB.",
+    "imageInvalid": "Selecione um arquivo de imagem válido (PNG, JPG, SVG ou WebP).",
+    "emblems": {
+      "star": "Estrela",
+      "trophy": "Troféu",
+      "target": "Alvo",
+      "bolt": "Raio",
+      "crown": "Coroa",
+      "none": "Sem imagem"
+    },
     "colorPalette": "Paleta de Cores",
-    "add": "Adicionar"
+    "palettePresets": "Paletas Prontas",
+    "customColors": "Cores Ativas (clique para editar)",
+    "shuffleColors": "Embaralhar",
+    "resetPalette": "Padrão",
+    "moveLeft": "Mover para esquerda",
+    "moveRight": "Mover para direita",
+    "removeColor": "Remover cor",
+    "add": "Adicionar",
+    "livePreview": "Prévia ao Vivo",
+    "testSpin": "Testar Giro",
+    "resetAll": "Restaurar Padrões",
+    "themePreviewLabel": "Prévia da Interface",
+    "themeLight": "Claro",
+    "themeDark": "Escuro",
+    "palettes": {
+      "broadcast": "Broadcast Padrão",
+      "cyberNeon": "Cyber Neon",
+      "casinoRoyale": "Cassino Royale",
+      "candyPastel": "Candy Pastel",
+      "emeraldArena": "Arena Esmeralda",
+      "sunsetHeat": "Pôr do Sol",
+      "highContrast": "Alto Contraste",
+      "obsidianMono": "Obsidiana Minimal"
+    }
   },
   "audioSettings": {
     "title": "Som do Sorteio",

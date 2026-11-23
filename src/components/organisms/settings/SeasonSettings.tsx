@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Calendar, Power, Edit2, X } from 'lucide-react';
+import { Plus, Trash2, Calendar, Power, Edit2, X, Check } from 'lucide-react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Season } from '../../../types';
-import { Toggle } from '../../atoms/Toggle';
+import { Button } from '../../atoms/Button';
+import { Input } from '../../atoms/Input';
 
 export const SeasonSettings = () => {
   const { t } = useTranslation();
@@ -11,7 +12,7 @@ export const SeasonSettings = () => {
   const setSeasons = useAppStore(s => s.setSeasons);
   const balanceScope = useAppStore(s => s.balanceScope);
   const setBalanceScope = useAppStore(s => s.setBalanceScope);
-  
+
   const [newSeasonName, setNewSeasonName] = useState('');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -35,7 +36,7 @@ export const SeasonSettings = () => {
 
   const handleAddOrUpdateSeason = () => {
     if (!newSeasonName.trim()) return;
-    
+
     const now = Date.now();
     let startDate = now;
     let endDate: number | undefined = undefined;
@@ -47,7 +48,7 @@ export const SeasonSettings = () => {
         if (!isNaN(parsedStart)) startDate = parsedStart;
       }
     }
-    
+
     if (customEnd) {
       const [year, month, day] = customEnd.split('-');
       if (year && month && day) {
@@ -65,9 +66,7 @@ export const SeasonSettings = () => {
       } : s));
     } else {
       let updatedSeasons = seasons;
-      
-      // If the new season has no end date, it becomes the active season.
-      // So we must close any currently active season right before this one starts.
+
       if (!endDate) {
         updatedSeasons = seasons.map(s => {
           if (!s.endDate) {
@@ -83,7 +82,7 @@ export const SeasonSettings = () => {
         startDate,
         endDate
       };
-      
+
       setSeasons([...updatedSeasons, newSeason]);
     }
 
@@ -107,96 +106,108 @@ export const SeasonSettings = () => {
   };
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString() + ' ' + new Date(timestamp).toLocaleTimeString();
+    return new Date(timestamp).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    }) + ' ' + new Date(timestamp).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h3 className="text-xl font-bold text-white mb-2">{t('settings.seasons.title')}</h3>
-        <p className="text-sm text-slate-400 mb-6">
+        <h3 className="text-base font-semibold text-[var(--studio-text)] mb-1">{t('settings.seasons.title')}</h3>
+        <p className="text-xs sm:text-sm text-[var(--studio-text-muted)] mb-4 leading-relaxed">
           {t('settings.seasons.desc')}
         </p>
 
-        <div className="bg-[#14151a] p-4 rounded-xl border border-slate-700/50 space-y-5">
+        <div className="bg-[var(--studio-card)] p-4 sm:p-5 rounded-xl border border-[var(--studio-border)] space-y-4">
           <div className="space-y-4">
-            <div>
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 ml-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[var(--studio-text-secondary)] block">
                 {t('settings.seasons.namePlaceholder').replace(' (ex: Verão 2024)', '')}
               </label>
-              <input
+              <Input
                 type="text"
                 value={newSeasonName}
                 onChange={(e) => setNewSeasonName(e.target.value)}
                 placeholder={t('settings.seasons.namePlaceholder')}
-                className="w-full bg-[#0f1015] border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors shadow-inner"
               />
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block ml-1">
+                <label className="text-xs font-medium text-[var(--studio-text-secondary)] block">
                   {t('settings.seasons.startDate')}
                 </label>
                 <input
                   type="date"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="w-full bg-[#0f1015] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 [color-scheme:dark] transition-colors"
+                  className="w-full min-h-[var(--studio-control-h)] bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)] transition-colors font-mono"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block ml-1">
+                <label className="text-xs font-medium text-[var(--studio-text-secondary)] block">
                   {t('settings.seasons.endDate')}
                 </label>
                 <input
                   type="date"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="w-full bg-[#0f1015] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 [color-scheme:dark] transition-colors"
+                  className="w-full min-h-[var(--studio-control-h)] bg-[var(--studio-input)] border border-[var(--studio-border-strong)] rounded-lg px-3 py-2 text-sm text-[var(--studio-text)] focus:outline-none focus:border-[var(--studio-accent)] transition-colors font-mono"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
               {editingSeasonId && (
-                <button
+                <Button
+                  type="button"
+                  variant="secondary"
                   onClick={resetForm}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-lg font-bold transition-all flex items-center justify-center gap-2 border border-slate-700/50"
+                  className="flex-1 gap-2"
                 >
-                  <X size={18} /> {t('settings.seasons.cancel')}
-                </button>
+                  <X size={16} /> {t('settings.seasons.cancel')}
+                </Button>
               )}
-              <button
+              <Button
+                type="button"
+                variant="primary"
                 onClick={handleAddOrUpdateSeason}
                 disabled={!newSeasonName.trim()}
-                className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/30"
+                className="flex-[2] gap-2"
               >
-                {editingSeasonId ? <Edit2 size={18} /> : <Plus size={18} />}
+                {editingSeasonId ? <Edit2 size={16} /> : <Plus size={16} />}
                 {editingSeasonId ? t('settings.seasons.update') : t('settings.seasons.save')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Escopo de Contabilização de Resultados */}
-      <div className="bg-[#14151a] p-5 rounded-xl border border-slate-700/50 space-y-3">
+      {/* Escopo de Contabilização */}
+      <div className="bg-[var(--studio-card)] p-4 sm:p-5 rounded-xl border border-[var(--studio-border)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h4 className="text-sm font-semibold text-white">{t('settings.general.balanceScope', 'Escopo de Contabilização de Resultados')}</h4>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h4 className="text-sm font-semibold text-[var(--studio-text)]">
+              {t('settings.general.balanceScope', 'Escopo de Contabilização de Resultados')}
+            </h4>
+            <p className="text-xs text-[var(--studio-text-muted)] mt-0.5 leading-relaxed">
               {t('settings.general.balanceScopeDesc', 'Define se o balanceamento de vitórias e estatísticas considera apenas a temporada atual ou o histórico geral acumulado.')}
             </p>
           </div>
-          <div className="flex items-center gap-1.5 bg-[#0f1015] p-1 rounded-xl border border-slate-700 shrink-0">
+          <div className="flex items-center gap-1 bg-[var(--studio-input)] p-1 rounded-lg border border-[var(--studio-border)] shrink-0">
             <button
               type="button"
               onClick={() => setBalanceScope('current_season')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
                 balanceScope === 'current_season'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[var(--studio-accent)] text-[var(--studio-accent-text)]'
+                  : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)]'
               }`}
             >
               Temporada Atual
@@ -204,10 +215,10 @@ export const SeasonSettings = () => {
             <button
               type="button"
               onClick={() => setBalanceScope('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap ${
                 balanceScope === 'all'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[var(--studio-accent)] text-[var(--studio-accent-text)]'
+                  : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)]'
               }`}
             >
               Resultado Geral
@@ -216,66 +227,96 @@ export const SeasonSettings = () => {
         </div>
       </div>
 
-      <div className="bg-[#14151a] p-5 rounded-xl border border-slate-700/50">
-        <h4 className="text-sm font-semibold text-white mb-4">{t('settings.seasons.registered')}</h4>
-        <div className="space-y-3">
+      {/* Registered Seasons */}
+      <div className="bg-[var(--studio-card)] p-4 sm:p-5 rounded-xl border border-[var(--studio-border)]">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--studio-text-muted)] mb-3.5">
+          {t('settings.seasons.registered')}
+        </h4>
+        <div className="space-y-2.5">
           {seasons.length === 0 ? (
-            <p className="text-sm text-slate-500">{t('settings.seasons.empty')}</p>
+            <p className="text-sm text-[var(--studio-text-muted)]">{t('settings.seasons.empty')}</p>
           ) : (
             [...seasons].reverse().map(season => {
               const isActive = !season.endDate;
               return (
-                <div key={season.id} className={`p-4 rounded-lg border transition-colors ${isActive ? 'bg-blue-900/20 border-blue-500/50' : 'bg-[#0f1015] border-slate-700/50'} flex justify-between items-center`}>
-                  <div>
-                    <h5 className="font-medium text-white flex items-center gap-2">
-                      {season.name} {isActive && <span className="text-[10px] uppercase font-bold bg-blue-600 px-2 py-0.5 rounded-full tracking-wider">{t('settings.seasons.active')}</span>}
-                    </h5>
-                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1 opacity-80">
-                      <Calendar size={12} />
-                      {formatDate(season.startDate)} - {season.endDate ? formatDate(season.endDate) : t('settings.seasons.now')}
+                <div
+                  key={season.id}
+                  className={`p-3.5 rounded-lg border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    isActive
+                      ? 'bg-[var(--studio-accent-soft)] border-[var(--studio-accent)]/40'
+                      : 'bg-[var(--studio-surface-elevated)] border-[var(--studio-border)]'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h5 className="font-semibold text-sm text-[var(--studio-text)] truncate">{season.name}</h5>
+                      {isActive && (
+                        <span className="text-[10px] uppercase font-bold text-[var(--studio-accent-fg)] tracking-wider">
+                          · {t('settings.seasons.active')}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[var(--studio-text-muted)] mt-1 flex items-center gap-1.5 font-mono tabular-nums">
+                      <Calendar size={12} className="shrink-0" />
+                      <span>{formatDate(season.startDate)} — {season.endDate ? formatDate(season.endDate) : t('settings.seasons.now')}</span>
                     </p>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
                     {seasonToDelete === season.id ? (
-                      <div className="flex gap-2 items-center bg-red-950/40 p-1.5 rounded-lg border border-red-900/50">
-                        <span className="text-[10px] text-red-300 font-bold px-2 uppercase">{t('settings.seasons.confirmDelete')}</span>
+                      <div className="flex gap-1.5 items-center bg-red-500/10 px-2 py-1 rounded-lg border border-red-500/30">
+                        <span className="text-[11px] text-red-700 dark:text-red-300 font-semibold pr-1">{t('settings.seasons.confirmDelete')}</span>
                         <button
+                          type="button"
                           onClick={confirmDelete}
-                          className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-[10px] rounded font-bold transition-colors uppercase"
+                          className="p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-md transition-colors"
+                          title={t('settings.seasons.yes')}
                         >
-                          {t('settings.seasons.yes')}
+                          <Check size={13} />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setSeasonToDelete(null)}
-                          className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] rounded font-bold transition-colors uppercase"
+                          className="p-1.5 bg-[var(--studio-card-hover)] text-[var(--studio-text-secondary)] rounded-md transition-colors"
+                          title={t('settings.seasons.no')}
                         >
-                          {t('settings.seasons.no')}
+                          <X size={13} />
                         </button>
                       </div>
                     ) : (
                       <>
                         <button
+                          type="button"
                           onClick={() => handleEditSeason(season)}
-                          className={`p-2 rounded-lg transition-colors ${editingSeasonId === season.id ? 'text-blue-400 bg-blue-400/10' : 'text-slate-400 hover:bg-slate-800'}`}
+                          className={`p-2 rounded-lg transition-colors ${
+                            editingSeasonId === season.id
+                              ? 'text-[var(--studio-accent-fg)] bg-[var(--studio-accent-soft)]'
+                              : 'text-[var(--studio-text-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-card-hover)]'
+                          }`}
                           title={t('settings.seasons.edit')}
+                          aria-label={t('settings.seasons.edit')}
                         >
-                          <Edit2 size={18} />
+                          <Edit2 size={16} />
                         </button>
                         {isActive && (
                           <button
+                            type="button"
                             onClick={() => handleCloseSeason(season.id)}
-                            className="p-2 text-orange-400 hover:bg-orange-400/10 rounded-lg transition-colors"
+                            className="p-2 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15 rounded-lg transition-colors"
                             title={t('settings.seasons.close')}
+                            aria-label={t('settings.seasons.close')}
                           >
-                            <Power size={18} />
+                            <Power size={16} />
                           </button>
                         )}
                         <button
+                          type="button"
                           onClick={() => handleDeleteSeason(season.id)}
-                          className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                          className="p-2 text-[var(--studio-text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                           title={t('settings.seasons.delete')}
+                          aria-label={t('settings.seasons.delete')}
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </>
                     )}
@@ -286,7 +327,6 @@ export const SeasonSettings = () => {
           )}
         </div>
       </div>
-
     </div>
   );
 };

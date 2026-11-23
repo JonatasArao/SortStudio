@@ -15,6 +15,10 @@ import {
   saveSeasons,
 } from '../utils/persistence';
 import { CustomAudio, CustomAudioItem } from '../types';
+import { DEFAULT_CENTER_IMAGE } from '../constants';
+
+const LEGACY_DEFAULT_CENTER_IMAGE =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%230f172a" stroke="%23f97316" stroke-width="4"/><polygon points="50,22 59,38 78,41 64,55 67,74 50,65 33,74 36,55 22,41 41,38" fill="%23fcd34d"/></svg>';
 
 export const useAppInitialization = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -56,7 +60,13 @@ export const useAppInitialization = () => {
           if (Array.isArray(wheel.colorSettings)) {
             state.setColors(wheel.colorSettings.map((c: any) => c.color));
           }
-          if (wheel.customPictureDataUri) state.setCenterImage(wheel.customPictureDataUri);
+          if (wheel.customPictureDataUri !== undefined) {
+            state.setCenterImage(
+              wheel.customPictureDataUri === LEGACY_DEFAULT_CENTER_IMAGE
+                ? DEFAULT_CENTER_IMAGE
+                : wheel.customPictureDataUri
+            );
+          }
           if (wheel.winnerMessage) state.setWinMessage(wheel.winnerMessage);
         }
 
@@ -89,6 +99,11 @@ export const useAppInitialization = () => {
           if (settings.eliminationSoundType !== undefined) state.setEliminationSoundType(settings.eliminationSoundType);
           if (settings.eliminationSpinTime !== undefined) state.setEliminationSpinTime(settings.eliminationSpinTime);
           if (settings.wheelTheme !== undefined) state.setWheelTheme(settings.wheelTheme);
+          if (settings.wheelScale !== undefined) state.setWheelScale(settings.wheelScale);
+          if (settings.sliceBorderWidth !== undefined) state.setSliceBorderWidth(settings.sliceBorderWidth);
+          if (settings.pointerStyle !== undefined) state.setPointerStyle(settings.pointerStyle);
+          if (settings.uiDensity !== undefined) state.setUiDensity(settings.uiDensity);
+          if (settings.centerBgColor !== undefined) state.setCenterBgColor(settings.centerBgColor);
           if (settings.penaltySaveWins !== undefined) state.setPenaltySaveWins(settings.penaltySaveWins);
           if (settings.testModeEnabled !== undefined) state.setTestModeEnabled(settings.testModeEnabled);
         }
@@ -212,6 +227,11 @@ export const useAppInitialization = () => {
   const eliminationSoundType = useAppStore(s => s.eliminationSoundType);
   const eliminationSpinTime = useAppStore(s => s.eliminationSpinTime);
   const wheelTheme = useAppStore(s => s.wheelTheme);
+  const wheelScale = useAppStore(s => s.wheelScale);
+  const sliceBorderWidth = useAppStore(s => s.sliceBorderWidth);
+  const pointerStyle = useAppStore(s => s.pointerStyle);
+  const uiDensity = useAppStore(s => s.uiDensity);
+  const centerBgColor = useAppStore(s => s.centerBgColor);
   const penaltySaveWins = useAppStore(s => s.penaltySaveWins);
   const testModeEnabled = useAppStore(s => s.testModeEnabled);
 
@@ -245,6 +265,11 @@ export const useAppInitialization = () => {
       eliminationSoundType,
       eliminationSpinTime,
       wheelTheme,
+      wheelScale,
+      sliceBorderWidth,
+      pointerStyle,
+      uiDensity,
+      centerBgColor,
       penaltySaveWins,
       testModeEnabled
     });
@@ -253,7 +278,7 @@ export const useAppInitialization = () => {
     masterVolume, tickSoundType, spinSoundMode, winSoundType, textSize, 
     centerSize, isAdvancedEntries, eliminationMessage, grandWinnerMessage,
     eliminationMode, autoContinueElimination, balanceWeightsByWins, balanceWeightsMode, balanceScope, pitySystemEnabled, ignoreNewItemWeight, newItemWeightMode, showPitySystemVisually, antiRepetitionEnabled, antiRepetitionCount, eliminationSoundType,
-    eliminationSpinTime, wheelTheme, penaltySaveWins, testModeEnabled
+    eliminationSpinTime, wheelTheme, wheelScale, sliceBorderWidth, pointerStyle, uiDensity, centerBgColor, penaltySaveWins, testModeEnabled
   ]);
 
   // Save Results

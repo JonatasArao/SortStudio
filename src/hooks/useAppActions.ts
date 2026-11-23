@@ -207,8 +207,13 @@ export const useAppActions = () => {
           wheelTheme: state.wheelTheme,
           colors: state.colors,
           centerImage: state.centerImage,
+          centerBgColor: state.centerBgColor,
           textSize: state.textSize,
           centerSize: state.centerSize,
+          wheelScale: state.wheelScale,
+          sliceBorderWidth: state.sliceBorderWidth,
+          pointerStyle: state.pointerStyle,
+          uiDensity: state.uiDensity,
         } : {}),
         ...(options.entries ? {
           items: state.items,

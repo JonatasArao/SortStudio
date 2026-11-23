@@ -93,14 +93,29 @@ interface AppState {
   setWheelType: (wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test') => void;
   colors: string[];
   setColors: (colors: string[] | ((prev: string[]) => string[])) => void;
+  updateColor: (index: number, color: string) => void;
+  moveColor: (index: number, direction: 'left' | 'right') => void;
+  shuffleColors: () => void;
+  applyColorPalette: (colors: string[]) => void;
   newColor: string;
   setNewColor: (newColor: string) => void;
   centerImage: string;
   setCenterImage: (centerImage: string) => void;
+  centerBgColor: string;
+  setCenterBgColor: (centerBgColor: string) => void;
   textSize: number;
   setTextSize: (textSize: number) => void;
   centerSize: number;
   setCenterSize: (centerSize: number) => void;
+  wheelScale: number;
+  setWheelScale: (wheelScale: number) => void;
+  sliceBorderWidth: number;
+  setSliceBorderWidth: (sliceBorderWidth: number) => void;
+  pointerStyle: 'classic' | 'needle' | 'badge';
+  setPointerStyle: (pointerStyle: 'classic' | 'needle' | 'badge') => void;
+  uiDensity: 'comfortable' | 'compact';
+  setUiDensity: (uiDensity: 'comfortable' | 'compact') => void;
+  resetVisualSettings: () => void;
 
   // Audio Settings
   soundEnabled: boolean;
@@ -342,14 +357,59 @@ export const useAppStore = create<AppState>((set) => ({
 
   colors: DEFAULT_SLICE_COLORS,
   setColors: (colors) => set((state) => ({ colors: typeof colors === 'function' ? colors(state.colors) : colors })),
+  updateColor: (index, color) => set((state) => {
+    const next = [...state.colors];
+    if (index >= 0 && index < next.length) {
+      next[index] = color;
+    }
+    return { colors: next };
+  }),
+  moveColor: (index, direction) => set((state) => {
+    const target = direction === 'left' ? index - 1 : index + 1;
+    if (target < 0 || target >= state.colors.length) return {};
+    const next = [...state.colors];
+    [next[index], next[target]] = [next[target], next[index]];
+    return { colors: next };
+  }),
+  shuffleColors: () => set((state) => {
+    const next = [...state.colors];
+    for (let i = next.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return { colors: next };
+  }),
+  applyColorPalette: (colors) => set({ colors: [...colors] }),
   newColor: "#10b981",
   setNewColor: (newColor) => set({ newColor }),
   centerImage: DEFAULT_CENTER_IMAGE,
   setCenterImage: (centerImage) => set({ centerImage }),
+  centerBgColor: '',
+  setCenterBgColor: (centerBgColor) => set({ centerBgColor }),
   textSize: 100,
   setTextSize: (textSize) => set({ textSize }),
   centerSize: 100,
   setCenterSize: (centerSize) => set({ centerSize }),
+  wheelScale: 100,
+  setWheelScale: (wheelScale) => set({ wheelScale }),
+  sliceBorderWidth: 2,
+  setSliceBorderWidth: (sliceBorderWidth) => set({ sliceBorderWidth }),
+  pointerStyle: 'classic',
+  setPointerStyle: (pointerStyle) => set({ pointerStyle }),
+  uiDensity: 'comfortable',
+  setUiDensity: (uiDensity) => set({ uiDensity }),
+  resetVisualSettings: () => set({
+    wheelTheme: 'default',
+    colors: [...DEFAULT_SLICE_COLORS],
+    centerImage: DEFAULT_CENTER_IMAGE,
+    centerBgColor: '',
+    textSize: 100,
+    centerSize: 100,
+    wheelScale: 100,
+    sliceBorderWidth: 2,
+    pointerStyle: 'classic',
+    uiDensity: 'comfortable',
+  }),
 
   soundEnabled: true,
   setSoundEnabled: (soundEnabled) => set((state) => {
