@@ -6,8 +6,6 @@ export const getSpinTimeRanges = (type: string, isEliminationFast = false) => {
       return { min: isEliminationFast ? 3 : 5, max: 30, step: 1 };
     case 'mystery_box':
       return { min: isEliminationFast ? 1 : 2, max: 30, step: 1 };
-    case 'bingo':
-      return { min: isEliminationFast ? 1 : 2, max: 30, step: 1 };
     case 'test':
     case 'horizon':
     case 'classic':

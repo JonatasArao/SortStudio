@@ -20,9 +20,7 @@ import {
   Sparkles,
   ArrowUpDown
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
-import { filterResultsByScope, getCurrentSeason } from '../../utils/seasonUtils';
 import { 
   runTestSimulation, 
   TestSimulationConfig, 
@@ -33,8 +31,6 @@ import {
 } from '../../utils/testSimulationUtils';
 
 export const TestDisplay: React.FC = () => {
-  const { t } = useTranslation();
-
   const items = useAppStore(s => s.items);
   const colors = useAppStore(s => s.colors);
   const results = useAppStore(s => s.results);
@@ -123,11 +119,6 @@ export const TestDisplay: React.FC = () => {
     () => items.filter(i => i.enabled && i.text.trim() !== ''),
     [items]
   );
-
-  // Season and history stats
-  const activeSeason = useMemo(() => getCurrentSeason(seasons), [seasons]);
-  const currentSeasonResults = useMemo(() => filterResultsByScope(results, seasons, 'current_season'), [results, seasons]);
-  const totalResultsCount = results.length;
 
   // Restore test params to app current settings (including balanceScope)
   const handleRestoreAppConfig = () => {

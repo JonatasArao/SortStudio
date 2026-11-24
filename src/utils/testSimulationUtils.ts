@@ -19,7 +19,7 @@ export interface TestSimulationConfig {
   wheelType: string;
 }
 
-export interface ParticipantTestStats {
+interface ParticipantTestStats {
   id: string;
   text: string;
   color: string;
@@ -124,7 +124,7 @@ export function compareTestParticipantsByPriorWins(a: ParticipantTestStats, b: P
   return a.text.localeCompare(b.text);
 }
 
-export interface DrawLogItem {
+interface DrawLogItem {
   drawId: string;
   globalOrder: number;
   typeOrder: number;

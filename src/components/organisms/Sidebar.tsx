@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Users } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from 'react-i18next';

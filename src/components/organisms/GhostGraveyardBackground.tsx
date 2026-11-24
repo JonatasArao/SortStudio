@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ghost, Skull, RotateCcw, Sparkles, Clock } from 'lucide-react';
+import { Ghost, Skull, RotateCcw, Clock } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 const GHOST_ANCHORS = [

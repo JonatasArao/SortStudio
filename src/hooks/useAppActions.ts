@@ -286,6 +286,11 @@ export const useAppActions = () => {
             stateToSet.customWinAudios = stateToSet.customWinAudios.map(recreateAudioObj);
           }
 
+          const validModes = ['classic', 'horizon', 'mystery_box', 'race', 'penalty_shootout', 'test'];
+          if (stateToSet.wheelType && !validModes.includes(stateToSet.wheelType)) {
+            stateToSet.wheelType = 'classic';
+          }
+
           useAppStore.setState(stateToSet);
           return;
         }

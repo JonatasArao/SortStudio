@@ -382,7 +382,6 @@
     "mystery_box": "Maletas",
     "race": "Corrida",
     "penalty_shootout": "Pênaltis",
-    "bingo": "Bingo",
     "visualTheme": "Tema Global da Interface",
     "applySuggestedPalette": "Aplicar paleta sugerida",
     "autoApplyPalette": "Sincronizar paleta ao trocar tema",
@@ -549,20 +548,6 @@
     "podium": {
       "others": "Outros Finalistas"
     }
-  },
-  "bingo": {
-    "title": "GLOBO DE BINGO",
-    "subtitle": "Sorteio do Bingo",
-    "drawBall": "SORTEAR BOLA",
-    "drawing": "Misturando Bolas...",
-    "ballsInGlobe": "Bolas no Globo",
-    "drawnCount": "Bolas Sorteadas",
-    "lastDrawn": "Últimas Bolas",
-    "ball": "Bola",
-    "shuffleGlobe": "Misturar",
-    "clearRack": "Reiniciar Bingo",
-    "winnerBall": "BOLA SORTEADA!",
-    "tip": "Pressione <kbd>Ctrl + Enter</kbd> para sortear uma bola"
   },
   "testMode": {
     "button": "Modo de Teste",

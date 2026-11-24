@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Calendar, Power, Edit2, X, Check } from 'lucide-react';
 import { useAppStore } from '../../../store/useAppStore';

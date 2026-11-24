@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Play, Check, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { getSpinTimeRanges } from '../../utils/spinUtils';

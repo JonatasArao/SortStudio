@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const Confetti = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-[150] overflow-hidden flex justify-center">

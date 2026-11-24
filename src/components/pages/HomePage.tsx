@@ -8,7 +8,6 @@ import { HorizonDisplay } from '../organisms/HorizonDisplay';
 import { MysteryBoxDisplay } from '../organisms/MysteryBoxDisplay';
 import { RaceDisplay } from '../organisms/RaceDisplay';
 import { PenaltyShootoutDisplay } from '../organisms/PenaltyShootoutDisplay';
-import { BingoDisplay } from '../organisms/BingoDisplay';
 import { Sidebar } from '../organisms/Sidebar';
 import { SettingsModal } from '../organisms/SettingsModal';
 import { WinnerModal } from '../organisms/WinnerModal';
@@ -60,8 +59,6 @@ export const HomePage = () => {
           <RaceDisplay />
         ) : wheelType === 'penalty_shootout' ? (
           <PenaltyShootoutDisplay />
-        ) : wheelType === 'bingo' ? (
-          <BingoDisplay />
         ) : wheelType === 'test' ? (
           <TestDisplay />
         ) : (

@@ -10,7 +10,6 @@ import {
   Package,
   Flag,
   Target,
-  Dices,
   Download,
   Upload,
   ChevronDown,
@@ -103,7 +102,7 @@ export const Header = () => {
   };
 
   const MODES: Array<{
-    id: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test';
+    id: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'test';
     label: string;
     description: string;
     icon: LucideIcon;
@@ -149,14 +148,6 @@ export const Header = () => {
       icon: Target,
       iconColor: 'text-sky-400',
       activeClass: 'bg-sky-500/15 border-sky-500/35 text-sky-200',
-    },
-    {
-      id: 'bingo',
-      label: t('visualSettings.bingo') || 'Bingo / Globo',
-      description: 'Extração de bolas numeradas',
-      icon: Dices,
-      iconColor: 'text-indigo-400',
-      activeClass: 'bg-indigo-500/15 border-indigo-500/35 text-indigo-200',
     },
     ...(testModeEnabled
       ? [

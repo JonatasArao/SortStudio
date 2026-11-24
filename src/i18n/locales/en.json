@@ -382,7 +382,6 @@
     "mystery_box": "Briefcases",
     "race": "Race",
     "penalty_shootout": "Penalties",
-    "bingo": "Bingo",
     "visualTheme": "Global Interface Theme",
     "applySuggestedPalette": "Apply suggested palette",
     "autoApplyPalette": "Sync palette on theme change",
@@ -549,20 +548,6 @@
     "podium": {
       "others": "Other Finishers"
     }
-  },
-  "bingo": {
-    "title": "BINGO GLOBE",
-    "subtitle": "Bingo Draw",
-    "drawBall": "DRAW BALL",
-    "drawing": "Shuffling Balls...",
-    "ballsInGlobe": "Balls in Globe",
-    "drawnCount": "Drawn Balls",
-    "lastDrawn": "Recent Balls",
-    "ball": "Ball",
-    "shuffleGlobe": "Shuffle",
-    "clearRack": "Reset Bingo",
-    "winnerBall": "BALL DRAWN!",
-    "tip": "Press <kbd>Ctrl + Enter</kbd> to draw a ball"
   },
   "testMode": {
     "button": "Test Mode",

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Shuffle, SortAsc, SortDesc, Plus, CheckSquare, ChevronDown, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';

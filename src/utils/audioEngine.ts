@@ -307,7 +307,7 @@ export const stopWinSound = () => {
   }
 };
 
-export const playStartLightBeep = (lightIndex: number, masterVolume = 1) => {
+export const playStartLightBeep = (masterVolume = 1) => {
   if (masterVolume === 0 || !audioCtx) return;
   if (audioCtx.state === "suspended") audioCtx.resume();
 
@@ -486,7 +486,7 @@ let lastKerbSoundTime = 0;
 /**
  * Initializes continuous race audio synthesis (engine sound & tire squeal).
  */
-export const initRaceAudioNodes = () => {
+const initRaceAudioNodes = () => {
   if (!audioCtx) return;
   if (audioCtx.state === "suspended") audioCtx.resume();
 
@@ -583,7 +583,10 @@ export const updateRaceEngineAudio = (
   cameraMode: string,
   deltaTime: number,
   masterVolume = 1.0,
-  isRacing = true
+  isRacing = true,
+  gear = 0,
+  rpmRatio = 0,
+  isBraking = false
 ) => {
   if (!audioCtx || masterVolume === 0 || !isRacing) {
     stopRaceAudio();
@@ -607,40 +610,54 @@ export const updateRaceEngineAudio = (
   let dopplerFactor = 1.0;
 
   if (isTrackside) {
-    // Exaggerate slightly for cinematic trackside pass-by sound
-    dopplerFactor = 1.0 - rateOfChange / 220;
-    dopplerFactor = Math.max(0.65, Math.min(1.45, dopplerFactor));
+    // Realistic cinematic trackside pass-by Doppler shift
+    dopplerFactor = 1.0 - rateOfChange / 210;
+    dopplerFactor = Math.max(0.62, Math.min(1.48, dopplerFactor));
   }
 
-  // Base engine pitch scaled by car speed (RPM)
-  // Low frequency for idle, higher for top speed. Real engines fire ~40-250Hz.
-  const idleFreq = 25; // Much deeper idle
-  const maxFreq = 120; // Lower max frequency for a deeper V8 roar
-  const baseFreq = idleFreq + (speedKmh / 280) * (maxFreq - idleFreq);
+  // Base engine pitch: if gear & rpmRatio are supplied, derive authentic F1 high-revving RPM curve;
+  // otherwise fall back to linear speed mapping for backward compatibility.
+  let baseFreq: number;
+  if (gear > 0) {
+    const clampedRpm = Math.max(0.15, Math.min(1.0, rpmRatio));
+    const gearFactor = 0.72 + (gear / 8) * 0.28;
+    const minF1Freq = 68;
+    const maxF1Freq = 195;
+    baseFreq = minF1Freq + clampedRpm * gearFactor * (maxF1Freq - minF1Freq);
+    if (isBraking) {
+      // Subtle downshift overrun rasp
+      baseFreq *= 0.94 + Math.sin(now * 45) * 0.03;
+    }
+  } else {
+    const idleFreq = 42;
+    const maxFreq = 165;
+    baseFreq = idleFreq + (speedKmh / 310) * (maxFreq - idleFreq);
+  }
   const finalFreq = baseFreq * dopplerFactor;
 
   // Osc 1: Base fundamental
-  raceEngineOsc1.frequency.setTargetAtTime(finalFreq, now, 0.03);
+  raceEngineOsc1.frequency.setTargetAtTime(finalFreq, now, 0.025);
   
-  // Osc 2: Detuned octave for screaming highs (now just slightly detuned)
-  raceEngineOsc2.frequency.setTargetAtTime(finalFreq * 1.01, now, 0.03);
+  // Osc 2: Slight harmonic detune + upper overtone for F1 scream
+  raceEngineOsc2.frequency.setTargetAtTime(finalFreq * 1.505, now, 0.025);
   
-  // Osc 3: Sub-octave triangle for deep body and rumble
-  raceEngineOsc3.frequency.setTargetAtTime(finalFreq * 0.5, now, 0.03);
+  // Osc 3: Sub-octave triangle for low-end exhaust body
+  raceEngineOsc3.frequency.setTargetAtTime(finalFreq * 0.5, now, 0.025);
 
   // Filter frequency opens up with RPM / speed
-  const filterFreq = 150 + (speedKmh / 280) * 2000;
-  raceEngineFilter.frequency.setTargetAtTime(filterFreq, now, 0.05);
+  const rpmNormalized = gear > 0 ? Math.max(0.1, rpmRatio) : Math.min(1, speedKmh / 310);
+  const filterFreq = (isBraking ? 420 : 280) + rpmNormalized * 2400;
+  raceEngineFilter.frequency.setTargetAtTime(filterFreq, now, 0.04);
 
   // Volume:
   let targetVol = 0;
   if (isTrackside) {
     // Proximity attenuation for trackside camera pass-by
-    const prox = 1 / (1 + Math.pow(distToCam / 14, 1.8));
-    targetVol = Math.min(0.45, prox * 0.6) * masterVolume;
+    const prox = 1 / (1 + Math.pow(distToCam / 22, 1.65));
+    targetVol = Math.min(0.42, prox * 0.55) * masterVolume;
   } else {
-    // Cockpit / onboard camera: constant engine sound
-    targetVol = 0.3 * masterVolume;
+    // Cockpit / onboard camera: rich constant engine presence
+    targetVol = (0.24 + rpmNormalized * 0.08) * masterVolume;
   }
 
   raceEngineGain.gain.setTargetAtTime(targetVol, now, 0.04);

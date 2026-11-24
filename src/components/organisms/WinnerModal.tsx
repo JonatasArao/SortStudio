@@ -70,12 +70,11 @@ export const WinnerModal = () => {
   const customMessage = isGrandWinner ? grandWinnerMessage : winner.message || winMessage;
   const Icon = isGrandWinner ? Crown : Trophy;
 
-  // Spatial stage banner for Race, Penalty Shootout, Mystery Box, and Bingo so stage results remain visible
+  // Spatial stage banner for Race, Penalty Shootout, and Mystery Box so stage results remain visible
   if (
     wheelType === 'race' ||
     wheelType === 'penalty_shootout' ||
-    wheelType === 'mystery_box' ||
-    wheelType === 'bingo'
+    wheelType === 'mystery_box'
   ) {
     const accentBorder =
       wheelType === 'penalty_shootout'
@@ -92,33 +91,22 @@ export const WinnerModal = () => {
           className={`bg-[var(--studio-surface)]/95 border ${accentBorder} text-[var(--studio-text)] backdrop-blur-xl px-4 sm:px-5 py-4 rounded-2xl w-full shadow-2xl flex flex-col gap-3.5 relative overflow-hidden`}
         >
           <div className="flex items-center gap-3.5 text-left">
-            {wheelType === 'bingo' ? (
-              <div
-                style={{ backgroundColor: winner.color || '#3b82f6' }}
-                className="w-12 h-12 rounded-full border-2 border-white/80 shadow-md shrink-0 flex items-center justify-center relative"
-              >
-                <div className="bg-white text-slate-950 rounded-full w-6 h-6 flex items-center justify-center font-mono font-bold text-xs">
-                  B
+            <div className="w-11 h-11 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border-strong)] flex items-center justify-center shrink-0">
+              {wheelType === 'race' && winner.color ? (
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/25"
+                  style={{ backgroundColor: winner.color }}
+                >
+                  <Car className="w-4 h-4 text-white" />
                 </div>
-              </div>
-            ) : (
-              <div className="w-11 h-11 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border-strong)] flex items-center justify-center shrink-0">
-                {wheelType === 'race' && winner.color ? (
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/25"
-                    style={{ backgroundColor: winner.color }}
-                  >
-                    <Car className="w-4 h-4 text-white" />
-                  </div>
-                ) : (
-                  <Icon className={accentText} size={22} />
-                )}
-              </div>
-            )}
+              ) : (
+                <Icon className={accentText} size={22} />
+              )}
+            </div>
 
             <div className="flex-1 min-w-0">
               <p className={`text-[11px] font-semibold uppercase tracking-wider ${accentText}`}>
-                {wheelType === 'bingo' ? t('bingo.winnerBall') || 'Bola Sorteada' : customMessage}
+                {customMessage}
               </p>
               <h2 className="font-display text-lg sm:text-xl font-bold text-[var(--studio-text)] truncate leading-tight mt-0.5">
                 {winner.text}

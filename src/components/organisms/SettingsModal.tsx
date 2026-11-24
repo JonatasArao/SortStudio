@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Settings, X, Sliders, Music, Palette, HardDrive, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';

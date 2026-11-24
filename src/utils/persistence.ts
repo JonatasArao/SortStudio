@@ -1,10 +1,10 @@
 import { get, set } from "idb-keyval";
-import { Item, Result, CustomAudioItem, WheelConfig, AppSettings } from "../types";
+import { Result, CustomAudioItem, WheelConfig, AppSettings } from "../types";
 
-export const WHEEL_KEY = "roleta_wheel";
-export const SETTINGS_KEY = "roleta_settings";
-export const AUDIOS_KEY = "roleta_audios";
-export const RESULTS_KEY = "roleta_results";
+const WHEEL_KEY = "roleta_wheel";
+const SETTINGS_KEY = "roleta_settings";
+const AUDIOS_KEY = "roleta_audios";
+const RESULTS_KEY = "roleta_results";
 
 export const saveWheelConfig = async (config: WheelConfig) => {
   await set(WHEEL_KEY, config);
@@ -37,7 +37,7 @@ export const saveResults = async (results: Result[]) => {
 export const getResults = async (): Promise<Result[] | undefined> => {
   return await get(RESULTS_KEY);
 };
-export const SEASONS_KEY = "roleta_seasons";
+const SEASONS_KEY = "roleta_seasons";
 export const saveSeasons = async (seasons: any[]) => {
   await set(SEASONS_KEY, seasons);
 };

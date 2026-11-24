@@ -7,7 +7,6 @@ import {
   Plus,
   X,
   Package,
-  Dices,
   FlaskConical,
   Disc,
   Layers,
@@ -93,7 +92,6 @@ export const VisualSettings: React.FC = () => {
     { id: 'mystery_box', label: t('visualSettings.boxes'), icon: Package },
     { id: 'race', label: t('visualSettings.race'), icon: Flag },
     { id: 'penalty_shootout', label: t('visualSettings.penalty_shootout'), icon: Target },
-    { id: 'bingo', label: t('visualSettings.bingo') || 'Bingo', icon: Dices },
     ...(testModeEnabled
       ? [{ id: 'test', label: t('testMode.button') || 'Modo de Teste', icon: FlaskConical }]
       : []),

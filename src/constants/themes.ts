@@ -1,10 +1,10 @@
 import { DEFAULT_CENTER_IMAGE, DEFAULT_SLICE_COLORS } from '../constants';
 
-export type StudioThemeId = 'default' | 'neon' | 'casino' | 'candy' | 'dark' | 'emerald';
+type StudioThemeId = 'default' | 'neon' | 'casino' | 'candy' | 'dark' | 'emerald';
 export type PointerStyle = 'classic' | 'needle' | 'badge';
 export type UiDensity = 'comfortable' | 'compact';
 
-export interface StudioThemeDefinition {
+interface StudioThemeDefinition {
   id: StudioThemeId;
   isLight: boolean;
   swatchColor: string;
@@ -57,7 +57,7 @@ export interface StudioThemeDefinition {
   };
 }
 
-export const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
+const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
   default: {
     id: 'default',
     isLight: false,
@@ -408,7 +408,7 @@ export const applyThemeToDocument = (themeId?: string): StudioThemeDefinition =>
   return theme;
 };
 
-export interface ColorPalettePreset {
+interface ColorPalettePreset {
   id: string;
   nameKey: string;
   fallbackName: string;
@@ -466,7 +466,7 @@ export const COLOR_PALETTE_PRESETS: ColorPalettePreset[] = [
   },
 ];
 
-export interface CenterEmblemPreset {
+interface CenterEmblemPreset {
   id: string;
   labelKey: string;
   fallbackLabel: string;

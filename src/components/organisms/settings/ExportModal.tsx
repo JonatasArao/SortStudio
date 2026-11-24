@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, X, Settings, List, History, Volume2, Palette, Scale, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../../store/useAppStore';

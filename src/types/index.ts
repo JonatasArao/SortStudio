@@ -100,7 +100,6 @@ export interface AppSettings {
   grandWinnerMessage?: string;
   eliminationMode?: boolean;
   autoContinueElimination?: boolean;
-  eliminationSpinSpeed?: 'fast' | 'normal' | 'dramatic';
   balanceWeightsByWins?: boolean;
   balanceWeightsMode?: 'linear' | 'quadratic' | 'cubic' | 'relative';
   balanceScope?: 'all' | 'current_season';

@@ -19,15 +19,6 @@ import {
   RACE_START_DELAY_MS
 } from '../constants';
 
-export const updateContinuousAudioVolume = () => {
-  const state = useAppStore.getState();
-  const { continuousAudioRef } = state;
-  if (continuousAudioRef) {
-    const actualVolume = state.soundEnabled ? state.masterVolume / 100 : 0;
-    continuousAudioRef.volume = actualVolume;
-  }
-};
-
 export const playRaceDefinedAudio = () => {
   const state = useAppStore.getState();
   if (!state.soundEnabled || state.masterVolume <= 0) return;
@@ -238,11 +229,6 @@ export const useWheelActions = () => {
       );
     }
 
-    const getActualWeight = (item: any) => {
-      const found = itemsWithFinalWeights.find(i => i.id === item.id);
-      return found ? found.weight : 1;
-    };
-
     let recentWinnersSlice: Result[] = [];
     if (state.antiRepetitionEnabled && !state.eliminationMode && currentValidItems.length > 2) {
       const numRecentToCheck = Math.min(state.antiRepetitionCount, Math.max(1, currentValidItems.length - 2));
@@ -397,7 +383,6 @@ export const useWheelActions = () => {
 
     const actualVolume = state.soundEnabled ? state.masterVolume / 100 : 0;
     const selectedCustomTick = state.customTickAudios.find((a) => a.id === state.tickSoundType);
-    const selectedCustomWin = state.customWinAudios.find((a) => a.id === state.winSoundType)?.audioObj || null;
 
     if (!isInstantSpin && state.wheelType !== 'race') {
       if (selectedCustomTick && selectedCustomTick.audioObj) {

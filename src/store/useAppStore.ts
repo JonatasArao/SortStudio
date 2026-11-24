@@ -89,8 +89,8 @@ interface AppState {
   setIsAdvancedEntries: (isAdvancedEntries: boolean) => void;
   
   // Visual/Colors
-  wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test';
-  setWheelType: (wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'bingo' | 'test') => void;
+  wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'test';
+  setWheelType: (wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'test') => void;
   colors: string[];
   setColors: (colors: string[] | ((prev: string[]) => string[])) => void;
   updateColor: (index: number, color: string) => void;
