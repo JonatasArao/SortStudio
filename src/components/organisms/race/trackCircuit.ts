@@ -444,9 +444,9 @@ export function terrainHeightAt(x: number, z: number): number {
   const ldz = (z - LAKE_CENTER.z) / LAKE_CENTER.radiusZ;
   const lakeRadial = Math.sqrt(ldx * ldx + ldz * ldz);
 
-  // Smooth terraced plateau for Pit Lane & Prédio dos Boxes (x in [-76, 138], z in [104, 166])
-  const pitXBlend = smoothstep(-76, -54, x) * (1 - smoothstep(116, 138, x));
-  const pitZBlend = smoothstep(103, 111, z) * (1 - smoothstep(156, 166, z));
+  // Smooth terraced plateau strictly for Pit Lane & Prédio dos Boxes (x in [-72, 126], z in [106, 139])
+  const pitXBlend = smoothstep(-72, -54, x) * (1 - smoothstep(114, 126, x));
+  const pitZBlend = smoothstep(106, 111, z) * (1 - smoothstep(134, 139, z));
   const pitBlend = pitXBlend * pitZBlend;
 
   const baseTrackBed = trackY - 0.16;
@@ -462,7 +462,7 @@ export function terrainHeightAt(x: number, z: number): number {
       x <= 25
         ? 6.4 + Math.max(0, Math.min(1, (x + 92) / 117)) * 7.0
         : 13.4 + Math.max(0, Math.min(1, (x - 25) / 65)) * 2.4;
-    h = h * (1 - pitBlend) + (pitTrackY - 0.34) * pitBlend;
+    h = h * (1 - pitBlend) + (pitTrackY - 0.28) * pitBlend;
   }
 
   // Carve lake bowl beneath LAKE_CENTER.y (-1.15) with sloped shoreline bank
@@ -609,21 +609,20 @@ export function createCircuitRibbonGeometry(
  * Builds the dedicated Interlagos Pit Lane ribbon running along the inside of Reta dos Boxes
  * (entry before Curva do Café -> pit boxes -> exit past S do Senna T1).
  */
-export function createPitLaneRibbonGeometry(halfWidth = 4.2, yOffset = 0.015): THREE.BufferGeometry {
+export function createPitLaneRibbonGeometry(halfWidth = 3.6, yOffset = 0.015): THREE.BufferGeometry {
   const pitPoints = [
-    new THREE.Vector3(-88, 6.45, 146),
-    new THREE.Vector3(-58, 8.2, 132),
-    new THREE.Vector3(-18, 10.7, 129),
-    new THREE.Vector3(25, 13.4, 129),
-    new THREE.Vector3(78, 15.2, 129),
-    new THREE.Vector3(118, 15.7, 127),
-    new THREE.Vector3(148, 14.0, 115),
-    new THREE.Vector3(166, 11.2, 95),
-    new THREE.Vector3(182, 8.3, 75),
+    new THREE.Vector3(-70, 7.5, 135),
+    new THREE.Vector3(-48, 8.8, 129),
+    new THREE.Vector3(-15, 11.1, 129),
+    new THREE.Vector3(20, 13.1, 129),
+    new THREE.Vector3(55, 14.6, 129),
+    new THREE.Vector3(85, 15.5, 129),
+    new THREE.Vector3(108, 15.8, 129),
+    new THREE.Vector3(124, 15.8, 132),
   ];
 
   const curve = new THREE.CatmullRomCurve3(pitPoints, false, 'catmullrom', 0.45);
-  const segs = 90;
+  const segs = 80;
   const length = curve.getLength();
   const count = segs + 1;
 

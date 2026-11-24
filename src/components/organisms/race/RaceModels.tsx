@@ -1461,7 +1461,7 @@ export const CircuitScenery = ({
   const geometries = useMemo(() => {
     const terrain = createTerrainGeometry();
     const asphalt = createCircuitRibbonGeometry(-TRACK_HALF_WIDTH, TRACK_HALF_WIDTH, 0, 20);
-    const pitLane = createPitLaneRibbonGeometry(4.0, 0.015);
+    const pitLane = createPitLaneRibbonGeometry(3.6, 0.015);
 
     const outerKerb = createCircuitRibbonGeometry(TRACK_HALF_WIDTH, TRACK_HALF_WIDTH + 1.35, 0.014, 7.5);
     const innerKerb = createCircuitRibbonGeometry(-TRACK_HALF_WIDTH - 1.35, -TRACK_HALF_WIDTH, 0.014, 7.5);
@@ -1806,6 +1806,48 @@ export const CircuitScenery = ({
           <boxGeometry args={[132, 0.25, 0.42]} />
           <meshStandardMaterial color="#facc15" roughness={0.35} />
         </mesh>
+      </group>
+
+      {/* Muro dos Boxes (Interlagos F1 Concrete Pit Wall & Team Timing Stands) */}
+      <group position={[30, 13.6, 136.5]} rotation={[0, 0, 0.052]}>
+        {/* Concrete Pit Wall separating Pit Lane from the Main Straight */}
+        <mesh position={[0, -0.3, 0]} castShadow receiveShadow>
+          <boxGeometry args={[154, 3.4, 0.65]} />
+          <meshStandardMaterial color="#475569" roughness={0.75} metalness={0.2} />
+        </mesh>
+        <mesh position={[0, 1.45, 0]}>
+          <boxGeometry args={[154, 0.12, 0.72]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.4} />
+        </mesh>
+        {/* Safety Catch Fencing & Team Pit Perches */}
+        {[-68, -44, -20, 4, 28, 52, 76].map((px, idx) => (
+          <group key={`pwall-post-${idx}`} position={[px, 1.4, 0]}>
+            <mesh position={[0, 0.65, 0]}>
+              <boxGeometry args={[0.08, 1.3, 0.08]} />
+              <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 0.75, 0]}>
+              <boxGeometry args={[22, 0.75, 0.02]} />
+              <meshStandardMaterial color="#334155" wireframe transparent opacity={0.65} />
+            </mesh>
+            {/* Team Pit Perch / Telemetry Canopy on the pit-lane side (-Z) */}
+            <group position={[0, 0.1, -1.2]}>
+              <mesh position={[0, 0.2, 0]} castShadow>
+                <boxGeometry args={[4.2, 1.1, 1.6]} />
+                <meshStandardMaterial color="#0f172a" roughness={0.6} />
+              </mesh>
+              {/* Monitors & Awning */}
+              <mesh position={[0, 1.1, 0]}>
+                <boxGeometry args={[4.4, 0.1, 1.8]} />
+                <meshStandardMaterial color="#16a34a" roughness={0.4} />
+              </mesh>
+              <mesh position={[0, 0.6, -0.7]}>
+                <boxGeometry args={[3.6, 0.45, 0.08]} />
+                <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.6} />
+              </mesh>
+            </group>
+          </group>
+        ))}
       </group>
 
       {/* Torre de Controle de Interlagos (Race Control Timing Tower near Pit Exit) */}
