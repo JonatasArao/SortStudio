@@ -41,6 +41,8 @@ export interface PodiumRacer {
   text: string;
   color: string;
   rank: number;
+  finishTimeSeconds?: number;
+  gapSeconds?: number;
 }
 
 export interface CustomAudioItem {

@@ -83,7 +83,6 @@ export const PenaltyShootoutDisplay = () => {
 
   const [currentKickerIndex, setCurrentKickerIndex] = useState<number>(0);
   const [activeKicker, setActiveKicker] = useState<typeof validItems[0] | null>(null);
-  const [, setTotalKickersCount] = useState<number>(0);
 
   const goalRef = useRef<HTMLDivElement>(null);
   const targetsRef = useRef<Record<string, HTMLDivElement | null>>({});
@@ -132,7 +131,6 @@ export const PenaltyShootoutDisplay = () => {
         setHighlightedIndex(null);
         setActiveKicker(null);
         setCurrentKickerIndex(0);
-        setTotalKickersCount(0);
         setKickerResults({});
       }
       return;
@@ -152,8 +150,6 @@ export const PenaltyShootoutDisplay = () => {
       const shuffledOthers = [...otherItems].sort(() => Math.random() - 0.5);
       sequence = [...shuffledOthers, expectedWinnerItem];
     }
-
-    setTotalKickersCount(sequence.length);
 
     const KICK_DURATION = 1550;
     const PREPARE_DURATION = 750;

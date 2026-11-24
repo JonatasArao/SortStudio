@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Item, Result, CustomAudio, PodiumRacer, Season, EliminatedRecord } from '../types';
+import type { SimulatedCar } from '../components/organisms/race/raceSimulation';
 import {
   DEFAULT_WHEEL_TITLE,
   DEFAULT_WIN_MESSAGE,
@@ -43,8 +44,6 @@ interface AppState {
   setAutoEliminationSpeed: (speed: 'turbo' | 'fast' | 'normal') => void;
   eliminationOverlayItem: (Item & { round?: number }) | null;
   setEliminationOverlayItem: (item: (Item & { round?: number }) | null) => void;
-  showEliminationPopup: boolean;
-  setShowEliminationPopup: (show: boolean) => void;
   isGraveyardOpen: boolean;
   setIsGraveyardOpen: (isOpen: boolean) => void;
   initialEliminationParticipantIds: string[];
@@ -79,8 +78,6 @@ interface AppState {
   setAntiRepetitionEnabled: (antiRepetitionEnabled: boolean) => void;
   antiRepetitionCount: number;
   setAntiRepetitionCount: (count: number) => void;
-  pityWeights: Record<string, number>;
-  setPityWeights: (weights: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
 
   // Items / Entries
   items: Item[];
@@ -134,12 +131,8 @@ interface AppState {
   // Custom Audios
   customTickAudios: CustomAudio[];
   setCustomTickAudios: (audios: CustomAudio[] | ((prev: CustomAudio[]) => CustomAudio[])) => void;
-  newTickUrl: string;
-  setNewTickUrl: (newTickUrl: string) => void;
   customWinAudios: CustomAudio[];
   setCustomWinAudios: (audios: CustomAudio[] | ((prev: CustomAudio[]) => CustomAudio[])) => void;
-  newWinUrl: string;
-  setNewWinUrl: (newWinUrl: string) => void;
 
   winSoundPlayedInRace: boolean;
   setWinSoundPlayedInRace: (winSoundPlayedInRace: boolean) => void;
@@ -157,6 +150,8 @@ interface AppState {
   setResults: (results: Result[] | ((prev: Result[]) => Result[])) => void;
   racePodium: PodiumRacer[];
   setRacePodium: (podium: PodiumRacer[]) => void;
+  raceSimulationCars: SimulatedCar[];
+  setRaceSimulationCars: (cars: SimulatedCar[]) => void;
   penaltySequence: Item[];
   setPenaltySequence: (sequence: Item[]) => void;
 
@@ -171,12 +166,8 @@ interface AppState {
   setSettingsTab: (tab: string) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  leftActiveTab: string;
-  setLeftActiveTab: (tab: string) => void;
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
-  isLeftSidebarOpen: boolean;
-  setIsLeftSidebarOpen: (isOpen: boolean) => void;
   isAddAudioModalOpen: boolean;
   setIsAddAudioModalOpen: (isOpen: boolean) => void;
   isExportModalOpen: boolean;
@@ -240,8 +231,6 @@ export const useAppStore = create<AppState>((set) => ({
   setAutoEliminationSpeed: (autoEliminationSpeed) => set({ autoEliminationSpeed }),
   eliminationOverlayItem: null,
   setEliminationOverlayItem: (eliminationOverlayItem) => set({ eliminationOverlayItem }),
-  showEliminationPopup: true,
-  setShowEliminationPopup: (showEliminationPopup) => set({ showEliminationPopup }),
   isGraveyardOpen: false,
   setIsGraveyardOpen: (isGraveyardOpen) => set({ isGraveyardOpen }),
   initialEliminationParticipantIds: [],
@@ -337,8 +326,6 @@ export const useAppStore = create<AppState>((set) => ({
   setAntiRepetitionEnabled: (antiRepetitionEnabled) => set({ antiRepetitionEnabled }),
   antiRepetitionCount: 5,
   setAntiRepetitionCount: (count) => set({ antiRepetitionCount: count }),
-  pityWeights: {},
-  setPityWeights: (weights) => set((state) => ({ pityWeights: typeof weights === 'function' ? weights(state.pityWeights) : weights })),
 
   items: [
     { id: crypto.randomUUID(), text: "Opção 1", weight: 1, enabled: true },
@@ -436,12 +423,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   customTickAudios: [],
   setCustomTickAudios: (customTickAudios) => set((state) => ({ customTickAudios: typeof customTickAudios === 'function' ? customTickAudios(state.customTickAudios) : customTickAudios })),
-  newTickUrl: "",
-  setNewTickUrl: (newTickUrl) => set({ newTickUrl }),
   customWinAudios: [],
   setCustomWinAudios: (customWinAudios) => set((state) => ({ customWinAudios: typeof customWinAudios === 'function' ? customWinAudios(state.customWinAudios) : customWinAudios })),
-  newWinUrl: "",
-  setNewWinUrl: (newWinUrl) => set({ newWinUrl }),
 
   winSoundPlayedInRace: false,
   setWinSoundPlayedInRace: (winSoundPlayedInRace) => set({ winSoundPlayedInRace }),
@@ -458,6 +441,8 @@ export const useAppStore = create<AppState>((set) => ({
   setResults: (results) => set((state) => ({ results: typeof results === 'function' ? results(state.results) : results })),
   racePodium: [],
   setRacePodium: (racePodium) => set({ racePodium }),
+  raceSimulationCars: [],
+  setRaceSimulationCars: (raceSimulationCars) => set({ raceSimulationCars }),
   penaltySequence: [],
   setPenaltySequence: (penaltySequence) => set({ penaltySequence }),
 
@@ -471,12 +456,8 @@ export const useAppStore = create<AppState>((set) => ({
   setSettingsTab: (settingsTab) => set({ settingsTab }),
   activeTab: "entradas",
   setActiveTab: (activeTab) => set({ activeTab }),
-  leftActiveTab: "estatisticas",
-  setLeftActiveTab: (leftActiveTab) => set({ leftActiveTab }),
   isSidebarOpen: true,
   setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
-  isLeftSidebarOpen: false,
-  setIsLeftSidebarOpen: (isLeftSidebarOpen) => set({ isLeftSidebarOpen }),
   isAddAudioModalOpen: false,
   setIsAddAudioModalOpen: (isAddAudioModalOpen) => set({ isAddAudioModalOpen }),
   isExportModalOpen: false,

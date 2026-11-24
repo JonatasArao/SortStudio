@@ -17,7 +17,7 @@ import {
 import { RACE_START_DELAY_MS } from '../../constants';
 import { TOTAL_LAPS, TRACK_P } from './race/trackCircuit';
 import {
-  generateGrandPrixSimulation,
+  generateAuthenticRaceSimulation,
   LiveRacerTelemetry,
   SimulatedCar,
 } from './race/raceSimulation';
@@ -25,8 +25,10 @@ import {
   ProceduralEnvironment,
   CircuitScenery,
   GrandPrixRacer,
+  TrackEffectsPool,
   createContactShadowTexture,
 } from './race/RaceModels';
+import { CelebrationEffects } from './race/CelebrationEffects';
 import {
   RaceCameraAndAudio,
   ManualCameraMode,
@@ -170,16 +172,29 @@ const LeaderboardBridge = ({
         }
       }
 
+      const podiumEntry = (hasFinished || (!isSpinning && Boolean(activeWinnerId)))
+        ? useAppStore.getState().racePodium?.find((p) => p.id === r.id)
+        : undefined;
+
       if (gapEl) {
         if (!isSpinning && !activeWinnerId) {
           gapEl.textContent = '';
+        } else if (podiumEntry && typeof podiumEntry.finishTimeSeconds === 'number') {
+          if (rank === 0) {
+            gapEl.textContent = `${podiumEntry.finishTimeSeconds.toFixed(2)}s`;
+            gapEl.className = 'text-[10px] font-mono tabular-nums text-amber-400 font-bold shrink-0 min-w-[48px] text-right';
+          } else {
+            const g = typeof podiumEntry.gapSeconds === 'number' ? podiumEntry.gapSeconds : 0;
+            gapEl.textContent = `+${g.toFixed(2)}s`;
+            gapEl.className = 'text-[10px] font-mono tabular-nums text-slate-300 shrink-0 min-w-[48px] text-right';
+          }
         } else if (rank === 0) {
           gapEl.textContent = 'P1';
-          gapEl.className = 'text-[10px] font-mono tabular-nums text-amber-400 font-bold shrink-0 min-w-[34px] text-right';
+          gapEl.className = 'text-[10px] font-mono tabular-nums text-amber-400 font-bold shrink-0 min-w-[48px] text-right';
         } else {
           const deltaM = Math.max(0, leaderDist - r.dist);
           gapEl.textContent = `+${deltaM.toFixed(0)}m`;
-          gapEl.className = 'text-[10px] font-mono tabular-nums text-slate-400 shrink-0 min-w-[34px] text-right';
+          gapEl.className = 'text-[10px] font-mono tabular-nums text-slate-400 shrink-0 min-w-[48px] text-right';
         }
       }
     });
@@ -306,6 +321,7 @@ const RaceScene = ({
   const eliminationMode = useAppStore((s) => s.eliminationMode);
   const eliminationSpinTime = useAppStore((s) => s.eliminationSpinTime);
   const racePodium = useAppStore((s) => s.racePodium);
+  const raceSimulationCars = useAppStore((s) => s.raceSimulationCars);
   const textSize = useAppStore((s) => s.textSize);
 
   const { stopContinuousAudio } = useWheelActions();
@@ -333,19 +349,29 @@ const RaceScene = ({
     };
   }, [shadowTex]);
 
+  const prevSpinningRef = useRef(false);
   useEffect(() => {
     if (isSpinning) {
-      hasPlayedWinSoundRef.current = false;
-      hasStoppedAudioRef.current = false;
-      racerPositionsRef.current = [];
-      leaderPosRef.current = null;
-      winnerPosRef.current = null;
-      const generated = generateGrandPrixSimulation(slices, durationSeconds, racePodium);
-      setSimData(generated);
+      if (!prevSpinningRef.current) {
+        hasPlayedWinSoundRef.current = false;
+        hasStoppedAudioRef.current = false;
+        racerPositionsRef.current = [];
+        leaderPosRef.current = null;
+        winnerPosRef.current = null;
+      }
+      prevSpinningRef.current = true;
+      if (raceSimulationCars && raceSimulationCars.length === slices.length) {
+        setSimData(raceSimulationCars);
+      } else {
+        const winnerId = racePodium?.find((p) => p.rank === 1)?.id || expectedWinnerId;
+        const generated = generateAuthenticRaceSimulation(slices, durationSeconds, winnerId);
+        setSimData(generated.cars);
+      }
     } else {
+      prevSpinningRef.current = false;
       setSimData(null);
     }
-  }, [isSpinning, slices, durationSeconds, racePodium]);
+  }, [isSpinning, slices, durationSeconds, racePodium, raceSimulationCars, expectedWinnerId]);
 
   const FINISH_LINE_DIST = TOTAL_LAPS * TRACK_P;
 
@@ -402,29 +428,31 @@ const RaceScene = ({
   );
 
   const textScale = textSize / 100;
+  const isCelebrating = !isSpinning && Boolean(winner);
+  const championColor = slices.find((s) => s.item.id === winner?.id)?.color || '#ef4444';
 
   return (
     <>
       <ProceduralEnvironment />
 
-      {/* Calibrated 3-point Warm Key / Cool Fill / Rim Lighting Rig */}
-      <hemisphereLight args={['#93c5fd', '#1e293b', 0.65]} />
+      {/* Calibrated 3-point Clear F1 Broadcast Daylight Lighting Rig */}
+      <hemisphereLight args={['#bae6fd', '#3f6212', 0.95]} />
       <directionalLight
-        position={[85, 115, 45]}
-        intensity={2.05}
-        color="#fff0d4"
+        position={[125, 175, 95]}
+        intensity={2.45}
+        color="#fff6e0"
         castShadow={!isSoftwareGl}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
         shadow-normalBias={0.03}
-        shadow-camera-left={-180}
-        shadow-camera-right={180}
-        shadow-camera-top={160}
-        shadow-camera-bottom={-160}
-        shadow-camera-near={10}
-        shadow-camera-far={360}
+        shadow-camera-left={-240}
+        shadow-camera-right={240}
+        shadow-camera-top={220}
+        shadow-camera-bottom={-220}
+        shadow-camera-near={15}
+        shadow-camera-far={520}
       />
-      <directionalLight position={[-95, 50, -85]} intensity={0.6} color="#7dd3fc" />
+      <directionalLight position={[-115, 75, -110]} intensity={0.65} color="#93c5fd" />
 
       <LeaderboardBridge
         slices={slices}
@@ -453,6 +481,19 @@ const RaceScene = ({
         totalRacers={slices.length}
         lightsCount={lightsCount}
         isLightsOut={isLightsOut}
+      />
+
+      <TrackEffectsPool
+        positionsRef={racerPositionsRef}
+        isSpinning={isSpinning}
+        startPhase={startPhase}
+        isCelebrating={isCelebrating}
+      />
+
+      <CelebrationEffects
+        isCelebrating={isCelebrating}
+        championColor={championColor}
+        isSoftwareGl={isSoftwareGl}
       />
 
       {slices.map((slice, index) => {
@@ -484,8 +525,6 @@ export const RaceDisplay = () => {
   const { t } = useTranslation();
   const isSpinning = useAppStore((s) => s.isSpinning);
   const winner = useAppStore((s) => s.winner);
-  const masterVolume = useAppStore((s) => s.masterVolume);
-  const soundEnabled = useAppStore((s) => s.soundEnabled);
   const { spinWheel: handleSpinClick } = useWheelActions();
 
   // Preserve slices during spin and celebration so cars stay on track
@@ -551,54 +590,57 @@ export const RaceDisplay = () => {
   // Pre-race 5-Light F1 Start Sequence synced with RACE_START_DELAY_MS
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
+    const getVol = () => {
+      const s = useAppStore.getState();
+      return s.soundEnabled ? s.masterVolume / 100 : 0;
+    };
 
     if (isSpinning) {
       setStartPhase('grid');
       setLightsCount(0);
       setIsLightsOut(false);
 
-      const vol = soundEnabled ? masterVolume / 100 : 0;
-      playEngineRevBeep(0.35, vol);
+      playEngineRevBeep(0.35, getVol());
 
       timeouts.push(
         setTimeout(() => {
           setStartPhase('lights_1');
           setLightsCount(1);
-          playStartLightBeep(vol);
+          playStartLightBeep(getVol());
         }, 700)
       );
       timeouts.push(
         setTimeout(() => {
           setStartPhase('lights_2');
           setLightsCount(2);
-          playStartLightBeep(vol);
+          playStartLightBeep(getVol());
         }, 1400)
       );
       timeouts.push(
         setTimeout(() => {
           setStartPhase('lights_3');
           setLightsCount(3);
-          playStartLightBeep(vol);
+          playStartLightBeep(getVol());
         }, 2100)
       );
       timeouts.push(
         setTimeout(() => {
           setStartPhase('lights_4');
           setLightsCount(4);
-          playStartLightBeep(vol);
+          playStartLightBeep(getVol());
         }, 2800)
       );
       timeouts.push(
         setTimeout(() => {
           setStartPhase('lights_5');
           setLightsCount(5);
-          playStartLightBeep(vol);
+          playStartLightBeep(getVol());
         }, 3500)
       );
       timeouts.push(
         setTimeout(() => {
           setStartPhase('lights_hold');
-          playEngineRevBeep(0.85, vol);
+          playEngineRevBeep(0.85, getVol());
         }, 4200)
       );
       timeouts.push(
@@ -606,7 +648,7 @@ export const RaceDisplay = () => {
           setStartPhase('racing');
           setLightsCount(0);
           setIsLightsOut(true);
-          playLightsOutGoSound(vol);
+          playLightsOutGoSound(getVol());
           playRaceDefinedAudio();
         }, RACE_START_DELAY_MS)
       );
@@ -619,7 +661,7 @@ export const RaceDisplay = () => {
     return () => {
       timeouts.forEach(clearTimeout);
     };
-  }, [isSpinning, soundEnabled, masterVolume]);
+  }, [isSpinning]);
 
   // Attach webglcontextlost / webglcontextrestored listeners
   useEffect(() => {
@@ -700,7 +742,7 @@ export const RaceDisplay = () => {
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.08,
           }}
-          camera={{ position: [-36, 18, 95], fov: 45, near: 0.4, far: 1200 }}
+          camera={{ position: [-4, 24, 186], fov: 45, near: 0.4, far: 1400 }}
           onCreated={({ gl }) => {
             canvasElRef.current = gl.domElement;
             gl.outputColorSpace = THREE.SRGBColorSpace;

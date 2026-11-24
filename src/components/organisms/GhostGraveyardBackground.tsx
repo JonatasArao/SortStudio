@@ -66,7 +66,7 @@ export const GhostGraveyardBackground: React.FC = () => {
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
-      } catch (err) {}
+      } catch {}
     }
   };
 

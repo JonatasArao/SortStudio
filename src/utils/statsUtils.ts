@@ -3,7 +3,6 @@ import { Item, Result } from "../types";
 export interface ParticipantStat {
   name: string;
   winsCount: number;
-  firstWinTimestamp: number | null;
   lastWinTimestamp: number | null;
   firstSeenTimestamp: number | null;
   daysWithoutWin: number;
@@ -73,7 +72,6 @@ export function getParticipantStats(
     {
       displayName: string;
       winsCount: number;
-      firstWinTimestamp: number | null;
       lastWinTimestamp: number | null;
       firstSeenTimestamp: number | null;
       hasWon: boolean;
@@ -92,7 +90,6 @@ export function getParticipantStats(
         map.set(key, {
           displayName: name,
           winsCount: 0,
-          firstWinTimestamp: null,
           lastWinTimestamp: null,
           firstSeenTimestamp: null,
           hasWon: false,
@@ -116,7 +113,6 @@ export function getParticipantStats(
       map.set(key, {
         displayName: name,
         winsCount: 0,
-        firstWinTimestamp: null,
         lastWinTimestamp: null,
         firstSeenTimestamp: null,
         hasWon: false,
@@ -142,9 +138,6 @@ export function getParticipantStats(
       }
       if (stat.lastWinTimestamp === null || ts > stat.lastWinTimestamp) {
         stat.lastWinTimestamp = ts;
-      }
-      if (stat.firstWinTimestamp === null || ts < stat.firstWinTimestamp) {
-        stat.firstWinTimestamp = ts;
       }
     }
   });
@@ -286,7 +279,6 @@ export function getParticipantStats(
     return {
       name: stat.displayName,
       winsCount: stat.winsCount,
-      firstWinTimestamp: stat.firstWinTimestamp,
       lastWinTimestamp: stat.lastWinTimestamp,
       firstSeenTimestamp: stat.firstSeenTimestamp,
       daysWithoutWin,

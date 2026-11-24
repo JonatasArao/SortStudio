@@ -766,5 +766,3 @@ export const stopRaceAudio = () => {
   }
   lastDistToCam = null;
 };
-
-

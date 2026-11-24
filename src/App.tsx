@@ -51,7 +51,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                   try {
                     localStorage.clear();
                     indexedDB.deleteDatabase('keyval-store');
-                  } catch (e) {}
+                  } catch {}
                   window.location.reload();
                 }}
                 className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition-all"

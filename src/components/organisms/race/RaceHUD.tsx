@@ -78,7 +78,7 @@ export const RaceHUD: React.FC<RaceHUDProps> = ({
       {/* Top-Left Live Timing Tower (Clickable to Lock Camera Focus on Any Driver) */}
       <aside
         aria-label={t('race.pos', 'POS')}
-        className="absolute top-3 left-3 sm:top-5 sm:left-5 z-20 w-48 sm:w-56 bg-[#0c101a]/90 border border-white/12 rounded-xl overflow-hidden shadow-2xl"
+        className="absolute top-3 left-3 sm:top-5 sm:left-5 z-20 w-52 sm:w-60 bg-[#0c101a]/90 border border-white/12 rounded-xl overflow-hidden shadow-2xl"
       >
         <div className="bg-[#121826] px-3 py-2 border-b border-white/10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-200">
@@ -143,7 +143,7 @@ export const RaceHUD: React.FC<RaceHUDProps> = ({
                 />
                 <span
                   id={`leaderboard-gap-${slice.item.id}`}
-                  className="text-[10px] font-mono tabular-nums text-slate-400 shrink-0 min-w-[34px] text-right"
+                  className="text-[10px] font-mono tabular-nums text-slate-400 shrink-0 min-w-[48px] text-right"
                 />
               </button>
             );
@@ -223,7 +223,7 @@ export const RaceHUD: React.FC<RaceHUDProps> = ({
           <div className="text-[11px] font-medium text-slate-300/90 bg-[#0c101a]/80 px-3 py-1 rounded-lg border border-white/10 flex items-center gap-2 whitespace-nowrap">
             <span>{TOTAL_LAPS} {t('race.laps_label', 'Voltas')}</span>
             <span aria-hidden="true">·</span>
-            <span>{t('race.mixed_circuit', 'Circuito Misto')}</span>
+            <span>{t('race.interlagos_circuit', 'Interlagos 3D')}</span>
             <span aria-hidden="true">·</span>
             <span>{t('race.aero_rules', 'Vácuo & DRS')}</span>
           </div>

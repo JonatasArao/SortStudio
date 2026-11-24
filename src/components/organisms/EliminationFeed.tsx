@@ -8,20 +8,27 @@ export const EliminationFeed = () => {
   const { t } = useTranslation();
   const winner = useAppStore(s => s.winner);
   const eliminationMessage = useAppStore(s => s.eliminationMessage) || t('eliminationFeed.eliminated');
-  const [feed, setFeed] = useState<{ id: string; text: string; eliminatedAt: number }[]>([]);
+  const [feed, setFeed] = useState<{ id: string; text: string }[]>([]);
   const timeoutRefs = useRef<{ [id: string]: NodeJS.Timeout }>({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(timeoutRefs.current).forEach(clearTimeout);
+      timeoutRefs.current = {};
+    };
+  }, []);
 
   useEffect(() => {
     if (winner && winner.isEliminated) {
       const newEntry = {
         id: crypto.randomUUID(),
         text: winner.text,
-        eliminatedAt: Date.now(),
       };
       setFeed(prev => [...prev, newEntry]);
 
       const timeoutId = setTimeout(() => {
         setFeed(prev => prev.filter(item => item.id !== newEntry.id));
+        delete timeoutRefs.current[newEntry.id];
       }, 5000);
 
       timeoutRefs.current[newEntry.id] = timeoutId;

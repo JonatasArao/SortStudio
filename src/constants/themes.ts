@@ -7,7 +7,6 @@ export type UiDensity = 'comfortable' | 'compact';
 interface StudioThemeDefinition {
   id: StudioThemeId;
   isLight: boolean;
-  swatchColor: string;
   preview: {
     canvas: string;
     surface: string;
@@ -50,9 +49,6 @@ interface StudioThemeDefinition {
     horizonPointer: string;
     horizonTargetIdle: string;
     horizonTargetActive: string;
-    boxGradient: string;
-    boxBorder: string;
-    boxText: string;
     accentHex: string;
   };
 }
@@ -61,7 +57,6 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
   default: {
     id: 'default',
     isLight: false,
-    swatchColor: '#2563eb',
     preview: {
       canvas: '#0b0d13',
       surface: '#12151f',
@@ -104,16 +99,12 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
       horizonPointer: 'border-l-blue-400 border-r-blue-400',
       horizonTargetIdle: 'border-white/25 bg-white/[0.04]',
       horizonTargetActive: 'border-emerald-400 bg-emerald-500/10',
-      boxGradient: 'from-[#182032] via-[#12151F] to-[#0E1119]',
-      boxBorder: 'border-white/15',
-      boxText: 'text-slate-100',
       accentHex: '#3b82f6',
     },
   },
   neon: {
     id: 'neon',
     isLight: false,
-    swatchColor: '#d946ef',
     preview: {
       canvas: '#070312',
       surface: '#100824',
@@ -156,16 +147,12 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
       horizonPointer: 'border-l-cyan-400 border-r-cyan-400',
       horizonTargetIdle: 'border-fuchsia-500/35 bg-fuchsia-500/10',
       horizonTargetActive: 'border-cyan-400 bg-cyan-400/20 shadow-[0_0_35px_rgba(34,211,238,0.4)]',
-      boxGradient: 'from-[#1e0b3a] via-[#120726] to-[#090314]',
-      boxBorder: 'border-cyan-400/45',
-      boxText: 'text-fuchsia-100',
       accentHex: '#d946ef',
     },
   },
   casino: {
     id: 'casino',
     isLight: false,
-    swatchColor: '#d97706',
     preview: {
       canvas: '#140406',
       surface: '#20080c',
@@ -208,16 +195,12 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
       horizonPointer: 'border-l-amber-400 border-r-amber-400',
       horizonTargetIdle: 'border-amber-500/35 bg-amber-500/5',
       horizonTargetActive: 'border-amber-300 bg-amber-400/20 shadow-[0_0_40px_rgba(251,191,36,0.3)]',
-      boxGradient: 'from-[#3a1608] via-[#240a09] to-[#170404]',
-      boxBorder: 'border-amber-500/50',
-      boxText: 'text-amber-100',
       accentHex: '#f59e0b',
     },
   },
   candy: {
     id: 'candy',
     isLight: true,
-    swatchColor: '#ec4899',
     preview: {
       canvas: '#fdf2f8',
       surface: '#ffffff',
@@ -260,16 +243,12 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
       horizonPointer: 'border-l-pink-500 border-r-pink-500',
       horizonTargetIdle: 'border-pink-400/70 bg-pink-100/50',
       horizonTargetActive: 'border-pink-500 bg-pink-300/40 shadow-[0_0_25px_rgba(244,114,182,0.35)]',
-      boxGradient: 'from-[#ffffff] via-[#fdf2f8] to-[#fce7f3]',
-      boxBorder: 'border-pink-300',
-      boxText: 'text-pink-950',
       accentHex: '#db2777',
     },
   },
   dark: {
     id: 'dark',
     isLight: false,
-    swatchColor: '#52525b',
     preview: {
       canvas: '#060608',
       surface: '#0f0f12',
@@ -312,16 +291,12 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
       horizonPointer: 'border-l-zinc-300 border-r-zinc-300',
       horizonTargetIdle: 'border-zinc-700 bg-zinc-800/50',
       horizonTargetActive: 'border-zinc-200 bg-zinc-100/10',
-      boxGradient: 'from-[#18181b] via-[#0f0f12] to-[#09090b]',
-      boxBorder: 'border-zinc-700',
-      boxText: 'text-zinc-100',
       accentHex: '#e4e4e7',
     },
   },
   emerald: {
     id: 'emerald',
     isLight: false,
-    swatchColor: '#10b981',
     preview: {
       canvas: '#06130e',
       surface: '#0c1f17',
@@ -364,9 +339,6 @@ const STUDIO_THEMES: Record<StudioThemeId, StudioThemeDefinition> = {
       horizonPointer: 'border-l-emerald-400 border-r-emerald-400',
       horizonTargetIdle: 'border-emerald-500/35 bg-emerald-500/10',
       horizonTargetActive: 'border-emerald-300 bg-emerald-400/20 shadow-[0_0_30px_rgba(16,185,129,0.35)]',
-      boxGradient: 'from-[#113024] via-[#0c1f17] to-[#07150f]',
-      boxBorder: 'border-emerald-500/40',
-      boxText: 'text-emerald-50',
       accentHex: '#10b981',
     },
   },

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Trophy, Crown, Car, X } from 'lucide-react';
+import { Trophy, Crown, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -70,9 +70,71 @@ export const WinnerModal = () => {
   const customMessage = isGrandWinner ? grandWinnerMessage : winner.message || winMessage;
   const Icon = isGrandWinner ? Crown : Trophy;
 
-  // Spatial stage banner for Race, Penalty Shootout, and Mystery Box so stage results remain visible
+  // Compact bottom banner for 3D Grand Prix Race (positions & times stay on the left timing tower)
+  if (wheelType === 'race') {
+    const championFinish = racePodium?.[0]?.finishTimeSeconds;
+    return (
+      <div className="fixed bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-3 sm:px-4">
+        <div
+          role="dialog"
+          aria-modal="false"
+          className="bg-[#0c101a]/95 border border-amber-500/35 text-slate-100 px-4 sm:px-5 py-3.5 rounded-2xl w-full shadow-2xl flex flex-col gap-3 relative overflow-hidden"
+        >
+          <div className="flex items-center gap-3.5 text-left">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center border border-white/20 shrink-0"
+              style={{ backgroundColor: winner.color || '#dc2626' }}
+            >
+              <Trophy className="w-5 h-5 text-white" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-amber-400">
+                <span className="truncate">{customMessage}</span>
+                {typeof championFinish === 'number' && (
+                  <>
+                    <span className="text-slate-500" aria-hidden="true">·</span>
+                    <span className="font-mono tabular-nums text-slate-200 shrink-0">
+                      {championFinish.toFixed(3)}s
+                    </span>
+                  </>
+                )}
+              </div>
+              <h2 className="font-display text-lg sm:text-xl font-bold text-white truncate leading-tight mt-0.5">
+                {winner.text}
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAccept}
+              className="w-8 h-8 rounded-lg bg-white/6 hover:bg-white/12 text-slate-300 hover:text-white border border-white/12 flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+              aria-label={t('common.close', 'Fechar')}
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          <div className="flex flex-row gap-2.5">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleReject}
+              className="flex-1 bg-white/8 hover:bg-white/14 text-slate-200 border-white/12 hover:border-red-500/40 hover:text-red-300"
+            >
+              {t('horizonDisplay.reject')}
+            </Button>
+            <Button variant="amber" size="sm" onClick={handleAccept} className="flex-1">
+              {t('horizonDisplay.accept')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Spatial stage banner for Penalty Shootout and Mystery Box so stage results remain visible
   if (
-    wheelType === 'race' ||
     wheelType === 'penalty_shootout' ||
     wheelType === 'mystery_box'
   ) {
@@ -92,16 +154,7 @@ export const WinnerModal = () => {
         >
           <div className="flex items-center gap-3.5 text-left">
             <div className="w-11 h-11 rounded-xl bg-[var(--studio-card)] border border-[var(--studio-border-strong)] flex items-center justify-center shrink-0">
-              {wheelType === 'race' && winner.color ? (
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/25"
-                  style={{ backgroundColor: winner.color }}
-                >
-                  <Car className="w-4 h-4 text-white" />
-                </div>
-              ) : (
-                <Icon className={accentText} size={22} />
-              )}
+              <Icon className={accentText} size={22} />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -122,35 +175,6 @@ export const WinnerModal = () => {
               <X size={15} />
             </button>
           </div>
-
-          {wheelType === 'race' && racePodium && racePodium.length > 0 && (
-            <div className="flex items-center gap-2 w-full bg-[var(--studio-input)] rounded-xl px-3 py-2 border border-[var(--studio-border)] overflow-x-auto no-scrollbar">
-              {racePodium.slice(0, 3).map((runner, idx) => (
-                <div
-                  key={runner.id}
-                  className="flex items-center gap-1.5 text-xs shrink-0"
-                >
-                  <span
-                    className={`font-mono font-bold ${
-                      idx === 0
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : idx === 1
-                        ? 'text-[var(--studio-text-secondary)]'
-                        : 'text-amber-700 dark:text-amber-600'
-                    }`}
-                  >
-                    #{idx + 1}
-                  </span>
-                  <span className="font-medium text-[var(--studio-text)] truncate max-w-[90px]">
-                    {runner.text}
-                  </span>
-                  {idx < Math.min(2, racePodium.length - 1) && (
-                    <span className="text-[var(--studio-text-muted)] ml-1" aria-hidden="true">·</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
 
           <div className="flex flex-row gap-2.5">
             <Button variant="secondary" size="sm" onClick={handleReject} className="flex-1 hover:border-red-500/40 hover:text-red-600 dark:hover:text-red-300">

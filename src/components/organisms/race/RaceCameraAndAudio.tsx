@@ -50,8 +50,8 @@ export const RaceCameraAndAudio = ({
   onBroadcastStateChange: (angle: ActiveBroadcastAngle, targetDriverId: string | null) => void;
 }) => {
   const { camera } = useThree();
-  const currentCamPos = useRef(new THREE.Vector3(-28, 12, 92));
-  const currentLookAt = useRef(new THREE.Vector3(0, 1.5, 75));
+  const currentCamPos = useRef(new THREE.Vector3(-4, 24, 186));
+  const currentLookAt = useRef(new THREE.Vector3(25, 14.5, 154));
   const targetFov = useRef(46);
 
   const activeAngleRef = useRef<ActiveBroadcastAngle>('idle');
@@ -60,7 +60,7 @@ export const RaceCameraAndAudio = ({
   const nextCutIntervalRef = useRef(3.2);
   const raceLaunchTimeRef = useRef<number | null>(null);
   const hasInitializedLaunchCutRef = useRef(false);
-  const tracksidePosRef = useRef(new THREE.Vector3(35, 4.2, 89));
+  const tracksidePosRef = useRef(new THREE.Vector3(60, 18.5, 170));
   const recentAnglesRef = useRef<ActiveBroadcastAngle[]>([]);
 
   useEffect(() => {
@@ -102,17 +102,17 @@ export const RaceCameraAndAudio = ({
       ) {
         hasInitializedLaunchCutRef.current = false;
         const startPose = getCircuitPosition(0, 0);
-        const gridCamX = startPose.x + startPose.tx * 22 - startPose.nx * 13;
-        const gridCamZ = startPose.z + startPose.tz * 22 - startPose.nz * 13;
-        _desiredCamPos.set(gridCamX, 3.6, gridCamZ);
+        const gridCamX = startPose.x + startPose.tx * 16 - startPose.nx * 10.5;
+        const gridCamZ = startPose.z + startPose.tz * 16 - startPose.nz * 10.5;
+        _desiredCamPos.set(gridCamX, startPose.y + 3.2, gridCamZ);
 
-        const lookFwd = startPhase === 'racing' ? THREE.MathUtils.lerp(-4, 18, Math.min(1, launchElapsed / 2.6)) : -6;
+        const lookFwd = startPhase === 'racing' ? THREE.MathUtils.lerp(-4, 16, Math.min(1, launchElapsed / 2.6)) : -6;
         _desiredLookAt.set(
           startPose.x + startPose.tx * lookFwd,
-          1.7,
+          startPose.y + 1.35 + startPose.ty * lookFwd,
           startPose.z + startPose.tz * lookFwd
         );
-        targetFov.current = 34;
+        targetFov.current = 36;
 
         if (activeAngleRef.current !== 'grid') {
           activeAngleRef.current = 'grid';
@@ -158,15 +158,24 @@ export const RaceCameraAndAudio = ({
         } else if (elapsed - lastSwitchTimeRef.current > nextCutIntervalRef.current) {
           lastSwitchTimeRef.current = elapsed;
 
-          // Pick focus driver if not locked manually
+          // Pick focus driver if not locked manually (prioritize active overtakes & lead battle)
           if (!focusedDriverId && sortedCars.length > 0) {
             const p1p2Gap = sortedCars.length > 1 ? sortedCars[0].totalDistance - sortedCars[1].totalDistance : 999;
             const p2p3Gap = sortedCars.length > 2 ? sortedCars[1].totalDistance - sortedCars[2].totalDistance : 999;
+            const activeAttacker = sortedCars.find(
+              (c) => c.battleState === 'SIDE_BY_SIDE' || c.battleState === 'PULL_OUT'
+            );
 
-            if (leaderProgress > 0.72) {
-              activeDriverIdRef.current = sortedCars[0].id;
-            } else if (p1p2Gap < 18) {
+            if (leaderProgress > 0.84) {
+              // Final-lap battle: track P2 attacking P1 or P1 defending into the final corner
+              activeDriverIdRef.current =
+                p1p2Gap < 14 && leaderProgress < 0.96 && Math.random() < 0.55
+                  ? sortedCars[1].id
+                  : sortedCars[0].id;
+            } else if (p1p2Gap < 16) {
               activeDriverIdRef.current = Math.random() < 0.55 ? sortedCars[1].id : sortedCars[0].id;
+            } else if (activeAttacker) {
+              activeDriverIdRef.current = activeAttacker.id;
             } else if (p2p3Gap < 16) {
               activeDriverIdRef.current = Math.random() < 0.5 ? sortedCars[2].id : sortedCars[1].id;
             } else {
@@ -180,7 +189,12 @@ export const RaceCameraAndAudio = ({
 
           // Context-aware TV director angle selection
           const candidates: ActiveBroadcastAngle[] = ['action', 'trackside', 'tv', 'helicopter'];
-          if (currentFocusCar?.drsActive || currentFocusCar?.inSlipstream || focusIdx > 0) {
+          if (
+            currentFocusCar?.drsActive ||
+            currentFocusCar?.inSlipstream ||
+            currentFocusCar?.battleState === 'SIDE_BY_SIDE' ||
+            focusIdx > 0
+          ) {
             candidates.push('bumper');
           }
           if (focusIdx === 0 && sortedCars.length > 1 && sortedCars[0].totalDistance - sortedCars[1].totalDistance < 22) {
@@ -198,56 +212,72 @@ export const RaceCameraAndAudio = ({
 
           nextCutIntervalRef.current =
             chosenAngle === 'bumper' || chosenAngle === 'rear'
-              ? 2.2 + Math.random() * 0.9
-              : 3.0 + Math.random() * 1.4;
+              ? 2.4 + Math.random() * 1.0
+              : 3.1 + Math.random() * 1.4;
 
           if (chosenAngle === 'trackside' && currentFocusCar) {
             const aheadPose = getCircuitPosition(currentFocusCar.totalDistance + 36, 0);
             const side = Math.random() > 0.5 ? 1 : -1;
             tracksidePosRef.current.set(
-              aheadPose.x + aheadPose.nx * side * 14,
-              4.0 + Math.random() * 1.5,
-              aheadPose.z + aheadPose.nz * side * 14
+              aheadPose.x + aheadPose.nx * side * 15.5,
+              aheadPose.y + 3.8 + Math.random() * 1.2,
+              aheadPose.z + aheadPose.nz * side * 15.5
             );
           }
         }
 
         const resolvedDriverId = focusedDriverId || activeDriverIdRef.current || sortedCars[0]?.id || null;
-        const targetCar =
+        const targetCar: LiveRacerTelemetry =
           sortedCars.find((c) => c.id === resolvedDriverId) ||
           sortedCars[0] ||
           leaderPosRef.current || {
             id: '',
-            x: 0,
-            z: 75,
+            x: 25,
+            y: 13.4,
+            z: 154,
             angle: 0,
+            trackAngle: 0,
+            pitchAngle: 0.05,
+            yawAngle: 0,
             totalDistance: 0,
             lane: 0,
             speed: 0,
             displayKmh: 0,
             gear: 1,
+            rpmRatio: 0.25,
             steerAngle: 0,
+            longAccel: 0,
+            latAccel: 0,
+            brakeIntensity: 0,
             drsActive: false,
             inSlipstream: false,
             braking: false,
+            onKerb: false,
+            tireSmoke: 0,
+            sparks: 0,
+            battleState: 'CRUISE',
             curvature: 0,
             signedCurvature: 0,
             drsZone: 1,
             sector: 1,
           };
 
+        // True chassis heading for onboard/rear T-cams; slightly yaw-damped heading for chase cam
+        const chaseHeading = targetCar.trackAngle + targetCar.yawAngle * 0.45;
         const dx = Math.cos(targetCar.angle);
         const dz = -Math.sin(targetCar.angle);
+        const cdx = Math.cos(chaseHeading);
+        const cdz = -Math.sin(chaseHeading);
 
         // If user is in manual trackside and car passed far away, re-anchor tripod ahead
         if (chosenAngle === 'trackside') {
-          _carWorldPos.set(targetCar.x, 1, targetCar.z);
+          _carWorldPos.set(targetCar.x, targetCar.y + 1, targetCar.z);
           if (tracksidePosRef.current.distanceTo(_carWorldPos) > 78) {
             const aheadPose = getCircuitPosition(targetCar.totalDistance + 38, 0);
-            const side = (Math.floor(targetCar.totalDistance / 80) % 2 === 0 ? 1 : -1) * 14;
+            const side = (Math.floor(targetCar.totalDistance / 80) % 2 === 0 ? 1 : -1) * 15.5;
             tracksidePosRef.current.set(
               aheadPose.x + aheadPose.nx * side,
-              4.2,
+              aheadPose.y + 4.0,
               aheadPose.z + aheadPose.nz * side
             );
           }
@@ -262,28 +292,41 @@ export const RaceCameraAndAudio = ({
 
         let dampRate = 7.5;
         let lookDamp = 12;
-        const speedNorm = Math.min(1, targetCar.displayKmh / 320);
+        const speedNorm = Math.min(1, targetCar.displayKmh / 330);
+        const slopeSin = Math.sin(targetCar.pitchAngle || 0);
 
         switch (chosenAngle) {
           case 'finish': {
             const fp = getCircuitPosition(0, 0);
-            _desiredCamPos.set(fp.x + fp.tx * 20 - fp.nx * 10, 4.2, fp.z + fp.tz * 20 - fp.nz * 10);
-            _desiredLookAt.set(fp.x - fp.tx * 8, 1.0, fp.z - fp.tz * 8);
-            targetFov.current = 38;
+            _desiredCamPos.set(
+              fp.x + fp.tx * 20 - fp.nx * 10.5,
+              fp.y + 3.9,
+              fp.z + fp.tz * 20 - fp.nz * 10.5
+            );
+            _desiredLookAt.set(fp.x - fp.tx * 12, fp.y + 0.9 - fp.ty * 12, fp.z - fp.tz * 12);
+            targetFov.current = 40;
             dampRate = 8;
             break;
           }
           case 'trackside': {
             _desiredCamPos.copy(tracksidePosRef.current);
-            _desiredLookAt.set(targetCar.x + dx * 4, 1.0, targetCar.z + dz * 4);
+            _desiredLookAt.set(targetCar.x + dx * 4, targetCar.y + 0.9, targetCar.z + dz * 4);
             targetFov.current = 32;
             dampRate = 40; // instant tripod placement
             lookDamp = 16;
             break;
           }
           case 'tv': {
-            _desiredCamPos.set(targetCar.x - 24 * dx - 16 * dz, 13.5, targetCar.z - 24 * dz + 16 * dx);
-            _desiredLookAt.set(targetCar.x + 10 * dx, 1.0, targetCar.z + 10 * dz);
+            _desiredCamPos.set(
+              targetCar.x - 19 * cdx - 13 * cdz,
+              targetCar.y + 10.8,
+              targetCar.z - 19 * cdz + 13 * cdx
+            );
+            _desiredLookAt.set(
+              targetCar.x + 10 * cdx,
+              targetCar.y + 0.9 + slopeSin * 10,
+              targetCar.z + 10 * cdz
+            );
             targetFov.current = 35;
             dampRate = 5.5;
             break;
@@ -291,28 +334,36 @@ export const RaceCameraAndAudio = ({
           case 'helicopter': {
             const orbit = elapsed * 0.38;
             _desiredCamPos.set(
-              targetCar.x + Math.sin(orbit) * 26,
-              25 + Math.sin(orbit * 0.6) * 2.5,
-              targetCar.z + Math.cos(orbit) * 26
+              targetCar.x + Math.sin(orbit) * 24,
+              targetCar.y + 22 + Math.sin(orbit * 0.6) * 2.5,
+              targetCar.z + Math.cos(orbit) * 24
             );
-            _desiredLookAt.set(targetCar.x + 5 * dx, 0.8, targetCar.z + 5 * dz);
-            targetFov.current = 36;
+            _desiredLookAt.set(targetCar.x + 5 * cdx, targetCar.y + 0.8, targetCar.z + 5 * cdz);
+            targetFov.current = 37;
             dampRate = 5;
             break;
           }
           case 'bumper': {
-            // F1 T-Cam Onboard over driver helmet & halo
-            _desiredCamPos.set(targetCar.x + 0.1 * dx, 1.82, targetCar.z + 0.1 * dz);
-            _desiredLookAt.set(targetCar.x + 28 * dx, 0.9, targetCar.z + 28 * dz);
+            // F1 T-Cam Onboard over driver helmet & halo following 3D track pitch
+            _desiredCamPos.set(targetCar.x + 0.08 * dx, targetCar.y + 1.36, targetCar.z + 0.08 * dz);
+            _desiredLookAt.set(
+              targetCar.x + 28 * dx,
+              targetCar.y + 0.82 + slopeSin * 28,
+              targetCar.z + 28 * dz
+            );
             targetFov.current = 60 + speedNorm * 8;
             dampRate = 45;
             lookDamp = 45;
             break;
           }
           case 'rear': {
-            // Rear-facing T-Cam looking back at chasing pack
-            _desiredCamPos.set(targetCar.x - 0.55 * dx, 1.9, targetCar.z - 0.55 * dz);
-            _desiredLookAt.set(targetCar.x - 26 * dx, 0.95, targetCar.z - 26 * dz);
+            // Rear-facing T-Cam looking back at chasing pack along 3D slope
+            _desiredCamPos.set(targetCar.x - 0.42 * dx, targetCar.y + 1.42, targetCar.z - 0.42 * dz);
+            _desiredLookAt.set(
+              targetCar.x - 26 * dx,
+              targetCar.y + 0.85 - slopeSin * 26,
+              targetCar.z - 26 * dz
+            );
             targetFov.current = 58;
             dampRate = 45;
             lookDamp = 45;
@@ -320,13 +371,17 @@ export const RaceCameraAndAudio = ({
           }
           case 'action':
           default: {
-            // Dynamic Broadcast Chase Cam with speed-linked FOV widening
+            // Dynamic Broadcast Chase Cam with speed-linked FOV widening and slope elevation tracking
             _desiredCamPos.set(
-              targetCar.x - 12.2 * dx + 3.2 * dz,
-              3.5,
-              targetCar.z - 12.2 * dz - 3.2 * dx
+              targetCar.x - 9.2 * cdx + 2.3 * cdz,
+              targetCar.y + 2.85 - slopeSin * 6.5,
+              targetCar.z - 9.2 * cdz - 2.3 * cdx
             );
-            _desiredLookAt.set(targetCar.x + 12 * dx, 1.1, targetCar.z + 12 * dz);
+            _desiredLookAt.set(
+              targetCar.x + 14 * cdx,
+              targetCar.y + 1.0 + slopeSin * 14,
+              targetCar.z + 14 * cdz
+            );
             targetFov.current = 48 + speedNorm * 10 + (targetCar.drsActive ? 3 : 0);
             dampRate = 10;
             lookDamp = 15;
@@ -350,19 +405,32 @@ export const RaceCameraAndAudio = ({
         camera.position.copy(currentCamPos.current);
         camera.lookAt(currentLookAt.current);
 
-        // Real-time audio telemetry
+        // Real-time F1 audio telemetry (gears, RPM curve, downshift overrun, tire load & kerb impacts)
         const appState = useAppStore.getState();
         const masterVol = appState.soundEnabled ? appState.masterVolume / 100 : 0;
         if (masterVol > 0 && startPhase === 'racing') {
-          _carWorldPos.set(targetCar.x, 1.0, targetCar.z);
+          _carWorldPos.set(targetCar.x, targetCar.y + 1.0, targetCar.z);
           const distToCam = camera.position.distanceTo(_carWorldPos);
 
-          updateRaceEngineAudio(targetCar.displayKmh, distToCam, chosenAngle, dt, masterVol, true);
+          updateRaceEngineAudio(
+            targetCar.displayKmh,
+            distToCam,
+            chosenAngle,
+            dt,
+            masterVol,
+            true,
+            targetCar.gear,
+            targetCar.rpmRatio,
+            targetCar.braking
+          );
 
-          const corneringLoad = Math.min(1, (targetCar.curvature / 0.028) * (targetCar.displayKmh / 210));
+          const corneringLoad = Math.min(
+            1,
+            Math.max(Math.abs(targetCar.latAccel) * 0.85, targetCar.brakeIntensity * 0.72)
+          );
           updateTireSquealAudio(corneringLoad, targetCar.displayKmh, masterVol);
 
-          if (targetCar.curvature > 0.015 && Math.abs(targetCar.lane) > 0.58 && targetCar.displayKmh > 80) {
+          if (targetCar.onKerb && targetCar.displayKmh > 80) {
             playKerbImpactSound(masterVol);
           }
         } else {
@@ -380,22 +448,25 @@ export const RaceCameraAndAudio = ({
           : null;
 
       if (expectedWinnerId && celebrateTarget) {
-        const orbit = elapsed * 0.35;
+        const arena = getCircuitPosition(6, 0);
+        const sweep = Math.sin(elapsed * 0.34) * 0.98;
         _desiredCamPos.set(
-          celebrateTarget.x + Math.sin(orbit) * 14,
-          5.6,
-          celebrateTarget.z + Math.cos(orbit) * 14
+          arena.x + Math.sin(sweep) * 17.5,
+          arena.y + 3.0 + Math.sin(elapsed * 0.48) * 0.35,
+          arena.z - Math.cos(sweep) * 16.5
         );
-        _desiredLookAt.set(celebrateTarget.x, 1.1, celebrateTarget.z);
+        // Keep the donut arena near screen center (well above the compact bottom card) while keeping grandstand fireworks in upper sky
+        _desiredLookAt.set(arena.x, arena.y + 0.95, arena.z + 1.5);
+        targetFov.current = 54;
       } else {
         const gridFocus = getCircuitPosition(-14, 0);
         const orbit = elapsed * 0.14;
         _desiredCamPos.set(
-          gridFocus.x + Math.sin(orbit) * 42,
-          17 + Math.sin(orbit * 0.7) * 3,
-          gridFocus.z + Math.cos(orbit) * 42
+          gridFocus.x + Math.sin(orbit) * 38,
+          gridFocus.y + 15 + Math.sin(orbit * 0.7) * 2.5,
+          gridFocus.z + Math.cos(orbit) * 38
         );
-        _desiredLookAt.set(gridFocus.x + 8, 1.5, gridFocus.z);
+        _desiredLookAt.set(gridFocus.x + 8, gridFocus.y + 1.5, gridFocus.z);
       }
 
       currentCamPos.current.x = THREE.MathUtils.damp(currentCamPos.current.x, _desiredCamPos.x, 3.5, dt);

@@ -7,6 +7,7 @@ import { getSecureRandom, secureShuffle } from '../utils/cryptoRandom';
 import { getSpinTimeRanges } from '../utils/spinUtils';
 import { getAudioCtx, playTickSound, playWinSound, playFailureSound, stopWinSound, stopRaceAudio } from '../utils/audioEngine';
 import { useWheelData } from './useWheelData';
+import { generateAuthenticRaceSimulation } from '../components/organisms/race/raceSimulation';
 import {
   FULL_CIRCLE_DEG,
   WHEEL_TOP_OFFSET_DEG,
@@ -154,29 +155,6 @@ export const useWheelActions = () => {
     setItems((prev) => prev.map((item) => ({ ...item, enabled: !allSelected })));
   };
 
-  const handleSelectAll = () => {
-    const { isSpinning, setItems } = useAppStore.getState();
-    if (!isSpinning) {
-      setItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
-    }
-  };
-
-  const handleDeselectAll = () => {
-    const { isSpinning, setItems } = useAppStore.getState();
-    if (!isSpinning) {
-      setItems((prev) => prev.map((item) => ({ ...item, enabled: false })));
-    }
-  };
-
-  const handleSort = () => {
-    const { isSpinning, setItems } = useAppStore.getState();
-    if (!isSpinning) {
-      setItems((prev) =>
-        [...prev].sort((a, b) => a.text.localeCompare(b.text))
-      );
-    }
-  };
-
   const handleAddColor = () => {
     const { newColor, setColors } = useAppStore.getState();
     setColors((prev) => [...prev, newColor]);
@@ -289,42 +267,34 @@ export const useWheelActions = () => {
 
     state.setExpectedWinnerId(winnerId);
 
-    // If it's a 3D race, generate the complete podium sequence
+    const isFinalRound = state.eliminationMode && currentValidItems.length === 2;
+    let actualSpinTime = isFinalRound 
+      ? state.spinTime 
+      : (state.eliminationMode 
+          ? (state.autoEliminationSpeed === 'turbo' 
+              ? Math.max(1, state.eliminationSpinTime * 0.6) 
+              : state.eliminationSpinTime) 
+          : state.spinTime);
+
+    const spinRange = getSpinTimeRanges(state.wheelType, !isFinalRound && state.eliminationMode);
+    actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
+
+    const isMysteryBox = state.wheelType === 'mystery_box';
+    const isInstantSpin = isMysteryBox && fastSpin;
+    let spinDurationMs = isInstantSpin ? 50 : actualSpinTime * 1000;
+
+    // If it's a 3D race, run a 100% forward solid-body physics race and wait until all racers cross the finish line
     if (state.wheelType === 'race') {
-      const winnerId = currentValidItems[winIndex].id;
-      
-      const remainingSlices = slices
-        .filter(s => s.item.id !== winnerId)
-        .map(s => ({
-          id: s.item.id,
-          text: s.item.text,
-          color: s.color,
-          score: (s.item.weight !== undefined ? s.item.weight : 1) * 0.5 + getSecureRandom() * 5
-        }));
-
-      remainingSlices.sort((a, b) => b.score - a.score);
-
-      const podium = [
-        {
-          id: winnerId,
-          text: currentValidItems[winIndex].text,
-          color: winSlice.color,
-          rank: 1
-        },
-        ...remainingSlices.map((item, index) => ({
-          id: item.id,
-          text: item.text,
-          color: item.color,
-          rank: index + 2
-        }))
-      ];
-      
-      state.setRacePodium(podium);
+      const simResult = generateAuthenticRaceSimulation(slices, actualSpinTime, winnerId);
+      state.setRacePodium(simResult.podium);
+      state.setRaceSimulationCars(simResult.cars);
+      if (!isInstantSpin) {
+        spinDurationMs = RACE_START_DELAY_MS + Math.round(simResult.lastCrossTime * 1000) + 900;
+      }
     }
 
     let penaltyDurationMs = 5000;
     if (state.wheelType === 'penalty_shootout') {
-      const winnerId = currentValidItems[winIndex].id;
       const expectedWinnerItem = currentValidItems[winIndex];
 
       const otherItems = currentValidItems.filter(item => item.id !== winnerId);
@@ -345,27 +315,8 @@ export const useWheelActions = () => {
     const sliceCenter = winSlice.startAngle + winSlice.angle / 2;
     const targetAngle = FULL_CIRCLE_DEG + WHEEL_TOP_OFFSET_DEG - sliceCenter + randomOffset;
 
-    const isFinalRound = state.eliminationMode && currentValidItems.length === 2;
-    let actualSpinTime = isFinalRound 
-      ? state.spinTime 
-      : (state.eliminationMode 
-          ? (state.autoEliminationSpeed === 'turbo' 
-              ? Math.max(1, state.eliminationSpinTime * 0.6) 
-              : state.eliminationSpinTime) 
-          : state.spinTime);
-
-    const spinRange = getSpinTimeRanges(state.wheelType, !isFinalRound && state.eliminationMode);
-    actualSpinTime = Math.max(spinRange.min, Math.min(spinRange.max, actualSpinTime));
-
-    const isMysteryBox = state.wheelType === 'mystery_box';
-    const isInstantSpin = isMysteryBox && fastSpin;
-    let spinDurationMs = isInstantSpin ? 50 : actualSpinTime * 1000;
-
     if (state.wheelType === 'penalty_shootout' && !isInstantSpin) {
       spinDurationMs = penaltyDurationMs;
-    } else if (state.wheelType === 'race' && !isInstantSpin) {
-      // Add a small 1s buffer for finish line crossing
-      spinDurationMs = RACE_START_DELAY_MS + actualSpinTime * 1000 + 1000;
     }
     // adding a highly random range of extra rotations to add more chaos to the wheel
     const randomExtraRotations = Math.floor(getSecureRandom() * 15) + 6;
@@ -530,9 +481,6 @@ export const useWheelActions = () => {
     handleMoveItem,
     handleShuffle,
     handleToggleSelectAll,
-    handleSelectAll,
-    handleDeselectAll,
-    handleSort,
     handleAddColor,
     handleRemoveColor,
     spinWheel,

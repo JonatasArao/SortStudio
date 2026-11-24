@@ -19,11 +19,7 @@
   --studio-accent-soft: rgba(59, 130, 246, 0.16);
   --studio-accent-text: #ffffff;
   --studio-accent-fg: #60a5fa;
-  --studio-accent-amber: #f59e0b;
-  --studio-accent-emerald: #10b981;
-  --studio-accent-crimson: #ef4444;
   --studio-control-h: 40px;
-  --studio-panel-gap: 1rem;
   --font-display: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -31,7 +27,6 @@
 
 [data-density="compact"] {
   --studio-control-h: 34px;
-  --studio-panel-gap: 0.625rem;
 }
 
 @layer base {

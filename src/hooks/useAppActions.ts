@@ -85,7 +85,7 @@ export const useAudioActions = () => {
   return { addCustomAudio, removeCustomAudio, updateCustomAudio };
 };
 
-export interface ExportOptions {
+interface ExportOptions {
   configVisual: boolean;
   configRules: boolean;
   configGeneral: boolean;
@@ -200,7 +200,6 @@ export const useAppActions = () => {
           newItemWeightMode: state.newItemWeightMode,
           antiRepetitionEnabled: state.antiRepetitionEnabled,
           antiRepetitionCount: state.antiRepetitionCount,
-          pityWeights: state.pityWeights,
           wheelType: state.wheelType,
         } : {}),
         ...(options.configVisual ? {
