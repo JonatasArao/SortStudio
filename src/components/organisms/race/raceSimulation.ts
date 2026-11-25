@@ -3,11 +3,11 @@ import {
   TOTAL_LAPS,
   TRACK_P,
   TRACK_HALF_WIDTH,
+  TRACK_SAMPLES,
+  CIRCUIT_SAMPLES,
   GRID_FIRST_DIST,
   GRID_STEP_DIST,
   GRID_LANE_MAG,
-  getCircuitPosition,
-  getUpcomingCornerInfo,
 } from './trackCircuit';
 
 export const SIM_FPS = 60;
@@ -114,9 +114,21 @@ function clamp(v: number, min: number, max: number): number {
   return v < min ? min : v > max ? max : v;
 }
 
+function sampleCurvatureFast(dist: number): number {
+  let lapDist = dist % TRACK_P;
+  if (lapDist < 0) lapDist += TRACK_P;
+  const exactIdx = (lapDist / TRACK_P) * TRACK_SAMPLES;
+  const idx0 = Math.floor(exactIdx) % TRACK_SAMPLES;
+  const idx1 = (idx0 + 1) % TRACK_SAMPLES;
+  const f = exactIdx - Math.floor(exactIdx);
+  const c0 = CIRCUIT_SAMPLES[idx0].curvature;
+  const c1 = CIRCUIT_SAMPLES[idx1].curvature;
+  return c0 + (c1 - c0) * f;
+}
+
 function getCornerSpeedLimit(dist: number, paceBaseSpeed: number): number {
-  const pose = getCircuitPosition(dist, 0);
-  const cornerLoad = Math.min(1, pose.curvature / 0.032);
+  const curvature = sampleCurvatureFast(dist);
+  const cornerLoad = Math.min(1, curvature / 0.032);
   // Straights ~1.34x base, heavy hairpins ~0.50x base for clear braking & traction zones
   return paceBaseSpeed * (1.34 - Math.pow(cornerLoad, 0.85) * 0.84);
 }
@@ -137,9 +149,52 @@ function getSafeLookaheadSpeed(
   return minSafe;
 }
 
+function getTrackSampleFieldsFast(dist: number): {
+  curvature: number;
+  signedCurvature: number;
+  idealLane: number;
+  drsZone: 0 | 1 | 2;
+} {
+  let lapDist = dist % TRACK_P;
+  if (lapDist < 0) lapDist += TRACK_P;
+  const exactIdx = (lapDist / TRACK_P) * TRACK_SAMPLES;
+  const idx0 = Math.floor(exactIdx) % TRACK_SAMPLES;
+  const idx1 = (idx0 + 1) % TRACK_SAMPLES;
+  const f = exactIdx - Math.floor(exactIdx);
+  const s0 = CIRCUIT_SAMPLES[idx0];
+  const s1 = CIRCUIT_SAMPLES[idx1];
+  return {
+    curvature: s0.curvature + (s1.curvature - s0.curvature) * f,
+    signedCurvature: s0.signedCurvature + (s1.signedCurvature - s0.signedCurvature) * f,
+    idealLane: s0.idealLane + (s1.idealLane - s0.idealLane) * f,
+    drsZone: s0.drsZone,
+  };
+}
+
+function getUpcomingCornerFast(
+  progressDistance: number,
+  lookaheadMeters: number
+): { curvature: number; signedCurvature: number } {
+  let maxK = 0;
+  let maxSignedK = 0;
+  for (let d = 5; d <= lookaheadMeters; d += 7) {
+    let lapDist = (progressDistance + d) % TRACK_P;
+    if (lapDist < 0) lapDist += TRACK_P;
+    const idx = Math.floor((lapDist / TRACK_P) * TRACK_SAMPLES) % TRACK_SAMPLES;
+    const s = CIRCUIT_SAMPLES[idx];
+    if (s.curvature > maxK) {
+      maxK = s.curvature;
+      maxSignedK = s.signedCurvature;
+    }
+  }
+  return { curvature: maxK, signedCurvature: maxSignedK };
+}
+
 interface CarTrait {
   basePace: number;
   ersSkill: number;
+  lateErsBoost: number;
+  earlyControl: number;
   lateBrakeSkill: number;
   launchGrip: number;
   reactionDelay: number;
@@ -165,6 +220,10 @@ function runForwardSolidPhysics(
   winnerCrossTime: number;
   lastCrossTime: number;
   overtakeCount: number;
+  leadChanges: number;
+  finalLapLeadChanges: number;
+  maxP1P2Gap: number;
+  winnerFinalLeadFrac: number;
 } {
   const numRacers = slices.length;
   const dt = 1 / SIM_FPS;
@@ -190,6 +249,8 @@ function runForwardSolidPhysics(
       prevSpeed: 0,
       basePace: tr.basePace,
       ersSkill: tr.ersSkill,
+      lateErsBoost: tr.lateErsBoost,
+      earlyControl: tr.earlyControl,
       lateBrakeSkill: tr.lateBrakeSkill,
       launchGrip: tr.launchGrip,
       reactionDelay: tr.reactionDelay,
@@ -211,6 +272,12 @@ function runForwardSolidPhysics(
   const crossingOrder: { id: string; text: string; color: string; crossTime: number }[] = [];
   let allCrossedStep = -1;
   let overtakeCount = 0;
+  let leadChanges = 0;
+  let finalLapLeadChanges = 0;
+  let maxP1P2Gap = 0;
+  let prevLeaderId = '';
+  let lastLeadOwnerId = '';
+  let lastLeadChangeDist = 0;
   let prevLeaderIds: string[] = [];
 
   for (let step = 0; step <= maxSteps; step++) {
@@ -218,6 +285,27 @@ function runForwardSolidPhysics(
 
     // Leader-first order for predictive blocking & solid-body enforcement
     const sorted = [...cars].sort((a, b) => b.dist - a.dist);
+
+    if (sorted.length > 0 && sorted[0].dist < FINISH_DIST) {
+      const p1 = sorted[0];
+      const p2 = sorted.length > 1 ? sorted[1] : null;
+      const p1p2Gap = p2 ? p1.dist - p2.dist : 0;
+      if (p1p2Gap > maxP1P2Gap) maxP1P2Gap = p1p2Gap;
+
+      if (!prevLeaderId) {
+        prevLeaderId = p1.id;
+        lastLeadOwnerId = p1.id;
+        lastLeadChangeDist = p1.dist;
+      } else if (p1.id !== prevLeaderId && p1p2Gap > 0.35) {
+        leadChanges++;
+        if (p1.dist >= FINISH_DIST * 0.64) {
+          finalLapLeadChanges++;
+        }
+        prevLeaderId = p1.id;
+        lastLeadOwnerId = p1.id;
+        lastLeadChangeDist = p1.dist;
+      }
+    }
 
     if (step > 40 && step % 15 === 0) {
       const orderIds = sorted.map((c) => c.id);
@@ -266,74 +354,97 @@ function runForwardSolidPhysics(
       signedCurvature: number;
     }>(numRacers);
 
+    const towRangeMeters = clamp(avgBaseSpeed * 1.18, 44, 98);
+    const drsRangeMeters = clamp(avgBaseSpeed * 1.12, 42, 92);
+
     for (let sIdx = 0; sIdx < sorted.length; sIdx++) {
       const car = sorted[sIdx];
-      const pose = getCircuitPosition(car.dist, car.lane * USABLE_HALF_WIDTH);
-      const upcoming = getUpcomingCornerInfo(car.dist, 76);
+      const pose = getTrackSampleFieldsFast(car.dist);
+      const upcoming = getUpcomingCornerFast(car.dist, 76);
       const lapProgress = clamp(car.dist / FINISH_DIST, 0, 1.15);
 
-      // Nearest car ahead in our current lane corridor
+      // Nearest car ahead in our current lane corridor (for braking & pull-out trigger)
       let blockingCar: (typeof cars)[number] | null = null;
       let blockingGap = 999;
+      // Widened aerodynamic wake cone (so cars pulling out or running offset keep strong tow!)
+      let towStrength = 0;
+
       for (let k = sIdx - 1; k >= 0; k--) {
         const cand = sorted[k];
         const gap = cand.dist - car.dist;
-        if (gap > 34) break;
-        if (gap > 0.1 && Math.abs(cand.lane - car.lane) < MIN_LAT_CLEARANCE + 0.06) {
+        if (gap > towRangeMeters + 2) break;
+        const latDiff = Math.abs(cand.lane - car.lane);
+        if (!blockingCar && gap > 0.1 && gap < 34 && latDiff < MIN_LAT_CLEARANCE + 0.06) {
           blockingCar = cand;
           blockingGap = gap;
-          break;
+        }
+        if (gap > 2.2 && gap < towRangeMeters && latDiff < 0.78) {
+          const distFalloff = 1 - Math.max(0, (gap - 6) / Math.max(24, towRangeMeters - 6));
+          const latFalloff = 1 - (latDiff / 0.78) * 0.4;
+          const candidateTow = distFalloff * latFalloff;
+          if (candidateTow > towStrength) towStrength = candidateTow;
         }
       }
 
       const carAhead = sIdx > 0 ? sorted[sIdx - 1] : null;
       const gapAhead = carAhead ? carAhead.dist - car.dist : 999;
+      const secondCar = sorted.length > 1 ? sorted[1] : null;
+      const leadGapToSecond = sIdx === 0 && secondCar ? car.dist - secondCar.dist : 0;
 
-      // Slipstream & DRS detection
-      const inSlipstream =
-        t > 1.2 &&
-        blockingCar !== null &&
-        blockingGap > 3.2 &&
-        blockingGap < 28 &&
-        pose.curvature < 0.02;
-
-      const drsEnabledLap = car.dist > TRACK_P; // DRS unlocks from Lap 2 onward
+      // Strong aerodynamic slipstream & DRS across Reta Oposta and Reta dos Boxes
+      const inSlipstream = t > 0.85 && towStrength > 0.1 && pose.curvature < 0.022;
+      const drsEnabledLap = car.dist > TRACK_P * 0.45;
       const drsActive =
         drsEnabledLap &&
         pose.drsZone !== 0 &&
         carAhead !== null &&
-        gapAhead > 2.0 &&
-        gapAhead < 30;
+        gapAhead > 1.5 &&
+        gapAhead < drsRangeMeters;
 
-      // Organic stint pace & ERS energy rhythm (zero outcome-forcing!)
+      // Balanced pack stint waves + late-race ERS deployment so lead trades organically up to the final lap
       const stintWave =
-        Math.sin(lapProgress * Math.PI * 3.5 + car.stintPhase) * car.waveAmp +
-        Math.cos(lapProgress * Math.PI * 6.5 + car.seed * 6.28) * (car.waveAmp * 0.45);
-      const paceMult = clamp(
-        car.basePace + stintWave + (lapProgress > 0.58 ? car.ersSkill * 0.022 : 0),
-        0.78,
-        1.36
-      );
-      const aeroMult = 1 + (inSlipstream ? 0.088 : 0) + (drsActive ? 0.125 : 0);
+        Math.sin(lapProgress * Math.PI * 5.2 + car.stintPhase) * car.waveAmp +
+        Math.cos(lapProgress * Math.PI * 8.5 + car.seed * 6.28) * (car.waveAmp * 0.42);
+      const earlyTrim = lapProgress < 0.76 ? car.earlyControl * (1 - lapProgress / 0.76) : 0;
+      const ersRamp = clamp((lapProgress - 0.68) / 0.23, 0, 1);
+      const lateErs = ersRamp * (car.ersSkill * 0.014 + car.lateErsBoost);
 
-      // Tactical overtaking state machine with persistent overtake commitment (prevents ping-ponging!)
+      // Clean-air drag on a solo P1 leader keeps the pack within DRS/tow range until the final sprint
+      let soloLeaderDrag = 1.0;
+      if (sIdx === 0 && !drsActive && !inSlipstream && pose.curvature < 0.018 && lapProgress < 0.93) {
+        if (leadGapToSecond > 24) {
+          soloLeaderDrag = lapProgress < 0.82 ? 0.92 : 0.938;
+        } else if (leadGapToSecond > 12) {
+          soloLeaderDrag = 0.955;
+        } else {
+          soloLeaderDrag = 0.976;
+        }
+      }
+
+      const paceMult = clamp(car.basePace + stintWave - earlyTrim + lateErs, 0.84, 1.30);
+      const aeroMult =
+        soloLeaderDrag *
+        (1 + (inSlipstream ? 0.072 + towStrength * 0.08 : 0) + (drsActive ? 0.145 : 0));
+
+      // Tactical overtaking state machine with persistent side-by-side commitment
       let targetLane = pose.idealLane;
       let nextState: OvertakeState = 'CRUISE';
       let lateBrakeBonus = 1.0;
       car.overtakeTimer = Math.max(0, car.overtakeTimer - dt);
 
-      if (t < 1.1) {
+      if (t < 0.95) {
         // Clean start straight off the grid box before blending to racing line / passing
-        const gridBlend = clamp((t - 0.35) / 0.75, 0, 1);
+        const gridBlend = clamp((t - 0.3) / 0.65, 0, 1);
         const startLane = car.index % 2 === 0 ? -GRID_LANE_MAG : GRID_LANE_MAG;
         targetLane = startLane * (1 - gridBlend) + pose.idealLane * gridBlend;
       } else {
         // Validate existing committed overtake target
         if (car.overtakeTargetId) {
           const target = carsById.get(car.overtakeTargetId);
-          const passCompleted = !target || car.dist > target.dist + MIN_BUMPER_GAP + 1.4;
-          const fellBehindTooFar = target && target.dist - car.dist > 26;
-          if (passCompleted || fellBehindTooFar || car.overtakeTimer <= 0) {
+          const passCompleted = !target || car.dist > target.dist + MIN_BUMPER_GAP + 1.5;
+          const fellBehindTooFar = target && target.dist - car.dist > 28;
+          const currentlyAlongside = target && Math.abs(car.dist - target.dist) < 6.5;
+          if (passCompleted || fellBehindTooFar || (car.overtakeTimer <= 0 && !currentlyAlongside)) {
             car.overtakeTargetId = null;
           } else if (target) {
             // Keep committing to the chosen parallel lane until genuinely ahead!
@@ -341,8 +452,8 @@ function runForwardSolidPhysics(
             if (corridorClear && Math.abs(car.overtakeLane - target.lane) >= MIN_LAT_CLEARANCE) {
               targetLane = car.overtakeLane;
               nextState = Math.abs(car.dist - target.dist) < 8.5 ? 'SIDE_BY_SIDE' : 'PULL_OUT';
-              if (upcoming.curvature > 0.011) {
-                lateBrakeBonus = 1.07 + car.lateBrakeSkill * 0.09;
+              if (upcoming.curvature > 0.01) {
+                lateBrakeBonus = 1.09 + car.lateBrakeSkill * 0.09;
               }
             } else {
               // Chosen lane got blocked ahead by a 3rd car; release commitment to re-evaluate
@@ -434,7 +545,7 @@ function runForwardSolidPhysics(
       // Desired longitudinal speed with pace-scaled cornering, braking anticipation & predictive following limit
       let desiredSpeed = 0;
       if (t >= car.reactionDelay) {
-        const cornerPaceSpeed = avgBaseSpeed * (0.28 + 0.72 * paceMult);
+        const cornerPaceSpeed = avgBaseSpeed * (0.34 + 0.66 * paceMult);
         const vSafeCorner = getSafeLookaheadSpeed(
           car.dist,
           cornerPaceSpeed,
@@ -543,9 +654,9 @@ function runForwardSolidPhysics(
 
       // Smooth lateral steering with hard lateral solid-body guard (cannot clip laterally into side-by-side car)
       const laneErr = st.targetLane - car.lane;
-      const desiredLatVel = clamp(laneErr * 3.8, -1.28, 1.28);
+      const desiredLatVel = clamp(laneErr * 4.2, -1.42, 1.42);
       const prevLatVel = car.latVel;
-      car.latVel += (desiredLatVel - car.latVel) * Math.min(1, dt * 8.5);
+      car.latVel += (desiredLatVel - car.latVel) * Math.min(1, dt * 9.0);
       let nextLane = clamp(car.lane + car.latVel * dt, -0.88, 0.88);
 
       for (let k = 0; k < numRacers; k++) {
@@ -657,6 +768,7 @@ function runForwardSolidPhysics(
   const winnerCrossTime = crossingOrder[0]?.crossTime || durationSeconds;
   const lastCrossTime = crossingOrder[crossingOrder.length - 1]?.crossTime || winnerCrossTime;
   const raceSteps = Math.max(120, Math.round(lastCrossTime * SIM_FPS));
+  const winnerFinalLeadFrac = lastLeadOwnerId === crossingOrder[0]?.id ? clamp(lastLeadChangeDist / FINISH_DIST, 0, 1) : 0;
 
   return {
     cars: cars.map((c) => ({
@@ -671,13 +783,18 @@ function runForwardSolidPhysics(
     winnerCrossTime,
     lastCrossTime,
     overtakeCount,
+    leadChanges,
+    finalLapLeadChanges,
+    maxP1P2Gap,
+    winnerFinalLeadFrac,
   };
 }
 
 /**
  * Generates a 100% honest forward solid-body physics Grand Prix simulation where:
  * - Every overtake is earned cleanly on track (no last-corner teleporting or clipping)
- * - Candidate initial performance profiles are simulated forward until `drawnWinnerId` genuinely wins on track
+ * - Balanced pack pace + strong slipstream/DRS create continuous P1 lead changes across all laps
+ * - The simulation selector scores lead battles, final-lap lead changes, and tight finishes
  * - The full `podium` (P1..PN) is derived directly from that simulation's actual crossing order
  */
 export function generateAuthenticRaceSimulation(
@@ -689,7 +806,7 @@ export function generateAuthenticRaceSimulation(
   const FINISH_DIST = TOTAL_LAPS * TRACK_P;
   const rawAvgSpeed = FINISH_DIST / Math.max(4, durationSeconds - 0.15);
 
-  // Calibrate reference speed scale so a ~1.03 pace car completes 3 laps close to `durationSeconds`
+  // Calibrate reference speed scale so a ~1.01 pace pack completes 3 laps close to `durationSeconds`
   const dt = 1 / SIM_FPS;
   const refSteps = Math.max(120, Math.round(durationSeconds * SIM_FPS));
   const refBrake = (1.42 * rawAvgSpeed * rawAvgSpeed) / 108;
@@ -715,54 +832,72 @@ export function generateAuthenticRaceSimulation(
   const targetWinnerId = slices[resolvedWinnerIdx]?.item.id;
 
   let chosenResult: ReturnType<typeof runForwardSolidPhysics> | null = null;
+  let bestChosenScore = -Infinity;
   let fallbackResult: ReturnType<typeof runForwardSolidPhysics> | null = null;
   let bestFallbackRank = Infinity;
   const setupPenaltyById = new Map<string, number>();
-  const MAX_ATTEMPTS = 24;
+  const setupBoostById = new Map<string, number>();
+  let winnerChaseBoost = 0;
+  let winnerEarlyTrimBoost = 0;
+  const MAX_ATTEMPTS = 9;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const traits: CarTrait[] = slices.map((slice, idx) => {
       const seedBase = ((idx * 67 + attempt * 131 + slice.item.id.charCodeAt(0) * 31) % 1000) / 1000;
       const isWinner = idx === resolvedWinnerIdx;
-      const wNorm = clamp(((slice.item.weight ?? 1) - 1) * 0.006, -0.012, 0.02);
+      const wNorm = clamp(((slice.item.weight ?? 1) - 1) * 0.004, -0.008, 0.015);
+      const isTwoCarDuel = numRacers === 2;
 
       if (isWinner) {
-        // Winner starts from their grid slot with genuine racecraft and scales pre-race setup if earlier
-        // simulations saw them caught in solid traffic from deep in the pack.
-        const gridDepthBonus = resolvedWinnerIdx * 0.008;
-        const attemptPaceBoost = attempt * 0.016;
-        // If starting on pole (idx 0), peak later in the race so P2/P3 overtake into T1/Lap 1 first!
-        const poleWavePhase = resolvedWinnerIdx === 0 ? -Math.PI * 0.42 : Math.PI * 0.15;
+        // Balanced pack pace in Laps 1-2 so the winner trades P1 with rivals, then deploys late ERS in Lap 3
+        const gridCatchup = isTwoCarDuel
+          ? resolvedWinnerIdx === 1
+            ? 0.006
+            : 0.0
+          : Math.min(0.032, resolvedWinnerIdx * 0.0042);
+        // Peak late in Lap 3 so P2/P3 battle the winner through the middle stints
+        const winnerWavePhase = -Math.PI * 0.78 + attempt * 0.58;
         return {
-          basePace: clamp(1.02 + gridDepthBonus + attemptPaceBoost, 1.0, 1.32),
-          ersSkill: 0.9 + attempt * 0.14,
-          lateBrakeSkill: 0.95 + attempt * 0.1,
-          launchGrip: resolvedWinnerIdx === 0 ? 0.94 : 1.05 + Math.min(0.18, attempt * 0.015),
-          reactionDelay: resolvedWinnerIdx === 0 ? 0.17 : Math.max(0.05, 0.1 - attempt * 0.005),
+          basePace: clamp(0.996 + gridCatchup + winnerChaseBoost * 0.55, 0.985, 1.052),
+          ersSkill: 0.7 + Math.min(0.42, winnerChaseBoost * 12),
+          lateErsBoost: (isTwoCarDuel ? 0.016 : 0.018) + winnerChaseBoost * 0.65,
+          earlyControl: (resolvedWinnerIdx <= 2 ? 0.030 : 0.012) + winnerEarlyTrimBoost,
+          lateBrakeSkill: 0.82 + Math.min(0.35, winnerChaseBoost * 10),
+          launchGrip: resolvedWinnerIdx <= 1 ? 0.93 : 1.03 + Math.min(0.08, winnerChaseBoost * 2.5),
+          reactionDelay: resolvedWinnerIdx === 0 ? 0.17 : 0.08,
           seed: seedBase,
-          stintPhase: poleWavePhase + attempt * 0.35,
-          waveAmp: resolvedWinnerIdx === 0 ? 0.036 : 0.018,
+          stintPhase: winnerWavePhase,
+          waveAmp: isTwoCarDuel ? 0.025 : 0.029,
         };
       }
 
       const penalty = setupPenaltyById.get(slice.item.id) || 0;
-      // Give front-row / top-4 rivals aggressive launch + early Lap 1 pace so lead battles & overtakes happen organically
-      const rivalEarlyBoost = idx <= Math.min(3, numRacers - 1) ? 0.024 : 0;
-      // Front-most cars get slightly higher wave variance so P1/P2/P3 trade positions in DRS battles
-      const packSpread = 0.955 + seedBase * 0.068 + wNorm + rivalEarlyBoost - penalty;
+      const rivalBoost = setupBoostById.get(slice.item.id) || 0;
+      // Keep top rivals right on the winner's pace (and slightly stronger early) for real wheel-to-wheel duels
+      const isLeadChallenger = idx <= Math.min(3, numRacers - 1);
+      const challengerBonus = isTwoCarDuel ? 0.012 : isLeadChallenger ? 0.021 : 0.008;
+      const packSpread = 0.986 + seedBase * 0.026 + wNorm + challengerBonus + rivalBoost - penalty;
 
       return {
-        basePace: clamp(packSpread, 0.82, 1.05),
-        ersSkill: 0.35 + seedBase * 0.55,
-        lateBrakeSkill: 0.25 + seedBase * 0.6,
+        basePace: clamp(packSpread, 0.90, 1.048),
+        ersSkill: 0.58 + seedBase * 0.36,
+        lateErsBoost: isTwoCarDuel
+          ? 0.013 + rivalBoost * 0.5 - Math.min(0.01, penalty * 0.35)
+          : isLeadChallenger
+            ? 0.015 + rivalBoost * 0.5 - Math.min(0.012, penalty * 0.35)
+            : 0.008 + rivalBoost * 0.4,
+        earlyControl: 0.0,
+        lateBrakeSkill: 0.55 + seedBase * 0.42,
         launchGrip:
-          idx <= 2
-            ? 1.04 + seedBase * 0.09 - Math.min(0.12, penalty * 0.6)
-            : 0.93 + seedBase * 0.14 - Math.min(0.1, penalty * 0.5),
-        reactionDelay: idx <= 2 ? 0.06 + seedBase * 0.08 : 0.09 + seedBase * 0.15,
+          idx <= 3
+            ? 1.03 + seedBase * 0.06 - Math.min(0.07, penalty * 0.4)
+            : 0.97 + seedBase * 0.09 - Math.min(0.07, penalty * 0.35),
+        reactionDelay: idx <= 3 ? 0.06 + seedBase * 0.06 : 0.08 + seedBase * 0.10,
         seed: seedBase,
-        stintPhase: (idx % 3 === 0 ? 0.6 : -0.5) + idx * 1.15 + attempt * 0.55,
-        waveAmp: 0.028,
+        stintPhase: isTwoCarDuel
+          ? -Math.PI * 0.78 + Math.PI + attempt * 0.58
+          : idx * 1.45 + attempt * 0.72,
+        waveAmp: isTwoCarDuel ? 0.028 : 0.032,
       };
     });
 
@@ -786,22 +921,55 @@ export function generateAuthenticRaceSimulation(
     const winnerWon = actualWinnerId === targetWinnerId;
 
     if (winnerWon) {
-      // Accept immediately if there are genuine overtakes (or on later attempts to stay fast)
-      const minDesiredOvertakes = numRacers > 2 ? 2 : 1;
-      if (sim.overtakeCount >= minDesiredOvertakes || attempt >= 5) {
+      const p1Time = sim.crossingOrder[0]?.crossTime || 0;
+      const p2Time = sim.crossingOrder[1]?.crossTime || p1Time;
+      const p1P2GapSec = Math.max(0, p2Time - p1Time);
+
+      // Score race quality by genuine lead battles, final-lap suspense, and close finish
+      const suspenseScore =
+        Math.min(10, sim.leadChanges) * 14 +
+        Math.min(4, sim.finalLapLeadChanges) * 30 +
+        (sim.winnerFinalLeadFrac >= 0.68 ? 35 : sim.winnerFinalLeadFrac * 25) +
+        (sim.winnerFinalLeadFrac >= 0.82 ? 22 : 0) +
+        Math.max(0, 24 - p1P2GapSec * 38) -
+        Math.max(0, sim.maxP1P2Gap - 34) * 1.1;
+
+      if (suspenseScore > bestChosenScore) {
+        bestChosenScore = suspenseScore;
         chosenResult = sim;
+      }
+
+      const isThrillingFinish =
+        sim.leadChanges >= 3 &&
+        sim.finalLapLeadChanges >= 1 &&
+        sim.winnerFinalLeadFrac >= 0.68 &&
+        sim.maxP1P2Gap <= 42 &&
+        p1P2GapSec <= 0.42;
+
+      if (isThrillingFinish && attempt >= 1) {
         break;
       }
-      chosenResult = sim;
-    }
 
-    // Pre-race setup tuning for the next forward simulation attempt:
-    // Any car that beat our drawn winner gets a modest setup trim so the winner can pass them cleanly next run.
-    const beatCount = winRankIdx > 0 ? winRankIdx : numRacers;
-    for (let k = 0; k < beatCount; k++) {
-      const rivalId = sim.crossingOrder[k]?.id;
-      if (rivalId && rivalId !== targetWinnerId) {
-        setupPenaltyById.set(rivalId, (setupPenaltyById.get(rivalId) || 0) + 0.018);
+      // Winner won, but took the lead too early or pulled away -> hold back winner in Laps 1-2 and boost top rivals
+      if (sim.winnerFinalLeadFrac < 0.68 || sim.finalLapLeadChanges === 0 || sim.maxP1P2Gap > 42) {
+        winnerEarlyTrimBoost = Math.min(0.075, winnerEarlyTrimBoost + 0.022);
+        for (let k = 1; k <= Math.min(2, sim.crossingOrder.length - 1); k++) {
+          const challengerId = sim.crossingOrder[k]?.id;
+          if (challengerId) {
+            setupBoostById.set(challengerId, Math.min(0.036, (setupBoostById.get(challengerId) || 0) + 0.01));
+          }
+        }
+      }
+    } else {
+      // Winner lost -> give winner a small chase/ERS bump and trim rivals ahead modestly
+      winnerChaseBoost = Math.min(0.045, winnerChaseBoost + 0.008);
+      winnerEarlyTrimBoost = Math.max(0, winnerEarlyTrimBoost - 0.008);
+      const beatCount = winRankIdx > 0 ? winRankIdx : numRacers;
+      for (let k = 0; k < beatCount; k++) {
+        const rivalId = sim.crossingOrder[k]?.id;
+        if (rivalId && rivalId !== targetWinnerId) {
+          setupPenaltyById.set(rivalId, (setupPenaltyById.get(rivalId) || 0) + 0.008);
+        }
       }
     }
   }

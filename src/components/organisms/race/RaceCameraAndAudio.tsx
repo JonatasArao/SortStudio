@@ -136,12 +136,12 @@ export const RaceCameraAndAudio = ({
         const totalRaceDist = TOTAL_LAPS * TRACK_P;
         const leaderDist = sortedCars[0]?.totalDistance || 0;
         const leaderProgress = leaderDist / totalRaceDist;
-        const isPhotoFinish = manualCamera === 'auto' && leaderProgress > 0.962;
+        const isPhotoFinish = manualCamera === 'auto' && leaderProgress > 0.984;
 
         if (!hasInitializedLaunchCutRef.current && startPhase === 'racing') {
           hasInitializedLaunchCutRef.current = true;
           lastSwitchTimeRef.current = elapsed;
-          nextCutIntervalRef.current = 3.2;
+          nextCutIntervalRef.current = 3.0;
           if (manualCamera === 'auto') {
             activeAngleRef.current = 'action';
             activeDriverIdRef.current = sortedCars[0]?.id || null;
@@ -158,25 +158,25 @@ export const RaceCameraAndAudio = ({
         } else if (elapsed - lastSwitchTimeRef.current > nextCutIntervalRef.current) {
           lastSwitchTimeRef.current = elapsed;
 
-          // Pick focus driver if not locked manually (prioritize active overtakes & lead battle)
+          // Pick focus driver if not locked manually (prioritize active P1/P2/P3 lead battles)
           if (!focusedDriverId && sortedCars.length > 0) {
             const p1p2Gap = sortedCars.length > 1 ? sortedCars[0].totalDistance - sortedCars[1].totalDistance : 999;
             const p2p3Gap = sortedCars.length > 2 ? sortedCars[1].totalDistance - sortedCars[2].totalDistance : 999;
             const activeAttacker = sortedCars.find(
-              (c) => c.battleState === 'SIDE_BY_SIDE' || c.battleState === 'PULL_OUT'
+              (c, idx) => idx <= 3 && (c.battleState === 'SIDE_BY_SIDE' || c.battleState === 'PULL_OUT')
             );
 
-            if (leaderProgress > 0.84) {
-              // Final-lap battle: track P2 attacking P1 or P1 defending into the final corner
+            if (leaderProgress > 0.66) {
+              // Final-lap battle: stay locked on the lead fight (P2 attacking P1 or P1 defending)
               activeDriverIdRef.current =
-                p1p2Gap < 14 && leaderProgress < 0.96 && Math.random() < 0.55
+                p1p2Gap < 22 && Math.random() < 0.65 && sortedCars[1]
                   ? sortedCars[1].id
                   : sortedCars[0].id;
-            } else if (p1p2Gap < 16) {
-              activeDriverIdRef.current = Math.random() < 0.55 ? sortedCars[1].id : sortedCars[0].id;
             } else if (activeAttacker) {
               activeDriverIdRef.current = activeAttacker.id;
-            } else if (p2p3Gap < 16) {
+            } else if (p1p2Gap < 22 && sortedCars[1]) {
+              activeDriverIdRef.current = Math.random() < 0.62 ? sortedCars[1].id : sortedCars[0].id;
+            } else if (p2p3Gap < 18 && sortedCars[2]) {
               activeDriverIdRef.current = Math.random() < 0.5 ? sortedCars[2].id : sortedCars[1].id;
             } else {
               activeDriverIdRef.current = sortedCars[0].id;
@@ -195,9 +195,9 @@ export const RaceCameraAndAudio = ({
             currentFocusCar?.battleState === 'SIDE_BY_SIDE' ||
             focusIdx > 0
           ) {
-            candidates.push('bumper');
+            candidates.push('bumper', 'action');
           }
-          if (focusIdx === 0 && sortedCars.length > 1 && sortedCars[0].totalDistance - sortedCars[1].totalDistance < 22) {
+          if (focusIdx === 0 && sortedCars.length > 1 && sortedCars[0].totalDistance - sortedCars[1].totalDistance < 26) {
             candidates.push('rear');
           }
 
@@ -212,8 +212,8 @@ export const RaceCameraAndAudio = ({
 
           nextCutIntervalRef.current =
             chosenAngle === 'bumper' || chosenAngle === 'rear'
-              ? 2.4 + Math.random() * 1.0
-              : 3.1 + Math.random() * 1.4;
+              ? 2.2 + Math.random() * 0.9
+              : 2.8 + Math.random() * 1.2;
 
           if (chosenAngle === 'trackside' && currentFocusCar) {
             const aheadPose = getCircuitPosition(currentFocusCar.totalDistance + 36, 0);
