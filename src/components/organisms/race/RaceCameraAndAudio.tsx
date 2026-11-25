@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { RaceTrackStyle } from '../../../types';
 import { useAppStore } from '../../../store/useAppStore';
 import {
   updateRaceEngineAudio,
@@ -8,13 +9,19 @@ import {
   playKerbImpactSound,
   stopRaceAudio,
 } from '../../../utils/audioEngine';
-import { TOTAL_LAPS, TRACK_P, getCircuitPosition } from './trackCircuit';
+import {
+  TOTAL_LAPS,
+  getCircuitConfig,
+  getCircuitPosition,
+  getCelebrationArenaPose,
+} from './trackCircuit';
 import { LiveRacerTelemetry } from './raceSimulation';
 
-export type ManualCameraMode = 'auto' | 'action' | 'bumper' | 'rear' | 'trackside' | 'helicopter' | 'tv';
+export type ManualCameraMode = 'auto' | 'photofinish' | 'action' | 'bumper' | 'rear' | 'trackside' | 'helicopter' | 'tv';
 export type ActiveBroadcastAngle =
   | 'idle'
   | 'grid'
+  | 'photofinish'
   | 'action'
   | 'bumper'
   | 'rear'
@@ -30,6 +37,7 @@ const _carWorldPos = new THREE.Vector3();
 
 export const RaceCameraAndAudio = ({
   isSpinning,
+  isReplayActive = false,
   expectedWinnerId,
   positionsRef,
   leaderPosRef,
@@ -38,8 +46,12 @@ export const RaceCameraAndAudio = ({
   manualCamera,
   focusedDriverId,
   onBroadcastStateChange,
+  trackStyle = 'interlagos',
+  simTimeRef,
+  timeScaleRef,
 }: {
   isSpinning: boolean;
+  isReplayActive?: boolean;
   expectedWinnerId?: string;
   positionsRef: React.MutableRefObject<LiveRacerTelemetry[]>;
   leaderPosRef: React.MutableRefObject<LiveRacerTelemetry | null>;
@@ -48,8 +60,15 @@ export const RaceCameraAndAudio = ({
   manualCamera: ManualCameraMode;
   focusedDriverId: string | null;
   onBroadcastStateChange: (angle: ActiveBroadcastAngle, targetDriverId: string | null) => void;
+  trackStyle?: RaceTrackStyle;
+  simTimeRef?: React.MutableRefObject<number>;
+  timeScaleRef?: React.MutableRefObject<number>;
 }) => {
   const { camera } = useThree();
+  const isDaytona = trackStyle === 'daytona';
+  const cfg = getCircuitConfig(trackStyle);
+  const perimeter = cfg.perimeter;
+  const halfW = cfg.trackHalfWidth;
   const currentCamPos = useRef(new THREE.Vector3(-4, 24, 186));
   const currentLookAt = useRef(new THREE.Vector3(25, 14.5, 154));
   const targetFov = useRef(46);
@@ -64,7 +83,7 @@ export const RaceCameraAndAudio = ({
   const recentAnglesRef = useRef<ActiveBroadcastAngle[]>([]);
 
   useEffect(() => {
-    if (!isSpinning) {
+    if (!isSpinning && !isReplayActive) {
       activeAngleRef.current = 'idle';
       targetFov.current = 45;
       raceLaunchTimeRef.current = null;
@@ -72,41 +91,45 @@ export const RaceCameraAndAudio = ({
       recentAnglesRef.current = [];
       onBroadcastStateChange('idle', focusedDriverId);
     }
-  }, [isSpinning, focusedDriverId, onBroadcastStateChange]);
+  }, [isSpinning, isReplayActive, focusedDriverId, onBroadcastStateChange]);
 
   useFrame((state, delta) => {
     const dt = Math.min(0.05, delta);
     const persCam = camera as THREE.PerspectiveCamera;
-    const elapsed = state.clock.elapsedTime;
+    const wallElapsed = state.clock.elapsedTime;
+    const timeScale = timeScaleRef?.current ?? 1;
+    const simElapsed = simTimeRef?.current ?? wallElapsed;
+    const isActiveBroadcast = isSpinning || isReplayActive;
 
-    if (startPhase === 'racing' && raceLaunchTimeRef.current === null) {
-      raceLaunchTimeRef.current = elapsed;
-    } else if (startPhase !== 'racing') {
+    if (!isReplayActive && startPhase === 'racing' && raceLaunchTimeRef.current === null) {
+      raceLaunchTimeRef.current = simElapsed;
+    } else if (startPhase !== 'racing' && !isReplayActive) {
       raceLaunchTimeRef.current = null;
     }
 
     const launchElapsed =
-      startPhase === 'racing' && raceLaunchTimeRef.current !== null
-        ? elapsed - raceLaunchTimeRef.current
+      !isReplayActive && startPhase === 'racing' && raceLaunchTimeRef.current !== null
+        ? Math.max(0, simElapsed - raceLaunchTimeRef.current)
         : 0;
 
-    if (isSpinning) {
+    if (isActiveBroadcast) {
       const validCars = (positionsRef.current || []).filter((p) => p && p.id);
       const sortedCars = [...validCars].sort((a, b) => b.totalDistance - a.totalDistance);
 
-      // Grid / launch camera during 5-light sequence & first 2.6s of launch (unless user forced manual angle)
+      // Grid / launch camera during 5-light sequence & first 2.5s of launch (unless replay or manual angle)
       if (
+        !isReplayActive &&
         manualCamera === 'auto' &&
         startPhase !== 'idle' &&
-        (startPhase !== 'racing' || launchElapsed < 2.6)
+        (startPhase !== 'racing' || launchElapsed < 2.5)
       ) {
         hasInitializedLaunchCutRef.current = false;
-        const startPose = getCircuitPosition(0, 0);
-        const gridCamX = startPose.x + startPose.tx * 16 - startPose.nx * 10.5;
-        const gridCamZ = startPose.z + startPose.tz * 16 - startPose.nz * 10.5;
+        const startPose = getCircuitPosition(0, 0, trackStyle);
+        const gridCamX = startPose.x + startPose.tx * 16 - startPose.nx * (isDaytona ? 13.5 : 10.5);
+        const gridCamZ = startPose.z + startPose.tz * 16 - startPose.nz * (isDaytona ? 13.5 : 10.5);
         _desiredCamPos.set(gridCamX, startPose.y + 3.2, gridCamZ);
 
-        const lookFwd = startPhase === 'racing' ? THREE.MathUtils.lerp(-4, 16, Math.min(1, launchElapsed / 2.6)) : -6;
+        const lookFwd = startPhase === 'racing' ? THREE.MathUtils.lerp(-4, 16, Math.min(1, launchElapsed / 2.5)) : -6;
         _desiredLookAt.set(
           startPose.x + startPose.tx * lookFwd,
           startPose.y + 1.35 + startPose.ty * lookFwd,
@@ -132,31 +155,52 @@ export const RaceCameraAndAudio = ({
         camera.lookAt(currentLookAt.current);
         stopRaceAudio();
       } else {
-        // Active race director or manual override
-        const totalRaceDist = TOTAL_LAPS * TRACK_P;
+        // Active race director, finish-line winner hold, replay, or manual override
+        const totalRaceDist = TOTAL_LAPS * perimeter;
         const leaderDist = sortedCars[0]?.totalDistance || 0;
         const leaderProgress = leaderDist / totalRaceDist;
-        const isPhotoFinish = manualCamera === 'auto' && leaderProgress > 0.984;
+        const isFinalApproach = !isReplayActive && manualCamera === 'auto' && leaderProgress >= 0.87 && leaderProgress < 0.945;
+        const isFinishLineShot = !isReplayActive && manualCamera === 'auto' && leaderProgress >= 0.945;
 
-        if (!hasInitializedLaunchCutRef.current && startPhase === 'racing') {
+        if (!hasInitializedLaunchCutRef.current && (startPhase === 'racing' || isReplayActive)) {
           hasInitializedLaunchCutRef.current = true;
-          lastSwitchTimeRef.current = elapsed;
+          lastSwitchTimeRef.current = simElapsed;
           nextCutIntervalRef.current = 3.0;
           if (manualCamera === 'auto') {
-            activeAngleRef.current = 'action';
-            activeDriverIdRef.current = sortedCars[0]?.id || null;
-            recentAnglesRef.current = ['action'];
-            onBroadcastStateChange('action', focusedDriverId || activeDriverIdRef.current);
+            const initAngle: ActiveBroadcastAngle = isReplayActive ? 'photofinish' : 'action';
+            activeAngleRef.current = initAngle;
+            activeDriverIdRef.current = expectedWinnerId || sortedCars[0]?.id || null;
+            recentAnglesRef.current = [initAngle];
+            onBroadcastStateChange(initAngle, focusedDriverId || activeDriverIdRef.current);
           }
         }
 
         let chosenAngle: ActiveBroadcastAngle = activeAngleRef.current;
         if (manualCamera !== 'auto') {
           chosenAngle = manualCamera;
-        } else if (isPhotoFinish) {
+        } else if (isReplayActive) {
+          chosenAngle = 'photofinish';
+          const officialWinnerCar =
+            (expectedWinnerId ? sortedCars.find((c) => c.id === expectedWinnerId) : undefined) || sortedCars[0];
+          if (!focusedDriverId && officialWinnerCar) {
+            activeDriverIdRef.current = officialWinnerCar.id;
+          }
+        } else if (isFinishLineShot) {
           chosenAngle = 'finish';
-        } else if (elapsed - lastSwitchTimeRef.current > nextCutIntervalRef.current) {
-          lastSwitchTimeRef.current = elapsed;
+          const officialWinnerCar =
+            (expectedWinnerId && leaderProgress >= 0.96
+              ? sortedCars.find((c) => c.id === expectedWinnerId)
+              : undefined) || sortedCars[0];
+          if (!focusedDriverId && officialWinnerCar) {
+            activeDriverIdRef.current = officialWinnerCar.id;
+          }
+        } else if (isFinalApproach) {
+          chosenAngle = 'action';
+          if (!focusedDriverId && sortedCars[0]) {
+            activeDriverIdRef.current = sortedCars[0].id;
+          }
+        } else if (simElapsed - lastSwitchTimeRef.current > nextCutIntervalRef.current) {
+          lastSwitchTimeRef.current = simElapsed;
 
           // Pick focus driver if not locked manually (prioritize active P1/P2/P3 lead battles)
           if (!focusedDriverId && sortedCars.length > 0) {
@@ -216,12 +260,18 @@ export const RaceCameraAndAudio = ({
               : 2.8 + Math.random() * 1.2;
 
           if (chosenAngle === 'trackside' && currentFocusCar) {
-            const aheadPose = getCircuitPosition(currentFocusCar.totalDistance + 36, 0);
+            const aheadPose = getCircuitPosition(currentFocusCar.totalDistance + 34, 0, trackStyle);
             const side = Math.random() > 0.5 ? 1 : -1;
+            const lateralOff = isDaytona ? side * (halfW + 3.0) : side * 15.5;
+            const tripodY = isDaytona
+              ? side > 0
+                ? aheadPose.y + halfW * Math.sin(aheadPose.bankAngle) + 3.6
+                : 3.4
+              : aheadPose.y + 3.8 + Math.random() * 1.2;
             tracksidePosRef.current.set(
-              aheadPose.x + aheadPose.nx * side * 15.5,
-              aheadPose.y + 3.8 + Math.random() * 1.2,
-              aheadPose.z + aheadPose.nz * side * 15.5
+              aheadPose.x + aheadPose.nx * lateralOff * Math.cos(aheadPose.bankAngle),
+              tripodY,
+              aheadPose.z + aheadPose.nz * lateralOff * Math.cos(aheadPose.bankAngle)
             );
           }
         }
@@ -232,12 +282,13 @@ export const RaceCameraAndAudio = ({
           sortedCars[0] ||
           leaderPosRef.current || {
             id: '',
-            x: 25,
-            y: 13.4,
-            z: 154,
+            x: isDaytona ? 0 : 25,
+            y: isDaytona ? 3.7 : 13.4,
+            z: isDaytona ? 148 : 154,
             angle: 0,
             trackAngle: 0,
-            pitchAngle: 0.05,
+            pitchAngle: isDaytona ? 0 : 0.05,
+            bankAngle: isDaytona ? 0.31 : 0,
             yawAngle: 0,
             totalDistance: 0,
             lane: 0,
@@ -273,12 +324,18 @@ export const RaceCameraAndAudio = ({
         if (chosenAngle === 'trackside') {
           _carWorldPos.set(targetCar.x, targetCar.y + 1, targetCar.z);
           if (tracksidePosRef.current.distanceTo(_carWorldPos) > 78) {
-            const aheadPose = getCircuitPosition(targetCar.totalDistance + 38, 0);
-            const side = (Math.floor(targetCar.totalDistance / 80) % 2 === 0 ? 1 : -1) * 15.5;
+            const aheadPose = getCircuitPosition(targetCar.totalDistance + 36, 0, trackStyle);
+            const side = Math.floor(targetCar.totalDistance / 80) % 2 === 0 ? 1 : -1;
+            const lateralOff = isDaytona ? side * (halfW + 3.0) : side * 15.5;
+            const tripodY = isDaytona
+              ? side > 0
+                ? aheadPose.y + halfW * Math.sin(aheadPose.bankAngle) + 3.6
+                : 3.4
+              : aheadPose.y + 4.0;
             tracksidePosRef.current.set(
-              aheadPose.x + aheadPose.nx * side,
-              aheadPose.y + 4.0,
-              aheadPose.z + aheadPose.nz * side
+              aheadPose.x + aheadPose.nx * lateralOff * Math.cos(aheadPose.bankAngle),
+              tripodY,
+              aheadPose.z + aheadPose.nz * lateralOff * Math.cos(aheadPose.bankAngle)
             );
           }
         }
@@ -296,16 +353,44 @@ export const RaceCameraAndAudio = ({
         const slopeSin = Math.sin(targetCar.pitchAngle || 0);
 
         switch (chosenAngle) {
-          case 'finish': {
-            const fp = getCircuitPosition(0, 0);
+          case 'photofinish': {
+            // Crisp Photo-Finish line camera capturing nose-to-nose separation right across the checkered line
+            const fp = getCircuitPosition(0, 0, trackStyle);
+            const sideDist = isDaytona ? 14.5 : 11.4;
             _desiredCamPos.set(
-              fp.x + fp.tx * 20 - fp.nx * 10.5,
-              fp.y + 3.9,
-              fp.z + fp.tz * 20 - fp.nz * 10.5
+              fp.x + fp.tx * 9.5 - fp.nx * sideDist,
+              fp.y + 2.5,
+              fp.z + fp.tz * 9.5 - fp.nz * sideDist
             );
-            _desiredLookAt.set(fp.x - fp.tx * 12, fp.y + 0.9 - fp.ty * 12, fp.z - fp.tz * 12);
-            targetFov.current = 40;
-            dampRate = 8;
+            const pastLine = targetCar.totalDistance >= totalRaceDist;
+            const targetPointDist = pastLine ? 0 : 0.3;
+            _desiredLookAt.set(
+              THREE.MathUtils.lerp(targetCar.x, fp.x - fp.tx * 2.5, targetPointDist),
+              targetCar.y + 0.9,
+              THREE.MathUtils.lerp(targetCar.z, fp.z - fp.tz * 2.5, targetPointDist)
+            );
+            targetFov.current = 34;
+            dampRate = 12;
+            lookDamp = 16;
+            break;
+          }
+          case 'finish': {
+            // Broadcast camera at the checkered finish line locking onto the winner as they cross and pull clear
+            const fp = getCircuitPosition(0, 0, trackStyle);
+            const sideDist = isDaytona ? 14.0 : 11.0;
+            _desiredCamPos.set(
+              fp.x + fp.tx * 24 - fp.nx * sideDist,
+              fp.y + 3.9,
+              fp.z + fp.tz * 24 - fp.nz * sideDist
+            );
+            const pastLine = targetCar.totalDistance >= totalRaceDist;
+            const lookX = pastLine ? targetCar.x + dx * 2 : THREE.MathUtils.lerp(targetCar.x, fp.x - fp.tx * 6, 0.2);
+            const lookY = pastLine ? targetCar.y + 0.95 : THREE.MathUtils.lerp(targetCar.y + 0.95, fp.y + 0.9, 0.2);
+            const lookZ = pastLine ? targetCar.z + dz * 2 : THREE.MathUtils.lerp(targetCar.z, fp.z - fp.tz * 6, 0.2);
+            _desiredLookAt.set(lookX, lookY, lookZ);
+            targetFov.current = pastLine ? 35 : 38;
+            dampRate = 11;
+            lookDamp = 16;
             break;
           }
           case 'trackside': {
@@ -319,7 +404,7 @@ export const RaceCameraAndAudio = ({
           case 'tv': {
             _desiredCamPos.set(
               targetCar.x - 19 * cdx - 13 * cdz,
-              targetCar.y + 10.8,
+              targetCar.y + (isDaytona ? 12.2 : 10.8),
               targetCar.z - 19 * cdz + 13 * cdx
             );
             _desiredLookAt.set(
@@ -332,7 +417,7 @@ export const RaceCameraAndAudio = ({
             break;
           }
           case 'helicopter': {
-            const orbit = elapsed * 0.38;
+            const orbit = simElapsed * 0.38;
             _desiredCamPos.set(
               targetCar.x + Math.sin(orbit) * 24,
               targetCar.y + 22 + Math.sin(orbit * 0.6) * 2.5,
@@ -344,11 +429,11 @@ export const RaceCameraAndAudio = ({
             break;
           }
           case 'bumper': {
-            // F1 T-Cam Onboard over driver helmet & halo following 3D track pitch
-            _desiredCamPos.set(targetCar.x + 0.08 * dx, targetCar.y + 1.36, targetCar.z + 0.08 * dz);
+            const camY = isDaytona ? 1.56 : 1.36;
+            _desiredCamPos.set(targetCar.x + 0.08 * dx, targetCar.y + camY, targetCar.z + 0.08 * dz);
             _desiredLookAt.set(
               targetCar.x + 28 * dx,
-              targetCar.y + 0.82 + slopeSin * 28,
+              targetCar.y + (isDaytona ? 0.95 : 0.82) + slopeSin * 28,
               targetCar.z + 28 * dz
             );
             targetFov.current = 60 + speedNorm * 8;
@@ -357,11 +442,11 @@ export const RaceCameraAndAudio = ({
             break;
           }
           case 'rear': {
-            // Rear-facing T-Cam looking back at chasing pack along 3D slope
-            _desiredCamPos.set(targetCar.x - 0.42 * dx, targetCar.y + 1.42, targetCar.z - 0.42 * dz);
+            const camY = isDaytona ? 1.58 : 1.42;
+            _desiredCamPos.set(targetCar.x - 0.42 * dx, targetCar.y + camY, targetCar.z - 0.42 * dz);
             _desiredLookAt.set(
               targetCar.x - 26 * dx,
-              targetCar.y + 0.85 - slopeSin * 26,
+              targetCar.y + (isDaytona ? 0.96 : 0.85) - slopeSin * 26,
               targetCar.z - 26 * dz
             );
             targetFov.current = 58;
@@ -371,25 +456,28 @@ export const RaceCameraAndAudio = ({
           }
           case 'action':
           default: {
-            // Dynamic Broadcast Chase Cam with speed-linked FOV widening and slope elevation tracking
+            // Dynamic Broadcast Chase Cam with speed-linked FOV widening and slope/bank tracking
+            const bankLift = isDaytona ? Math.sin(targetCar.bankAngle || 0) * 1.1 : 0;
+            const chaseDist = isDaytona ? 8.3 : 9.2;
+            const chaseSide = isDaytona ? 2.0 : 2.3;
             _desiredCamPos.set(
-              targetCar.x - 9.2 * cdx + 2.3 * cdz,
-              targetCar.y + 2.85 - slopeSin * 6.5,
-              targetCar.z - 9.2 * cdz - 2.3 * cdx
+              targetCar.x - chaseDist * cdx + chaseSide * cdz,
+              targetCar.y + (isDaytona ? 2.75 : 2.95) + bankLift - slopeSin * 6.5,
+              targetCar.z - chaseDist * cdz - chaseSide * cdx
             );
             _desiredLookAt.set(
               targetCar.x + 14 * cdx,
               targetCar.y + 1.0 + slopeSin * 14,
               targetCar.z + 14 * cdz
             );
-            targetFov.current = 48 + speedNorm * 10 + (targetCar.drsActive ? 3 : 0);
+            targetFov.current = 48 + speedNorm * 10 + (targetCar.drsActive || (isDaytona && targetCar.inSlipstream) ? 3 : 0);
             dampRate = 10;
             lookDamp = 15;
             break;
           }
         }
 
-        if (isAngleCut || currentCamPos.current.distanceTo(_desiredCamPos) > 45) {
+        if (isAngleCut || currentCamPos.current.distanceTo(_desiredCamPos) > 45 || timeScale === 0) {
           currentCamPos.current.copy(_desiredCamPos);
           currentLookAt.current.copy(_desiredLookAt);
         } else {
@@ -405,19 +493,20 @@ export const RaceCameraAndAudio = ({
         camera.position.copy(currentCamPos.current);
         camera.lookAt(currentLookAt.current);
 
-        // Real-time F1 audio telemetry (gears, RPM curve, downshift overrun, tire load & kerb impacts)
+        // Real-time F1/NASCAR audio telemetry scaled by slow-motion / pause
         const appState = useAppStore.getState();
         const masterVol = appState.soundEnabled ? appState.masterVolume / 100 : 0;
-        if (masterVol > 0 && startPhase === 'racing') {
+        if (masterVol > 0 && timeScale > 0 && (startPhase === 'racing' || isReplayActive)) {
           _carWorldPos.set(targetCar.x, targetCar.y + 1.0, targetCar.z);
           const distToCam = camera.position.distanceTo(_carWorldPos);
+          const pitchScaledKmh = targetCar.displayKmh * (0.64 + 0.36 * timeScale);
 
           updateRaceEngineAudio(
-            targetCar.displayKmh,
+            pitchScaledKmh,
             distToCam,
             chosenAngle,
             dt,
-            masterVol,
+            isReplayActive ? masterVol * 0.7 : masterVol,
             true,
             targetCar.gear,
             targetCar.rpmRatio,
@@ -428,9 +517,9 @@ export const RaceCameraAndAudio = ({
             1,
             Math.max(Math.abs(targetCar.latAccel) * 0.85, targetCar.brakeIntensity * 0.72)
           );
-          updateTireSquealAudio(corneringLoad, targetCar.displayKmh, masterVol);
+          updateTireSquealAudio(corneringLoad, pitchScaledKmh, isReplayActive ? masterVol * 0.65 : masterVol);
 
-          if (targetCar.onKerb && targetCar.displayKmh > 80) {
+          if (targetCar.onKerb && targetCar.displayKmh > 80 && !isReplayActive) {
             playKerbImpactSound(masterVol);
           }
         } else {
@@ -448,19 +537,19 @@ export const RaceCameraAndAudio = ({
           : null;
 
       if (expectedWinnerId && celebrateTarget) {
-        const arena = getCircuitPosition(6, 0);
-        const sweep = Math.sin(elapsed * 0.34) * 0.98;
+        const arena = getCelebrationArenaPose(trackStyle);
+        const sweep = Math.sin(wallElapsed * 0.34) * 0.98;
         _desiredCamPos.set(
           arena.x + Math.sin(sweep) * 17.5,
-          arena.y + 3.0 + Math.sin(elapsed * 0.48) * 0.35,
+          arena.y + 3.0 + Math.sin(wallElapsed * 0.48) * 0.35,
           arena.z - Math.cos(sweep) * 16.5
         );
         // Keep the donut arena near screen center (well above the compact bottom card) while keeping grandstand fireworks in upper sky
         _desiredLookAt.set(arena.x, arena.y + 0.95, arena.z + 1.5);
         targetFov.current = 54;
       } else {
-        const gridFocus = getCircuitPosition(-14, 0);
-        const orbit = elapsed * 0.14;
+        const gridFocus = getCircuitPosition(-14, 0, trackStyle);
+        const orbit = wallElapsed * 0.14;
         _desiredCamPos.set(
           gridFocus.x + Math.sin(orbit) * 38,
           gridFocus.y + 15 + Math.sin(orbit * 0.7) * 2.5,

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Item, Result, CustomAudio, PodiumRacer, Season, EliminatedRecord } from '../types';
+import { Item, Result, CustomAudio, PodiumRacer, Season, EliminatedRecord, RaceTrackStyle } from '../types';
 import type { SimulatedCar } from '../components/organisms/race/raceSimulation';
 import {
   DEFAULT_WHEEL_TITLE,
@@ -88,6 +88,8 @@ interface AppState {
   // Visual/Colors
   wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'test';
   setWheelType: (wheelType: 'classic' | 'horizon' | 'mystery_box' | 'race' | 'penalty_shootout' | 'test') => void;
+  raceTrackStyle: RaceTrackStyle;
+  setRaceTrackStyle: (raceTrackStyle: RaceTrackStyle) => void;
   colors: string[];
   setColors: (colors: string[] | ((prev: string[]) => string[])) => void;
   updateColor: (index: number, color: string) => void;
@@ -152,6 +154,22 @@ interface AppState {
   setRacePodium: (podium: PodiumRacer[]) => void;
   raceSimulationCars: SimulatedCar[];
   setRaceSimulationCars: (cars: SimulatedCar[]) => void;
+  isRaceReplayActive: boolean;
+  setIsRaceReplayActive: (active: boolean) => void;
+  pendingRaceDraw: {
+    winIndex: number;
+    currentValidItems: Item[];
+    winnerCrossTime: number;
+    lastCrossTime: number;
+  } | null;
+  setPendingRaceDraw: (
+    draw: {
+      winIndex: number;
+      currentValidItems: Item[];
+      winnerCrossTime: number;
+      lastCrossTime: number;
+    } | null
+  ) => void;
   penaltySequence: Item[];
   setPenaltySequence: (sequence: Item[]) => void;
 
@@ -341,6 +359,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   wheelType: 'classic',
   setWheelType: (wheelType) => set({ wheelType }),
+  raceTrackStyle: 'interlagos',
+  setRaceTrackStyle: (raceTrackStyle) => set({ raceTrackStyle }),
 
   colors: DEFAULT_SLICE_COLORS,
   setColors: (colors) => set((state) => ({ colors: typeof colors === 'function' ? colors(state.colors) : colors })),
@@ -443,6 +463,10 @@ export const useAppStore = create<AppState>((set) => ({
   setRacePodium: (racePodium) => set({ racePodium }),
   raceSimulationCars: [],
   setRaceSimulationCars: (raceSimulationCars) => set({ raceSimulationCars }),
+  isRaceReplayActive: false,
+  setIsRaceReplayActive: (isRaceReplayActive) => set({ isRaceReplayActive }),
+  pendingRaceDraw: null,
+  setPendingRaceDraw: (pendingRaceDraw) => set({ pendingRaceDraw }),
   penaltySequence: [],
   setPenaltySequence: (penaltySequence) => set({ penaltySequence }),
 

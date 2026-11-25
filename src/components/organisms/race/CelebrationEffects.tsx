@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TRACK_HALF_WIDTH, getCircuitPosition } from './trackCircuit';
+import type { RaceTrackStyle } from '../../../types';
+import { getCircuitConfig, getCelebrationArenaPose } from './trackCircuit';
 
 const FW_COUNT = 320;
 const _fwDummy = new THREE.Object3D();
@@ -12,16 +13,18 @@ const _whiteColor = new THREE.Color('#f8fafc');
 
 /**
  * 3D Stadium Spotlights, Volumetric Light Beams, and Instanced Pyrotechnic Fireworks
- * rendered during the post-race celebration on the Main Straight.
+ * rendered during the post-race celebration on the Main Straight / Tri-Oval Infield.
  */
 export const CelebrationEffects = ({
   isCelebrating,
   championColor,
   isSoftwareGl,
+  trackStyle = 'interlagos',
 }: {
   isCelebrating: boolean;
   championColor: string;
   isSoftwareGl: boolean;
+  trackStyle?: RaceTrackStyle;
 }) => {
   const fwMeshRef = useRef<THREE.InstancedMesh>(null);
   const spot1TargetRef = useRef<THREE.Object3D>(new THREE.Object3D());
@@ -31,7 +34,8 @@ export const CelebrationEffects = ({
   const beam3Ref = useRef<THREE.Group>(null);
   const beam4Ref = useRef<THREE.Group>(null);
 
-  const arenaCenter = useMemo(() => getCircuitPosition(6, 0), []);
+  const trackHalfWidth = useMemo(() => getCircuitConfig(trackStyle).trackHalfWidth, [trackStyle]);
+  const arenaCenter = useMemo(() => getCelebrationArenaPose(trackStyle), [trackStyle]);
 
   // Pre-allocated firework particle buffers (Zero-GC)
   const fwStateRef = useRef({
@@ -113,7 +117,7 @@ export const CelebrationEffects = ({
       fw.nextBurstTime = t + 0.72 + ((fw.burstIdx * 37) % 10) * 0.045;
       const bx = arenaCenter.x - 24 + ((fw.burstIdx * 29) % 54);
       const by = arenaCenter.y + 12.0 + ((fw.burstIdx * 17) % 8);
-      const bz = arenaCenter.z + TRACK_HALF_WIDTH + 22 + (((fw.burstIdx * 13) % 14) - 7);
+      const bz = arenaCenter.z + trackHalfWidth + 22 + (((fw.burstIdx * 13) % 14) - 7);
       const sparksPerBurst = 44;
 
       for (let p = 0; p < sparksPerBurst; p++) {
@@ -199,7 +203,7 @@ export const CelebrationEffects = ({
       {!isSoftwareGl && (
         <>
           <spotLight
-            position={[arenaCenter.x - 16, arenaCenter.y + 16, arenaCenter.z + TRACK_HALF_WIDTH + 10]}
+            position={[arenaCenter.x - 16, arenaCenter.y + 16, arenaCenter.z + trackHalfWidth + 10]}
             target={spot1TargetRef.current}
             angle={0.42}
             penumbra={0.65}
@@ -208,7 +212,7 @@ export const CelebrationEffects = ({
             color="#fef3c7"
           />
           <spotLight
-            position={[arenaCenter.x + 18, arenaCenter.y + 15, arenaCenter.z - TRACK_HALF_WIDTH - 8]}
+            position={[arenaCenter.x + 18, arenaCenter.y + 15, arenaCenter.z - trackHalfWidth - 8]}
             target={spot2TargetRef.current}
             angle={0.44}
             penumbra={0.65}
@@ -220,7 +224,7 @@ export const CelebrationEffects = ({
       )}
 
       {/* Soft Volumetric Stadium Spotlight Cones from Grandstand & Pit Towers */}
-      <group position={[arenaCenter.x - 12, arenaCenter.y + 9.2, arenaCenter.z + TRACK_HALF_WIDTH + 10]}>
+      <group position={[arenaCenter.x - 12, arenaCenter.y + 9.2, arenaCenter.z + trackHalfWidth + 10]}>
         <group ref={beam1Ref}>
           <mesh position={[0, -13, 0]}>
             <coneGeometry args={[4.6, 26, 20, 1, true]} />
@@ -236,7 +240,7 @@ export const CelebrationEffects = ({
         </group>
       </group>
 
-      <group position={[arenaCenter.x + 22, arenaCenter.y + 9.2, arenaCenter.z + TRACK_HALF_WIDTH + 10]}>
+      <group position={[arenaCenter.x + 22, arenaCenter.y + 9.2, arenaCenter.z + trackHalfWidth + 10]}>
         <group ref={beam2Ref}>
           <mesh position={[0, -13, 0]}>
             <coneGeometry args={[4.6, 26, 20, 1, true]} />
@@ -252,7 +256,7 @@ export const CelebrationEffects = ({
         </group>
       </group>
 
-      <group position={[arenaCenter.x - 10, arenaCenter.y + 6.8, arenaCenter.z - TRACK_HALF_WIDTH - 8]}>
+      <group position={[arenaCenter.x - 10, arenaCenter.y + 6.8, arenaCenter.z - trackHalfWidth - 8]}>
         <group ref={beam3Ref}>
           <mesh position={[0, -11, 0]}>
             <coneGeometry args={[3.8, 22, 20, 1, true]} />
@@ -268,7 +272,7 @@ export const CelebrationEffects = ({
         </group>
       </group>
 
-      <group position={[arenaCenter.x + 20, arenaCenter.y + 6.8, arenaCenter.z - TRACK_HALF_WIDTH - 8]}>
+      <group position={[arenaCenter.x + 20, arenaCenter.y + 6.8, arenaCenter.z - trackHalfWidth - 8]}>
         <group ref={beam4Ref}>
           <mesh position={[0, -11, 0]}>
             <coneGeometry args={[3.8, 22, 20, 1, true]} />

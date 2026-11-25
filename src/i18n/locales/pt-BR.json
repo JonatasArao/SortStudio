@@ -58,6 +58,12 @@
       "eliminationModeDesc": "O sorteado não é o ganhador, ele é eliminado. A roleta continua até sobrar uma pessoa.",
       "penaltySaveWins": "Goleiro Defende Vence (Pênaltis)",
       "penaltySaveWinsDesc": "Ativa o modo onde quem tem o chute defendido pelo goleiro é o vencedor da disputa, em vez de quem faz o gol.",
+      "raceTrackStyle": "Personalização do Modo Corrida",
+      "raceTrackStyleDesc": "Escolha o autódromo e o estilo dos carros quando o modo Corrida estiver ativo.",
+      "raceTrackInterlagos": "Interlagos · Fórmula 1",
+      "raceTrackInterlagosDesc": "Circuito misto com elevações 3D, boxes e zonas de DRS.",
+      "raceTrackDaytona": "Daytona Oval · NASCAR",
+      "raceTrackDaytonaDesc": "Tri-oval a 31°, Stock Cars com aerofólio e vácuo intenso.",
       "autoContinue": "Automático (Batalha Rápida)",
       "autoContinueDesc": "Continua girando automaticamente até restar 1 jogador.",
       "fastSpinTime": "Tempo das Rodadas Rápidas",
@@ -420,7 +426,12 @@
     "cam_action": "Câmera de Ação",
     "cam_rear": "Espelho / Traseira",
     "auto_director": "Diretor Auto",
-    "driver_placeholder": "PILOTO"
+    "driver_placeholder": "PILOTO",
+    "laps_label": "Voltas",
+    "interlagos_circuit": "Interlagos 3D",
+    "aero_rules": "Vácuo & DRS",
+    "daytona_circuit": "Daytona Tri-Oval 3D",
+    "nascar_rules": "Vácuo NASCAR"
   },
   "testMode": {
     "button": "Modo de Teste"

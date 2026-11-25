@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Trophy, Crown, X } from 'lucide-react';
+import { Trophy, Crown, X, RotateCcw } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useWheelActions } from '../../hooks/useWheelActions';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,9 @@ export const WinnerModal = () => {
   const autoRemoveWinner = useAppStore(s => s.autoRemoveWinner);
   const wheelType = useAppStore(s => s.wheelType);
   const racePodium = useAppStore(s => s.racePodium);
+  const raceSimulationCars = useAppStore(s => s.raceSimulationCars);
+  const isRaceReplayActive = useAppStore(s => s.isRaceReplayActive);
+  const setIsRaceReplayActive = useAppStore(s => s.setIsRaceReplayActive);
 
   const { handleRemoveItem, stopWinSound } = useWheelActions();
 
@@ -65,6 +68,7 @@ export const WinnerModal = () => {
 
   if (!winner || winner.isEliminated) return null;
   if (wheelType === 'horizon') return null;
+  if (wheelType === 'race' && isRaceReplayActive) return null;
 
   const isGrandWinner = winner.type === 'grand_winner';
   const customMessage = isGrandWinner ? grandWinnerMessage : winner.message || winMessage;
@@ -73,6 +77,7 @@ export const WinnerModal = () => {
   // Compact bottom banner for 3D Grand Prix Race (positions & times stay on the left timing tower)
   if (wheelType === 'race') {
     const championFinish = racePodium?.[0]?.finishTimeSeconds;
+    const canReplay = raceSimulationCars.length > 0 && racePodium.length > 0;
     return (
       <div className="fixed bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-3 sm:px-4">
         <div
@@ -115,16 +120,30 @@ export const WinnerModal = () => {
             </button>
           </div>
 
-          <div className="flex flex-row gap-2.5">
+          <div className="flex flex-row gap-2">
+            {canReplay && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  stopWinSound();
+                  setIsRaceReplayActive(true);
+                }}
+                className="bg-white/8 hover:bg-white/14 text-sky-300 border-sky-400/30 hover:border-sky-400/60 flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{t('race.replay_btn', 'Replay')}</span>
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"
               onClick={handleReject}
-              className="flex-1 bg-white/8 hover:bg-white/14 text-slate-200 border-white/12 hover:border-red-500/40 hover:text-red-300"
+              className="flex-1 bg-white/8 hover:bg-white/14 text-slate-200 border-white/12 hover:border-red-500/40 hover:text-red-300 whitespace-nowrap"
             >
               {t('horizonDisplay.reject')}
             </Button>
-            <Button variant="amber" size="sm" onClick={handleAccept} className="flex-1">
+            <Button variant="amber" size="sm" onClick={handleAccept} className="flex-1 whitespace-nowrap">
               {t('horizonDisplay.accept')}
             </Button>
           </div>

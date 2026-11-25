@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Flame,
   Timer,
+  Flag,
+  Gauge,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Toggle } from '../../atoms/Toggle';
@@ -87,6 +89,8 @@ export const GeneralSettings = () => {
   const setBalanceScope = useAppStore(s => s.setBalanceScope);
   const wheelType = useAppStore(s => s.wheelType);
   const setWheelType = useAppStore(s => s.setWheelType);
+  const raceTrackStyle = useAppStore(s => s.raceTrackStyle);
+  const setRaceTrackStyle = useAppStore(s => s.setRaceTrackStyle);
   const penaltySaveWins = useAppStore(s => s.penaltySaveWins);
   const setPenaltySaveWins = useAppStore(s => s.setPenaltySaveWins);
   const testModeEnabled = useAppStore(s => s.testModeEnabled);
@@ -279,6 +283,68 @@ export const GeneralSettings = () => {
             </div>
           )}
         </div>
+
+        {wheelType === 'race' && (
+          <div className="pt-4 border-t border-[var(--studio-border)] space-y-3">
+            <div>
+              <label className="text-sm font-medium text-[var(--studio-text)] flex items-center gap-2">
+                <Flag size={15} className="text-red-500" />
+                <span>{t('settings.general.raceTrackStyle', 'Personalização do Modo Corrida')}</span>
+              </label>
+              <p className="text-xs text-[var(--studio-text-muted)] mt-1">
+                {t('settings.general.raceTrackStyleDesc', 'Escolha o autódromo e o estilo dos carros quando o modo Corrida estiver ativo.')}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                {
+                  id: 'interlagos' as const,
+                  title: t('settings.general.raceTrackInterlagos', 'Interlagos · Fórmula 1'),
+                  desc: t('settings.general.raceTrackInterlagosDesc', 'Circuito misto com elevações 3D, boxes e zonas de DRS.'),
+                  icon: Flag,
+                },
+                {
+                  id: 'daytona' as const,
+                  title: t('settings.general.raceTrackDaytona', 'Daytona Oval · NASCAR'),
+                  desc: t('settings.general.raceTrackDaytonaDesc', 'Tri-oval a 31°, Stock Cars com aerofólio e vácuo intenso.'),
+                  icon: Gauge,
+                },
+              ].map((option) => {
+                const Icon = option.icon;
+                const isSelected = raceTrackStyle === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setRaceTrackStyle(option.id)}
+                    className={`p-3.5 rounded-xl border text-left transition-colors flex flex-col gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? 'border-[var(--studio-accent)] bg-[var(--studio-accent-soft)] ring-1 ring-[var(--studio-accent)]'
+                        : 'border-[var(--studio-border)] bg-[var(--studio-input)] hover:border-[var(--studio-border-strong)]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
+                        <Icon size={15} className={isSelected ? 'text-[var(--studio-accent-fg)]' : 'text-[var(--studio-text-muted)]'} />
+                        <span>{option.title}</span>
+                      </span>
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                          isSelected
+                            ? 'border-[var(--studio-accent)] bg-[var(--studio-accent)]/20'
+                            : 'border-[var(--studio-border-strong)]'
+                        }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-[var(--studio-accent)]" />}
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--studio-text-muted)] leading-relaxed">{option.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {wheelType === 'penalty_shootout' && (
           <div className="flex items-center justify-between pt-4 border-t border-[var(--studio-border)] gap-4">

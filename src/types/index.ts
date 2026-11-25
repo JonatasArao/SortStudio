@@ -121,4 +121,7 @@ export interface AppSettings {
   centerBgColor?: string;
   penaltySaveWins?: boolean;
   testModeEnabled?: boolean;
+  raceTrackStyle?: RaceTrackStyle;
 }
+
+export type RaceTrackStyle = 'interlagos' | 'daytona';

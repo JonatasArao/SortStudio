@@ -58,6 +58,12 @@
       "eliminationModeDesc": "The selected person does not win, they are eliminated. The wheel continues until one person remains.",
       "penaltySaveWins": "Goalkeeper Save Wins (Penalties)",
       "penaltySaveWinsDesc": "Enables the mode where the player whose shot is saved by the goalkeeper is the winner, instead of the one who scores.",
+      "raceTrackStyle": "Race Mode Customization",
+      "raceTrackStyleDesc": "Choose the circuit and car class when Race mode is active.",
+      "raceTrackInterlagos": "Interlagos · Formula 1",
+      "raceTrackInterlagosDesc": "Road course with 3D elevation, pit lane, and DRS zones.",
+      "raceTrackDaytona": "Daytona Oval · NASCAR",
+      "raceTrackDaytonaDesc": "31° banked tri-oval, Stock Cars with rear spoiler, and pack drafting.",
       "autoContinue": "Auto Continue (Fast Battle)",
       "autoContinueDesc": "Automatically continues spinning until 1 player remains.",
       "fastSpinTime": "Fast Round Spin Time",
@@ -420,7 +426,12 @@
     "cam_action": "Action Cam",
     "cam_rear": "Rear Mirror",
     "auto_director": "Auto Director",
-    "driver_placeholder": "RACER"
+    "driver_placeholder": "RACER",
+    "laps_label": "Laps",
+    "interlagos_circuit": "Interlagos 3D",
+    "aero_rules": "Slipstream & DRS",
+    "daytona_circuit": "Daytona Tri-Oval 3D",
+    "nascar_rules": "NASCAR Drafting"
   },
   "testMode": {
     "button": "Test Mode"

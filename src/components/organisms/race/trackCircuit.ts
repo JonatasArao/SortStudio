@@ -1,9 +1,13 @@
 import * as THREE from 'three';
+import type { RaceTrackStyle } from '../../../types';
 
 export const TOTAL_LAPS = 3;
 export const TRACK_WIDTH = 20;
 export const TRACK_HALF_WIDTH = TRACK_WIDTH / 2;
 export const TRACK_SAMPLES = 840;
+
+export const DAYTONA_TRACK_WIDTH = 15;
+export const DAYTONA_HALF_WIDTH = DAYTONA_TRACK_WIDTH / 2;
 
 export const CAR_VISUAL_SCALE = 1.45;
 export const GRID_FIRST_DIST = -5.0;
@@ -11,10 +15,14 @@ export const GRID_STEP_DIST = 4.6;
 export const GRID_LANE_MAG = 0.38;
 
 // Start/Finish anchor on Reta dos Boxes (Subida dos Boxes climb)
-const START_FINISH_ANCHOR: [number, number] = [25, 154];
+const INTERLAGOS_START_ANCHOR: [number, number] = [25, 154];
+// Start/Finish anchor on Daytona Tri-Oval Frontstretch
+const DAYTONA_START_ANCHOR: [number, number] = [0, 148];
 
 // Lake basin center inside the infield near Descida do Lago (T4)
 export const LAKE_CENTER = { x: -86, z: -102, y: -1.15, radiusX: 36, radiusZ: 24 };
+// Lake Lloyd center inside Daytona Tri-Oval infield
+export const DAYTONA_LAKE_CENTER = { x: 0, z: -20, y: -1.05, radiusX: 72, radiusZ: 32 };
 
 export interface TrackSample {
   s: number;
@@ -28,6 +36,7 @@ export interface TrackSample {
   nz: number;
   angle: number;
   pitchAngle: number;
+  bankAngle: number;
   curvature: number;
   signedCurvature: number;
   idealLane: number;
@@ -46,6 +55,7 @@ export interface TrackPose {
   nz: number;
   angle: number;
   pitchAngle: number;
+  bankAngle: number;
   curvature: number;
   signedCurvature: number;
   idealLane: number;
@@ -54,16 +64,21 @@ export interface TrackPose {
   totalDistance: number;
 }
 
+export interface CircuitConfig {
+  style: RaceTrackStyle;
+  totalLaps: number;
+  trackWidth: number;
+  trackHalfWidth: number;
+  usableHalfWidth: number;
+  perimeter: number;
+  ds: number;
+  samples: TrackSample[];
+}
+
 /**
  * Autódromo José Carlos Pace (Interlagos) — Counter-Clockwise 3D Control Points [x, y, z].
- * Sequence:
- *   Subida dos Boxes -> Start/Finish -> S do Senna (T1-T2) -> Curva do Sol (T3) ->
- *   Reta Oposta -> Descida do Lago (T4, lowest point) -> Ferradura (T8) ->
- *   Laranjinha (T9) -> Pinheirinho (T10) -> Bico de Pato (T11-T12) ->
- *   Mergulho (T13) -> Junção (T14) -> Curva do Café (T15) -> Subida dos Boxes.
  */
 const INTERLAGOS_CONTROL_POINTS: [number, number, number][] = [
-  // Curva do Café -> Subida dos Boxes -> Start/Finish -> Braking T1
   [-92, 6.4, 154],
   [-36, 9.8, 154],
   [25, 13.4, 154],   // Start/Finish Line (uphill climb)
@@ -71,10 +86,10 @@ const INTERLAGOS_CONTROL_POINTS: [number, number, number][] = [
   [142, 15.6, 150],  // T1 braking zone
 
   // S do Senna (T1 Left -> steep downhill -> T2 Right)
-  [172, 13.0, 128],  // T1 apex (Left)
-  [168, 10.0, 94],   // Downhill plunge
-  [188, 8.0, 74],    // T2 apex (Right)
-  [214, 6.6, 52],    // S do Senna exit
+  [172, 13.0, 128],
+  [168, 10.0, 94],
+  [188, 8.0, 74],
+  [214, 6.6, 52],
 
   // Curva do Sol (T3 Sweeping Left onto Reta Oposta)
   [224, 5.4, 18],
@@ -88,8 +103,8 @@ const INTERLAGOS_CONTROL_POINTS: [number, number, number][] = [
 
   // Descida do Lago (T4 Left — lowest elevation point beside the lake)
   [-114, 0.35, -166],
-  [-156, 0.0, -134], // Lowest point of circuit
-  [-142, 0.9, -86],  // Exit uphill toward infield
+  [-156, 0.0, -134],
+  [-142, 0.9, -86],
 
   // Subida para Ferradura (T5-T7 fast climb)
   [-102, 2.9, -60],
@@ -124,6 +139,29 @@ const INTERLAGOS_CONTROL_POINTS: [number, number, number][] = [
   [-126, 4.6, 154],
 ];
 
+/**
+ * Daytona International Speedway Tri-Oval — Counter-Clockwise 3D Control Points [x, y, z].
+ * Features signature Tri-Oval frontstretch dogleg (18°), Turns 1-2 (31°), Backstretch (3°), Turns 3-4 (31°).
+ */
+const DAYTONA_CONTROL_POINTS: [number, number, number][] = [
+  [0, 0, 148],       // Tri-Oval Start/Finish Apex (18° banking)
+  [76, 0, 134],      // Tri-Oval exit toward T1
+  [146, 0, 114],     // Chute into Turn 1
+  [218, 0, 84],      // Turn 1 entry (progressive banking up to 31°)
+  [264, 0, 32],      // Turn 1 center
+  [264, 0, -40],     // Turn 2 center
+  [216, 0, -96],     // Turn 2 exit onto Backstretch
+  [136, 0, -124],    // Backstretch east
+  [0, 0, -126],      // Backstretch mid (3° flat)
+  [-136, 0, -124],   // Backstretch west
+  [-216, 0, -96],    // Turn 3 entry
+  [-264, 0, -40],    // Turn 3 center
+  [-264, 0, 32],     // Turn 4 center
+  [-218, 0, 84],     // Turn 4 exit onto Frontstretch
+  [-146, 0, 114],    // Chute into Tri-Oval
+  [-76, 0, 134],     // Tri-Oval entry
+];
+
 // Normalized DRS zone bounds (Zone 2 computed dynamically on Reta Oposta)
 export const DRS_ZONE_1_START = 0.905;
 export const DRS_ZONE_1_END = 0.088;
@@ -145,12 +183,16 @@ function findClosestFraction(samples: { x: number; z: number }[], tx: number, tz
   return bestIdx / samples.length;
 }
 
-function buildCircuitData() {
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+function buildInterlagosData() {
   const vectors = INTERLAGOS_CONTROL_POINTS.map(([x, y, z]) => new THREE.Vector3(x, y, z));
   const rawCurve = new THREE.CatmullRomCurve3(vectors, true, 'catmullrom', 0.45);
   const totalLength = rawCurve.getLength();
 
-  // Locate parameter t closest to Start/Finish anchor so s=0 aligns with checkered line
   let bestT = 0;
   let bestDistSq = Infinity;
   const probeCount = 3000;
@@ -158,8 +200,8 @@ function buildCircuitData() {
   for (let i = 0; i < probeCount; i++) {
     const t = i / probeCount;
     rawCurve.getPointAt(t, tmp);
-    const dx = tmp.x - START_FINISH_ANCHOR[0];
-    const dz = tmp.z - START_FINISH_ANCHOR[1];
+    const dx = tmp.x - INTERLAGOS_START_ANCHOR[0];
+    const dz = tmp.z - INTERLAGOS_START_ANCHOR[1];
     const dSq = dx * dx + dz * dz;
     if (dSq < bestDistSq) {
       bestDistSq = dSq;
@@ -167,7 +209,6 @@ function buildCircuitData() {
     }
   }
 
-  // First pass: extract positions & 3D tangents
   const rawPos: THREE.Vector3[] = [];
   const rawTan: THREE.Vector3[] = [];
   for (let i = 0; i < TRACK_SAMPLES; i++) {
@@ -176,7 +217,6 @@ function buildCircuitData() {
     rawTan.push(rawCurve.getTangentAt(u).normalize());
   }
 
-  // Compute exact Reta Oposta DRS Zone 2 bounds from spline coordinates
   DRS_ZONE_2_START = findClosestFraction(rawPos, 138, -52);
   DRS_ZONE_2_END = findClosestFraction(rawPos, -32, -142);
 
@@ -186,23 +226,14 @@ function buildCircuitData() {
   for (let i = 0; i < TRACK_SAMPLES; i++) {
     const p = rawPos[i];
     const tan = rawTan[i];
-
-    // Horizontal projection of tangent for consistent XZ heading & lateral normal
     const horizLen = Math.max(0.0001, Math.hypot(tan.x, tan.z));
     const htx = tan.x / horizLen;
     const htz = tan.z / horizLen;
-
-    // Right-hand outward normal in XZ plane relative to forward (htx, htz)
     const nx = -htz;
     const nz = htx;
-
-    // Car local forward is +X; rotation.y = atan2(-htz, htx) aligns +X with (htx, htz)
     const angle = Math.atan2(-htz, htx);
     rawAngles.push(angle);
-
-    // Longitudinal road pitch angle (positive = uphill)
     const pitchAngle = Math.atan2(tan.y, horizLen);
-
     const s = (i / TRACK_SAMPLES) * totalLength;
     const progressFrac = i / TRACK_SAMPLES;
     const sector: 1 | 2 | 3 = progressFrac < 0.30 ? 1 : progressFrac < 0.72 ? 2 : 3;
@@ -226,6 +257,7 @@ function buildCircuitData() {
       nz,
       angle,
       pitchAngle,
+      bankAngle: 0,
       curvature: 0,
       signedCurvature: 0,
       idealLane: 0,
@@ -234,7 +266,6 @@ function buildCircuitData() {
     });
   }
 
-  // Smooth curvature from horizontal heading delta
   const ds = totalLength / TRACK_SAMPLES;
   const windowHalf = 5;
   for (let i = 0; i < TRACK_SAMPLES; i++) {
@@ -250,7 +281,6 @@ function buildCircuitData() {
     samples[i].curvature = Math.abs(signedK);
   }
 
-  // Compute authentic F1 outside-apex-outside racing line
   const rawIdeal = new Float64Array(TRACK_SAMPLES);
   const entryStep = Math.round(28 / ds);
   const midAheadStep = Math.round(12 / ds);
@@ -290,13 +320,172 @@ function buildCircuitData() {
   return { samples, totalLength, ds };
 }
 
-const CIRCUIT = buildCircuitData();
+function buildDaytonaData() {
+  const vectors = DAYTONA_CONTROL_POINTS.map(([x, y, z]) => new THREE.Vector3(x, y, z));
+  const rawCurve = new THREE.CatmullRomCurve3(vectors, true, 'centripetal', 0.5);
+  const totalLength = rawCurve.getLength();
+  const ds = totalLength / TRACK_SAMPLES;
 
-export const TRACK_P = CIRCUIT.totalLength;
-export const CIRCUIT_SAMPLES = CIRCUIT.samples;
-const CIRCUIT_DS = CIRCUIT.ds;
+  let bestT = 0;
+  let bestDistSq = Infinity;
+  const probeCount = 3000;
+  const tmp = new THREE.Vector3();
+  for (let i = 0; i < probeCount; i++) {
+    const t = i / probeCount;
+    rawCurve.getPointAt(t, tmp);
+    const dx = tmp.x - DAYTONA_START_ANCHOR[0];
+    const dz = tmp.z - DAYTONA_START_ANCHOR[1];
+    const dSq = dx * dx + dz * dz;
+    if (dSq < bestDistSq) {
+      bestDistSq = dSq;
+      bestT = t;
+    }
+  }
 
-// Coarse lookup samples for ultra-fast terrain height queries
+  const rawPos: THREE.Vector3[] = [];
+  const rawTan: THREE.Vector3[] = [];
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    const u = ((i / TRACK_SAMPLES) + bestT) % 1;
+    rawPos.push(rawCurve.getPointAt(u));
+    rawTan.push(rawCurve.getTangentAt(u).normalize());
+  }
+
+  // Smooth progressive banking profile around Daytona Tri-Oval:
+  // 31 deg in Turns 1-2 & 3-4, 18 deg on Tri-Oval frontstretch, 3 deg on Backstretch
+  const rawBank = new Float64Array(TRACK_SAMPLES);
+  const RAD_31 = (31 * Math.PI) / 180;
+  const RAD_18 = (18 * Math.PI) / 180;
+  const RAD_3 = (3 * Math.PI) / 180;
+
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    const p = rawPos[i];
+    const turnWeight = smoothstep(125, 195, Math.abs(p.x));
+    const straightBank = p.z >= 0 ? RAD_18 : RAD_3;
+    rawBank[i] = straightBank * (1 - turnWeight) + RAD_31 * turnWeight;
+  }
+
+  // Multi-pass Gaussian-like smoothing on banking so transitions feel fluid at 320 km/h
+  let currBank = rawBank;
+  for (let pass = 0; pass < 5; pass++) {
+    const nextBank = new Float64Array(TRACK_SAMPLES);
+    for (let i = 0; i < TRACK_SAMPLES; i++) {
+      let sum = 0;
+      for (let k = -8; k <= 8; k++) {
+        sum += currBank[(i + k + TRACK_SAMPLES) % TRACK_SAMPLES];
+      }
+      nextBank[i] = sum / 17;
+    }
+    currBank = nextBank;
+  }
+
+  // Anchor inner edge (-DAYTONA_HALF_WIDTH) flush at y = 0, lifting centerline & outer edge smoothly
+  const centerY = new Float64Array(TRACK_SAMPLES);
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    centerY[i] = DAYTONA_HALF_WIDTH * Math.sin(currBank[i]);
+  }
+
+  const samples: TrackSample[] = [];
+  const rawAngles: number[] = [];
+
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    const p = rawPos[i];
+    const tan = rawTan[i];
+    const horizLen = Math.max(0.0001, Math.hypot(tan.x, tan.z));
+    const htx = tan.x / horizLen;
+    const htz = tan.z / horizLen;
+    const nx = -htz;
+    const nz = htx;
+    const angle = Math.atan2(-htz, htx);
+    rawAngles.push(angle);
+
+    // Longitudinal slope resulting from smooth banking centerline lift
+    const prevY = centerY[(i - 2 + TRACK_SAMPLES) % TRACK_SAMPLES];
+    const nextY = centerY[(i + 2) % TRACK_SAMPLES];
+    const dy = nextY - prevY;
+    const span = 4 * ds;
+    const pitchAngle = Math.atan2(dy, span);
+    const ty = Math.sin(pitchAngle);
+    const horizScale = Math.cos(pitchAngle);
+
+    const s = (i / TRACK_SAMPLES) * totalLength;
+    const progressFrac = i / TRACK_SAMPLES;
+    const sector: 1 | 2 | 3 = progressFrac < 0.34 ? 1 : progressFrac < 0.67 ? 2 : 3;
+
+    // Wide middle/low racing groove default (pack cars dynamically run 2-wide & 3-wide)
+    const grooveBias = -0.18 * smoothstep(135, 220, Math.abs(p.x));
+
+    samples.push({
+      s,
+      x: p.x,
+      y: centerY[i],
+      z: p.z,
+      tx: htx * horizScale,
+      ty,
+      tz: htz * horizScale,
+      nx,
+      nz,
+      angle,
+      pitchAngle,
+      bankAngle: currBank[i],
+      curvature: 0,
+      signedCurvature: 0,
+      idealLane: grooveBias,
+      drsZone: 0,
+      sector,
+    });
+  }
+
+  const windowHalf = 6;
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    const prevIdx = (i - windowHalf + TRACK_SAMPLES) % TRACK_SAMPLES;
+    const nextIdx = (i + windowHalf) % TRACK_SAMPLES;
+    let dAngle = rawAngles[nextIdx] - rawAngles[prevIdx];
+    while (dAngle > Math.PI) dAngle -= Math.PI * 2;
+    while (dAngle < -Math.PI) dAngle += Math.PI * 2;
+
+    const spanDist = windowHalf * 2 * ds;
+    const signedK = dAngle / spanDist;
+    samples[i].signedCurvature = signedK;
+    samples[i].curvature = Math.abs(signedK);
+  }
+
+  return { samples, totalLength, ds };
+}
+
+const INTERLAGOS_CIRCUIT = buildInterlagosData();
+const DAYTONA_CIRCUIT = buildDaytonaData();
+
+const CIRCUIT_REGISTRY: Record<RaceTrackStyle, CircuitConfig> = {
+  interlagos: {
+    style: 'interlagos',
+    totalLaps: TOTAL_LAPS,
+    trackWidth: TRACK_WIDTH,
+    trackHalfWidth: TRACK_HALF_WIDTH,
+    usableHalfWidth: TRACK_HALF_WIDTH - 1.8,
+    perimeter: INTERLAGOS_CIRCUIT.totalLength,
+    ds: INTERLAGOS_CIRCUIT.ds,
+    samples: INTERLAGOS_CIRCUIT.samples,
+  },
+  daytona: {
+    style: 'daytona',
+    totalLaps: TOTAL_LAPS,
+    trackWidth: DAYTONA_TRACK_WIDTH,
+    trackHalfWidth: DAYTONA_HALF_WIDTH,
+    usableHalfWidth: DAYTONA_HALF_WIDTH - 1.5,
+    perimeter: DAYTONA_CIRCUIT.totalLength,
+    ds: DAYTONA_CIRCUIT.ds,
+    samples: DAYTONA_CIRCUIT.samples,
+  },
+};
+
+export function getCircuitConfig(trackStyle: RaceTrackStyle = 'interlagos'): CircuitConfig {
+  return CIRCUIT_REGISTRY[trackStyle] || CIRCUIT_REGISTRY.interlagos;
+}
+
+// Legacy default Interlagos exports kept intact
+export const TRACK_P = INTERLAGOS_CIRCUIT.totalLength;
+export const CIRCUIT_SAMPLES = INTERLAGOS_CIRCUIT.samples;
+
 const TERRAIN_SAMPLE_STEP = 4;
 
 function lerpAngle(a: number, b: number, t: number): number {
@@ -306,17 +495,25 @@ function lerpAngle(a: number, b: number, t: number): number {
   return a + diff * t;
 }
 
-export function getCircuitPosition(progressDistance: number, laneOffsetMeters = 0): TrackPose {
-  let lapDist = progressDistance % TRACK_P;
-  if (lapDist < 0) lapDist += TRACK_P;
+export function getCircuitPosition(
+  progressDistance: number,
+  laneOffsetMeters = 0,
+  trackStyle: RaceTrackStyle = 'interlagos'
+): TrackPose {
+  const cfg = getCircuitConfig(trackStyle);
+  const perimeter = cfg.perimeter;
+  const samples = cfg.samples;
 
-  const exactIdx = (lapDist / TRACK_P) * TRACK_SAMPLES;
+  let lapDist = progressDistance % perimeter;
+  if (lapDist < 0) lapDist += perimeter;
+
+  const exactIdx = (lapDist / perimeter) * TRACK_SAMPLES;
   const idx0 = Math.floor(exactIdx) % TRACK_SAMPLES;
   const idx1 = (idx0 + 1) % TRACK_SAMPLES;
   const f = exactIdx - Math.floor(exactIdx);
 
-  const s0 = CIRCUIT_SAMPLES[idx0];
-  const s1 = CIRCUIT_SAMPLES[idx1];
+  const s0 = samples[idx0];
+  const s1 = samples[idx1];
 
   const tx = s0.tx + (s1.tx - s0.tx) * f;
   const ty = s0.ty + (s1.ty - s0.ty) * f;
@@ -327,11 +524,14 @@ export function getCircuitPosition(progressDistance: number, laneOffsetMeters = 
   const cx = s0.x + (s1.x - s0.x) * f;
   const cy = s0.y + (s1.y - s0.y) * f;
   const cz = s0.z + (s1.z - s0.z) * f;
+  const bankAngle = s0.bankAngle + (s1.bankAngle - s0.bankAngle) * f;
+  const cosB = Math.cos(bankAngle);
+  const sinB = Math.sin(bankAngle);
 
   return {
-    x: cx + nx * laneOffsetMeters,
-    y: cy,
-    z: cz + nz * laneOffsetMeters,
+    x: cx + nx * (laneOffsetMeters * cosB),
+    y: cy + laneOffsetMeters * sinB,
+    z: cz + nz * (laneOffsetMeters * cosB),
     tx,
     ty,
     tz,
@@ -339,6 +539,7 @@ export function getCircuitPosition(progressDistance: number, laneOffsetMeters = 
     nz,
     angle: lerpAngle(s0.angle, s1.angle, f),
     pitchAngle: s0.pitchAngle + (s1.pitchAngle - s0.pitchAngle) * f,
+    bankAngle,
     curvature: s0.curvature + (s1.curvature - s0.curvature) * f,
     signedCurvature: s0.signedCurvature + (s1.signedCurvature - s0.signedCurvature) * f,
     idealLane: s0.idealLane + (s1.idealLane - s0.idealLane) * f,
@@ -348,11 +549,15 @@ export function getCircuitPosition(progressDistance: number, laneOffsetMeters = 
   };
 }
 
-export function getLookaheadCurvature(progressDistance: number, lookaheadMeters: number): number {
+export function getLookaheadCurvature(
+  progressDistance: number,
+  lookaheadMeters: number,
+  trackStyle: RaceTrackStyle = 'interlagos'
+): number {
   const step = 6;
   let maxK = 0;
   for (let d = 0; d <= lookaheadMeters; d += step) {
-    const pose = getCircuitPosition(progressDistance + d, 0);
+    const pose = getCircuitPosition(progressDistance + d, 0, trackStyle);
     if (pose.curvature > maxK) maxK = pose.curvature;
   }
   return maxK;
@@ -360,14 +565,15 @@ export function getLookaheadCurvature(progressDistance: number, lookaheadMeters:
 
 export function getUpcomingCornerInfo(
   progressDistance: number,
-  lookaheadMeters: number
+  lookaheadMeters: number,
+  trackStyle: RaceTrackStyle = 'interlagos'
 ): { distance: number; curvature: number; signedCurvature: number } {
   const step = 5;
   let bestDist = lookaheadMeters;
   let maxK = 0;
   let maxSignedK = 0;
   for (let d = 4; d <= lookaheadMeters; d += step) {
-    const pose = getCircuitPosition(progressDistance + d, 0);
+    const pose = getCircuitPosition(progressDistance + d, 0, trackStyle);
     if (pose.curvature > maxK) {
       maxK = pose.curvature;
       maxSignedK = pose.signedCurvature;
@@ -377,14 +583,16 @@ export function getUpcomingCornerInfo(
   return { distance: bestDist, curvature: maxK, signedCurvature: maxSignedK };
 }
 
-/**
- * Computes minimum horizontal distance from (x, z) to the circuit centerline and the corresponding road elevation.
- */
-export function getNearestTrackInfo(x: number, z: number): { dist: number; trackY: number; sample: TrackSample } {
+export function getNearestTrackInfo(
+  x: number,
+  z: number,
+  trackStyle: RaceTrackStyle = 'interlagos'
+): { dist: number; trackY: number; sample: TrackSample } {
+  const samples = getCircuitConfig(trackStyle).samples;
   let bestIdx = 0;
   let bestDistSq = Infinity;
   for (let i = 0; i < TRACK_SAMPLES; i += TERRAIN_SAMPLE_STEP) {
-    const s = CIRCUIT_SAMPLES[i];
+    const s = samples[i];
     const dx = x - s.x;
     const dz = z - s.z;
     const dSq = dx * dx + dz * dz;
@@ -394,11 +602,10 @@ export function getNearestTrackInfo(x: number, z: number): { dist: number; track
     }
   }
 
-  // Local refinement
   let refinedIdx = bestIdx;
   for (let offset = -TERRAIN_SAMPLE_STEP; offset <= TERRAIN_SAMPLE_STEP; offset++) {
     const idx = (bestIdx + offset + TRACK_SAMPLES) % TRACK_SAMPLES;
-    const s = CIRCUIT_SAMPLES[idx];
+    const s = samples[idx];
     const dx = x - s.x;
     const dz = z - s.z;
     const dSq = dx * dx + dz * dz;
@@ -408,7 +615,7 @@ export function getNearestTrackInfo(x: number, z: number): { dist: number; track
     }
   }
 
-  const sample = CIRCUIT_SAMPLES[refinedIdx];
+  const sample = samples[refinedIdx];
   return {
     dist: Math.sqrt(bestDistSq),
     trackY: sample.y,
@@ -416,35 +623,68 @@ export function getNearestTrackInfo(x: number, z: number): { dist: number; track
   };
 }
 
-function smoothstep(edge0: number, edge1: number, x: number): number {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
+export function terrainHeightAt(
+  x: number,
+  z: number,
+  trackStyle: RaceTrackStyle = 'interlagos'
+): number {
+  if (trackStyle === 'daytona') {
+    const { dist, sample } = getNearestTrackInfo(x, z, 'daytona');
+    const signedLat = (x - sample.x) * sample.nx + (z - sample.z) * sample.nz;
+    const cosB = Math.max(0.5, Math.cos(sample.bankAngle));
+    const sinB = Math.sin(sample.bankAngle);
 
-/**
- * Continuous 3D Interlagos terrain heightfield:
- * - Conforms smoothly beneath the asphalt, pit lane, and grandstands (never poking through the track)
- * - Carves a natural basin for the Lago de Interlagos near Descida do Lago
- * - Rises gently into São Paulo hillsides around the outer perimeter
- */
-export function terrainHeightAt(x: number, z: number): number {
-  const { dist, trackY } = getNearestTrackInfo(x, z);
+    // Carved Lake Lloyd depression inside the Daytona infield
+    const ldx = (x - DAYTONA_LAKE_CENTER.x) / DAYTONA_LAKE_CENTER.radiusX;
+    const ldz = (z - DAYTONA_LAKE_CENTER.z) / DAYTONA_LAKE_CENTER.radiusZ;
+    const lakeRadial = Math.sqrt(ldx * ldx + ldz * ldz);
 
-  // Subtle natural rolling hills outside the circuit corridor
+    let h = 0;
+
+    // Gentle Florida coastal berm sloping down outside the outer SAFER wall
+    if (signedLat > -DAYTONA_HALF_WIDTH && dist < DAYTONA_HALF_WIDTH + 22) {
+      const bankSlopeY = Math.max(0, sample.y + (signedLat / cosB) * sinB - 0.38);
+      if (signedLat <= DAYTONA_HALF_WIDTH + 2) {
+        h = bankSlopeY;
+      } else {
+        const outerEdgeY = sample.y + DAYTONA_HALF_WIDTH * sinB - 0.35;
+        const bermDrop = smoothstep(DAYTONA_HALF_WIDTH + 2, DAYTONA_HALF_WIDTH + 22, signedLat);
+        h = outerEdgeY * (1 - bermDrop);
+      }
+    }
+
+    // Slight scenic coastal mounds far beyond the stadium perimeter
+    const radialOut = Math.hypot(x * 0.72, z * 1.12);
+    h += smoothstep(235, 360, radialOut) * 4.5;
+
+    if (lakeRadial < 1.32) {
+      const basinFactor = 1 - smoothstep(0.68, 1.32, lakeRadial);
+      const basinTargetY = DAYTONA_LAKE_CENTER.y - 1.35;
+      h = h * (1 - basinFactor) + basinTargetY * basinFactor;
+    }
+
+    // Strict clearance directly beneath banked asphalt & inner apron
+    if (dist < DAYTONA_HALF_WIDTH + 3.0) {
+      const surfaceY = Math.max(0, sample.y + (signedLat / cosB) * sinB);
+      h = Math.min(h, Math.max(-0.08, surfaceY - 0.28));
+    }
+
+    return h;
+  }
+
+  const { dist, trackY } = getNearestTrackInfo(x, z, 'interlagos');
+
   const rollingHills =
     Math.sin(x * 0.011 + 0.5) * Math.cos(z * 0.013 - 0.3) * 4.5 +
     Math.sin(x * 0.024 - z * 0.018) * 1.8;
 
-  // Outer Sao Paulo ridge rise beyond circuit bounds
   const radialOut = Math.hypot(x * 0.78, z * 0.92);
   const perimeterRise = smoothstep(185, 340, radialOut) * 18.0;
 
-  // Lake depression in the infield near Descida do Lago (carved cleanly below LAKE_CENTER.y = -1.15)
   const ldx = (x - LAKE_CENTER.x) / LAKE_CENTER.radiusX;
   const ldz = (z - LAKE_CENTER.z) / LAKE_CENTER.radiusZ;
   const lakeRadial = Math.sqrt(ldx * ldx + ldz * ldz);
 
-  // Smooth terraced plateau strictly for Pit Lane & Prédio dos Boxes (x in [-72, 126], z in [106, 139])
   const pitXBlend = smoothstep(-72, -54, x) * (1 - smoothstep(114, 126, x));
   const pitZBlend = smoothstep(106, 111, z) * (1 - smoothstep(134, 139, z));
   const pitBlend = pitXBlend * pitZBlend;
@@ -452,12 +692,10 @@ export function terrainHeightAt(x: number, z: number): number {
   const baseTrackBed = trackY - 0.16;
   const naturalTarget = Math.max(-2.4, trackY * 0.68 + 2.2 + rollingHills + perimeterRise);
 
-  // Keep terrain snugly tucked under the track bed up to 13.8m from centerline, then blend outward
   const roadBlend = smoothstep(TRACK_HALF_WIDTH + 3.8, 52, dist);
   let h = baseTrackBed * (1 - roadBlend) + naturalTarget * roadBlend;
 
   if (pitBlend > 0) {
-    // Match Subida dos Boxes elevation across Pit Lane & Pit Building apron
     const pitTrackY =
       x <= 25
         ? 6.4 + Math.max(0, Math.min(1, (x + 92) / 117)) * 7.0
@@ -465,14 +703,12 @@ export function terrainHeightAt(x: number, z: number): number {
     h = h * (1 - pitBlend) + (pitTrackY - 0.28) * pitBlend;
   }
 
-  // Carve lake bowl beneath LAKE_CENTER.y (-1.15) with sloped shoreline bank
   if (lakeRadial < 1.38) {
     const basinFactor = 1 - smoothstep(0.68, 1.38, lakeRadial);
     const basinTargetY = LAKE_CENTER.y - 1.45;
     h = h * (1 - basinFactor) + basinTargetY * basinFactor;
   }
 
-  // Enforce strict clearance directly under asphalt & kerbs so terrain never clips
   if (dist < TRACK_HALF_WIDTH + 3.0) {
     h = Math.min(h, trackY - 0.16);
   }
@@ -480,15 +716,12 @@ export function terrainHeightAt(x: number, z: number): number {
   return h;
 }
 
-/**
- * Generates the sculpted 3D Interlagos terrain BufferGeometry with vertex colors
- * (soil shoulders, lush mowed turf, hillside grass, and sandy lake bank).
- */
-export function createTerrainGeometry(): THREE.BufferGeometry {
-  const width = 760;
-  const depth = 680;
-  const segX = 144;
-  const segZ = 128;
+export function createTerrainGeometry(trackStyle: RaceTrackStyle = 'interlagos'): THREE.BufferGeometry {
+  const isDaytona = trackStyle === 'daytona';
+  const width = isDaytona ? 900 : 760;
+  const depth = isDaytona ? 640 : 680;
+  const segX = isDaytona ? 156 : 144;
+  const segZ = isDaytona ? 120 : 128;
 
   const geom = new THREE.PlaneGeometry(width, depth, segX, segZ);
   geom.rotateX(-Math.PI / 2);
@@ -500,30 +733,49 @@ export function createTerrainGeometry(): THREE.BufferGeometry {
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
-    const y = terrainHeightAt(x, z);
+    const y = terrainHeightAt(x, z, trackStyle);
     pos.setY(i, y);
 
-    const { dist } = getNearestTrackInfo(x, z);
-    const ldx = (x - LAKE_CENTER.x) / LAKE_CENTER.radiusX;
-    const ldz = (z - LAKE_CENTER.z) / LAKE_CENTER.radiusZ;
-    const lakeRadial = Math.sqrt(ldx * ldx + ldz * ldz);
+    if (isDaytona) {
+      const { dist } = getNearestTrackInfo(x, z, 'daytona');
+      const ldx = (x - DAYTONA_LAKE_CENTER.x) / DAYTONA_LAKE_CENTER.radiusX;
+      const ldz = (z - DAYTONA_LAKE_CENTER.z) / DAYTONA_LAKE_CENTER.radiusZ;
+      const lakeRadial = Math.sqrt(ldx * ldx + ldz * ldz);
 
-    if (lakeRadial < 1.12) {
-      // Sandy / damp earth shoreline around Lago de Interlagos
-      const shoreMix = smoothstep(0.75, 1.12, lakeRadial);
-      c.setRGB(
-        0.34 * (1 - shoreMix) + 0.24 * shoreMix,
-        0.31 * (1 - shoreMix) + 0.42 * shoreMix,
-        0.22 * (1 - shoreMix) + 0.17 * shoreMix
-      );
-    } else if (dist < TRACK_HALF_WIDTH + 4.5) {
-      // Darker compacted shoulder turf right along kerbs
-      c.setRGB(0.24, 0.42, 0.18);
+      if (lakeRadial < 1.12) {
+        const shoreMix = smoothstep(0.76, 1.12, lakeRadial);
+        c.setRGB(
+          0.42 * (1 - shoreMix) + 0.22 * shoreMix,
+          0.38 * (1 - shoreMix) + 0.48 * shoreMix,
+          0.26 * (1 - shoreMix) + 0.18 * shoreMix
+        );
+      } else if (dist < DAYTONA_HALF_WIDTH + 6) {
+        c.setRGB(0.24, 0.46, 0.18);
+      } else {
+        const stripe = ((Math.floor((x + 400) / 14) % 2) === 0) ? 0.025 : -0.02;
+        const n = Math.sin(x * 0.04) * Math.cos(z * 0.04) * 0.025;
+        c.setRGB(0.22 + stripe + n, 0.50 + stripe + n, 0.18 + n * 0.5);
+      }
     } else {
-      // Natural São Paulo grass variation by elevation and organic noise
-      const n = Math.sin(x * 0.045) * Math.cos(z * 0.045) * 0.04;
-      const elevTint = Math.min(0.08, Math.max(-0.04, y * 0.003));
-      c.setRGB(0.22 + elevTint + n, 0.48 + elevTint * 0.5 + n, 0.18 + n * 0.5);
+      const { dist } = getNearestTrackInfo(x, z, 'interlagos');
+      const ldx = (x - LAKE_CENTER.x) / LAKE_CENTER.radiusX;
+      const ldz = (z - LAKE_CENTER.z) / LAKE_CENTER.radiusZ;
+      const lakeRadial = Math.sqrt(ldx * ldx + ldz * ldz);
+
+      if (lakeRadial < 1.12) {
+        const shoreMix = smoothstep(0.75, 1.12, lakeRadial);
+        c.setRGB(
+          0.34 * (1 - shoreMix) + 0.24 * shoreMix,
+          0.31 * (1 - shoreMix) + 0.42 * shoreMix,
+          0.22 * (1 - shoreMix) + 0.17 * shoreMix
+        );
+      } else if (dist < TRACK_HALF_WIDTH + 4.5) {
+        c.setRGB(0.24, 0.42, 0.18);
+      } else {
+        const n = Math.sin(x * 0.045) * Math.cos(z * 0.045) * 0.04;
+        const elevTint = Math.min(0.08, Math.max(-0.04, y * 0.003));
+        c.setRGB(0.22 + elevTint + n, 0.48 + elevTint * 0.5 + n, 0.18 + n * 0.5);
+      }
     }
 
     colors[i * 3] = c.r;
@@ -538,8 +790,8 @@ export function createTerrainGeometry(): THREE.BufferGeometry {
 }
 
 /**
- * Builds a 3D ribbon BufferGeometry along the circuit centerline between [leftOffset, rightOffset]
- * with correct counter-clockwise (+Y upward) triangle winding so FrontSide renders crisply from above.
+ * Builds a 3D banked ribbon BufferGeometry along the circuit centerline between [leftOffset, rightOffset]
+ * with correct counter-clockwise (+Y upward) triangle winding.
  */
 export function createCircuitRibbonGeometry(
   leftOffset: number,
@@ -547,8 +799,14 @@ export function createCircuitRibbonGeometry(
   yOffset = 0,
   uvRepeatLength = 18,
   startFraction = 0,
-  endFraction = 1
+  endFraction = 1,
+  trackStyle: RaceTrackStyle = 'interlagos',
+  flatYOverride?: number
 ): THREE.BufferGeometry {
+  const cfg = getCircuitConfig(trackStyle);
+  const samples = cfg.samples;
+  const ds = cfg.ds;
+
   const closed = startFraction === 0 && endFraction === 1;
   const startIdx = Math.floor(startFraction * TRACK_SAMPLES);
   const endIdx = closed ? TRACK_SAMPLES : Math.floor(endFraction * TRACK_SAMPLES);
@@ -560,23 +818,46 @@ export function createCircuitRibbonGeometry(
 
   for (let k = 0; k < count; k++) {
     const sampleIdx = (startIdx + k) % TRACK_SAMPLES;
-    const s = CIRCUIT_SAMPLES[sampleIdx];
-    const dist = (startIdx + k) * CIRCUIT_DS;
+    const s = samples[sampleIdx];
+    const dist = (startIdx + k) * ds;
     const vCoord = dist / uvRepeatLength;
 
-    const lx = s.x + s.nx * leftOffset;
-    const lz = s.z + s.nz * leftOffset;
-    const rx = s.x + s.nx * rightOffset;
-    const rz = s.z + s.nz * rightOffset;
-    const vy = s.y + yOffset;
+    const cosB = Math.cos(s.bankAngle);
+    const sinB = Math.sin(s.bankAngle);
+
+    let lx: number;
+    let lz: number;
+    let ly: number;
+    let rx: number;
+    let rz: number;
+    let ry: number;
+
+    if (flatYOverride !== undefined) {
+      const anchorEdge = rightOffset * cosB;
+      const apronWidth = leftOffset - rightOffset;
+      rx = s.x + s.nx * anchorEdge;
+      rz = s.z + s.nz * anchorEdge;
+      ry = flatYOverride + yOffset;
+      lx = s.x + s.nx * (anchorEdge + apronWidth);
+      lz = s.z + s.nz * (anchorEdge + apronWidth);
+      ly = flatYOverride + yOffset;
+    } else {
+      lx = s.x + s.nx * (leftOffset * cosB);
+      lz = s.z + s.nz * (leftOffset * cosB);
+      ly = s.y + leftOffset * sinB + yOffset;
+
+      rx = s.x + s.nx * (rightOffset * cosB);
+      rz = s.z + s.nz * (rightOffset * cosB);
+      ry = s.y + rightOffset * sinB + yOffset;
+    }
 
     const baseVert = k * 2;
     positions[baseVert * 3] = lx;
-    positions[baseVert * 3 + 1] = vy;
+    positions[baseVert * 3 + 1] = ly;
     positions[baseVert * 3 + 2] = lz;
 
     positions[(baseVert + 1) * 3] = rx;
-    positions[(baseVert + 1) * 3 + 1] = vy;
+    positions[(baseVert + 1) * 3 + 1] = ry;
     positions[(baseVert + 1) * 3 + 2] = rz;
 
     uvs[baseVert * 2] = 0;
@@ -590,7 +871,6 @@ export function createCircuitRibbonGeometry(
       const b = baseVert + 1;
       const c = baseVert + 2;
       const d = baseVert + 3;
-      // Counter-clockwise winding viewed from +Y so FrontSide faces upward!
       indices.push(a, b, c);
       indices.push(b, d, c);
     }
@@ -605,10 +885,6 @@ export function createCircuitRibbonGeometry(
   return geom;
 }
 
-/**
- * Builds the dedicated Interlagos Pit Lane ribbon running along the inside of Reta dos Boxes
- * (entry before Curva do Café -> pit boxes -> exit past S do Senna T1).
- */
 export function createPitLaneRibbonGeometry(halfWidth = 3.6, yOffset = 0.015): THREE.BufferGeometry {
   const pitPoints = [
     new THREE.Vector3(-70, 7.5, 135),
@@ -621,8 +897,35 @@ export function createPitLaneRibbonGeometry(halfWidth = 3.6, yOffset = 0.015): T
     new THREE.Vector3(124, 15.8, 132),
   ];
 
-  const curve = new THREE.CatmullRomCurve3(pitPoints, false, 'catmullrom', 0.45);
-  const segs = 80;
+  return buildSplineRibbon(pitPoints, halfWidth, yOffset, 80, 14);
+}
+
+/**
+ * Builds the flat Daytona Infield Pit Road ribbon entering off Turn 4, running inside the Tri-Oval apron,
+ * and merging cleanly back after Turn 1.
+ */
+export function createDaytonaPitLaneGeometry(halfWidth = 4.2, yOffset = 0.018): THREE.BufferGeometry {
+  const pitPoints = [
+    new THREE.Vector3(-155, 0, 96),
+    new THREE.Vector3(-124, 0, 76),
+    new THREE.Vector3(-72, 0, 66),
+    new THREE.Vector3(0, 0, 66),
+    new THREE.Vector3(72, 0, 66),
+    new THREE.Vector3(124, 0, 76),
+    new THREE.Vector3(155, 0, 96),
+  ];
+
+  return buildSplineRibbon(pitPoints, halfWidth, yOffset, 90, 14);
+}
+
+function buildSplineRibbon(
+  points: THREE.Vector3[],
+  halfWidth: number,
+  yOffset: number,
+  segs: number,
+  uvRepeat: number
+): THREE.BufferGeometry {
+  const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.45);
   const length = curve.getLength();
   const count = segs + 1;
 
@@ -647,7 +950,7 @@ export function createPitLaneRibbonGeometry(halfWidth = 3.6, yOffset = 0.015): T
     positions[(baseVert + 1) * 3 + 1] = p.y + yOffset;
     positions[(baseVert + 1) * 3 + 2] = p.z + nz * halfWidth;
 
-    const vCoord = (t * length) / 14;
+    const vCoord = (t * length) / uvRepeat;
     uvs[baseVert * 2] = 0;
     uvs[baseVert * 2 + 1] = vCoord;
     uvs[(baseVert + 1) * 2] = 1;
@@ -672,18 +975,19 @@ export function createPitLaneRibbonGeometry(halfWidth = 3.6, yOffset = 0.015): T
   return geom;
 }
 
-/**
- * Builds an extruded 3D vertical safety wall / FIA catch barrier ribbon following the circuit elevation.
- * Automatically omits barrier segments that would intrude upon another leg of the circuit or pit apron.
- */
 export function createCircuitBarrierGeometry(
   offset: number,
   height = 1.25,
   thickness = 0.65,
   yBaseOffset = -0.15,
   startFraction = 0,
-  endFraction = 1
+  endFraction = 1,
+  trackStyle: RaceTrackStyle = 'interlagos',
+  flatBaseY?: number
 ): THREE.BufferGeometry {
+  const cfg = getCircuitConfig(trackStyle);
+  const samples = cfg.samples;
+
   const closed = startFraction === 0 && endFraction === 1;
   const startIdx = Math.floor(startFraction * TRACK_SAMPLES);
   const endIdx = closed ? TRACK_SAMPLES : Math.floor(endFraction * TRACK_SAMPLES);
@@ -699,35 +1003,43 @@ export function createCircuitBarrierGeometry(
 
   for (let k = 0; k < count; k++) {
     const sampleIdx = (startIdx + k) % TRACK_SAMPLES;
-    const s = CIRCUIT_SAMPLES[sampleIdx];
-    const cx = s.x + s.nx * offset;
-    const cz = s.z + s.nz * offset;
-    const ix = s.x + s.nx * innerOff;
-    const iz = s.z + s.nz * innerOff;
-    const ox = s.x + s.nx * outerOff;
-    const oz = s.z + s.nz * outerOff;
-    const yb = s.y + yBaseOffset;
+    const s = samples[sampleIdx];
 
-    // Ensure barrier never crosses any other part of the circuit (e.g. tight hairpins)
-    const nearest = getNearestTrackInfo(cx, cz);
-    const isClear = nearest.dist >= TRACK_HALF_WIDTH + 2.8;
-    validAtStep[k] = isClear ? 1 : 0;
+    const cosB = flatBaseY !== undefined ? 1 : Math.cos(s.bankAngle);
+    const sinB = flatBaseY !== undefined ? 0 : Math.sin(s.bankAngle);
+
+    const cx = s.x + s.nx * (offset * cosB);
+    const cz = s.z + s.nz * (offset * cosB);
+    const ix = s.x + s.nx * (innerOff * cosB);
+    const iz = s.z + s.nz * (innerOff * cosB);
+    const ox = s.x + s.nx * (outerOff * cosB);
+    const oz = s.z + s.nz * (outerOff * cosB);
+
+    const yIn = flatBaseY !== undefined ? flatBaseY + yBaseOffset : s.y + innerOff * sinB + yBaseOffset;
+    const yOut = flatBaseY !== undefined ? flatBaseY + yBaseOffset : s.y + outerOff * sinB + yBaseOffset;
+
+    if (trackStyle === 'interlagos') {
+      const nearest = getNearestTrackInfo(cx, cz, 'interlagos');
+      validAtStep[k] = nearest.dist >= TRACK_HALF_WIDTH + 2.8 ? 1 : 0;
+    } else {
+      validAtStep[k] = 1;
+    }
 
     const v = k * 4;
     positions[v * 3] = ix;
-    positions[v * 3 + 1] = yb;
+    positions[v * 3 + 1] = yIn;
     positions[v * 3 + 2] = iz;
 
     positions[(v + 1) * 3] = ix;
-    positions[(v + 1) * 3 + 1] = yb + height;
+    positions[(v + 1) * 3 + 1] = yIn + height;
     positions[(v + 1) * 3 + 2] = iz;
 
     positions[(v + 2) * 3] = ox;
-    positions[(v + 2) * 3 + 1] = yb + height;
+    positions[(v + 2) * 3 + 1] = yOut + height;
     positions[(v + 2) * 3 + 2] = oz;
 
     positions[(v + 3) * 3] = ox;
-    positions[(v + 3) * 3 + 1] = yb;
+    positions[(v + 3) * 3 + 1] = yOut;
     positions[(v + 3) * 3 + 2] = oz;
 
     if (k > 0 && validAtStep[k] && validAtStep[k - 1]) {
@@ -746,4 +1058,19 @@ export function createCircuitBarrierGeometry(
   geom.computeVertexNormals();
   geom.computeBoundingSphere();
   return geom;
+}
+
+export function getCelebrationArenaPose(trackStyle: RaceTrackStyle = 'interlagos'): TrackPose {
+  if (trackStyle === 'daytona') {
+    const base = getCircuitPosition(4, 0, 'daytona');
+    return {
+      ...base,
+      x: base.x,
+      y: 0.01,
+      z: 126,
+      bankAngle: 0,
+      pitchAngle: 0,
+    };
+  }
+  return getCircuitPosition(6, 0, 'interlagos');
 }

@@ -183,6 +183,8 @@ export const useWheelActions = () => {
     }
 
     state.setWinSoundPlayedInRace(false);
+    state.setIsRaceReplayActive(false);
+    state.setPendingRaceDraw(null);
     state.setIsSpinning(true);
     if (!state.autoContinueElimination || !state.eliminationMode) {
       state.setWinner(null);
@@ -283,13 +285,25 @@ export const useWheelActions = () => {
     const isInstantSpin = isMysteryBox && fastSpin;
     let spinDurationMs = isInstantSpin ? 50 : actualSpinTime * 1000;
 
-    // If it's a 3D race, run a 100% forward solid-body physics race and wait until all racers cross the finish line
+    // If it's a 3D race, run a 100% forward solid-body physics race and let the simulation clock complete after the finish-line hold
+    let pendingRaceMetadata: {
+      winIndex: number;
+      currentValidItems: typeof currentValidItems;
+      winnerCrossTime: number;
+      lastCrossTime: number;
+    } | null = null;
     if (state.wheelType === 'race') {
-      const simResult = generateAuthenticRaceSimulation(slices, actualSpinTime, winnerId);
+      const simResult = generateAuthenticRaceSimulation(slices, actualSpinTime, winnerId, state.raceTrackStyle);
       state.setRacePodium(simResult.podium);
       state.setRaceSimulationCars(simResult.cars);
       if (!isInstantSpin) {
         spinDurationMs = RACE_START_DELAY_MS + Math.round(simResult.lastCrossTime * 1000) + 900;
+        pendingRaceMetadata = {
+          winIndex,
+          currentValidItems,
+          winnerCrossTime: simResult.winnerCrossTime,
+          lastCrossTime: simResult.lastCrossTime,
+        };
       }
     }
 
@@ -378,6 +392,12 @@ export const useWheelActions = () => {
       }
     }
 
+    if (pendingRaceMetadata) {
+      state.setPendingRaceDraw(pendingRaceMetadata);
+      state.setSpinTimeoutRef(null);
+      return;
+    }
+
     const newSpinTimeout = setTimeout(() => {
       const currentState = useAppStore.getState();
       currentState.setIsSpinning(false);
@@ -419,7 +439,6 @@ export const useWheelActions = () => {
         currentState.setWinner({ ...winningItem, isEliminated: false, type: 'grand_winner', drawId });
         currentState.setEliminationOverlayItem(null);
         currentState.setIsAutoEliminating(false);
-        // Disable the OTHER item magically to clean state since game is over
         const otherItem = currentValidItems.find(i => i.id !== winningItem.id);
         if (otherItem) {
            currentState.setItems(prev => prev.map(i => i.id === otherItem.id ? { ...i, enabled: false } : i));
@@ -447,8 +466,6 @@ export const useWheelActions = () => {
         ]);
       }
 
-      // Pity system weights are now computed dynamically from results history, no state update needed here.
-
       const finalState = useAppStore.getState();
       const finalVolume = finalState.soundEnabled ? finalState.masterVolume / 100 : 0;
       if (finalVolume > 0) {
@@ -474,6 +491,105 @@ export const useWheelActions = () => {
     state.setSpinTimeoutRef(newSpinTimeout);
   }, [slices]);
 
+  const completeRaceDraw = useCallback((enableAutoReplay: boolean = true) => {
+    const currentState = useAppStore.getState();
+    const pending = currentState.pendingRaceDraw;
+    if (!pending) return;
+
+    const { winIndex, currentValidItems } = pending;
+    const winningItem = currentValidItems[winIndex];
+    currentState.setPendingRaceDraw(null);
+    currentState.setIsSpinning(false);
+
+    if (!winningItem) return;
+
+    const isFinalRound = currentState.eliminationMode && currentValidItems.length === 2;
+    if (!currentState.eliminationMode || isFinalRound) {
+      stopContinuousAudio();
+    }
+
+    const drawId = crypto.randomUUID();
+    const type = isFinalRound ? 'grand_winner' : (currentState.eliminationMode ? 'eliminated' : 'winner');
+
+    if (currentState.eliminationMode && !isFinalRound) {
+      const round = currentState.eliminationRound;
+      currentState.setWinner({ ...winningItem, isEliminated: true, type: 'eliminated' });
+      const isAuto = currentState.isAutoEliminating || currentState.autoContinueElimination;
+      if (!isAuto) {
+        currentState.setEliminationOverlayItem({ ...winningItem, round });
+      } else {
+        currentState.setEliminationOverlayItem(null);
+      }
+      currentState.setEliminatedHistory(prev => [
+        {
+          id: crypto.randomUUID(),
+          itemId: winningItem.id,
+          text: winningItem.text,
+          color: winningItem.color,
+          round,
+          eliminatedAt: Date.now(),
+          rank: currentValidItems.length,
+        },
+        ...prev,
+      ]);
+      currentState.setEliminationRound(r => r + 1);
+    } else if (isFinalRound) {
+      const round = currentState.eliminationRound;
+      currentState.setWinner({ ...winningItem, isEliminated: false, type: 'grand_winner', drawId });
+      currentState.setEliminationOverlayItem(null);
+      currentState.setIsAutoEliminating(false);
+      const otherItem = currentValidItems.find(i => i.id !== winningItem.id);
+      if (otherItem) {
+        currentState.setItems(prev => prev.map(i => i.id === otherItem.id ? { ...i, enabled: false } : i));
+        currentState.setEliminatedHistory(prev => [
+          {
+            id: crypto.randomUUID(),
+            itemId: otherItem.id,
+            text: otherItem.text,
+            color: otherItem.color,
+            round,
+            eliminatedAt: Date.now(),
+            rank: 2,
+          },
+          ...prev,
+        ]);
+      }
+    } else {
+      currentState.setWinner({ ...winningItem, type: 'winner', drawId });
+    }
+
+    if (type !== 'eliminated') {
+      currentState.setResults((prev) => [
+        { ...winningItem, drawId, type, timestamp: Date.now() },
+        ...prev,
+      ]);
+      if (enableAutoReplay && currentState.raceSimulationCars.length > 0) {
+        currentState.setIsRaceReplayActive(true);
+      }
+    }
+
+    const finalState = useAppStore.getState();
+    const finalVolume = finalState.soundEnabled ? finalState.masterVolume / 100 : 0;
+    if (finalVolume > 0) {
+      if (finalState.winSoundPlayedInRace) {
+        // Already played when winner crossed finish line
+      } else if (finalState.eliminationMode && !isFinalRound) {
+        const genericCustomFail = finalState.customWinAudios.find(a => a.id === finalState.eliminationSoundType) || null;
+        playFailureSound(finalVolume, finalState.eliminationSoundType, genericCustomFail);
+      } else {
+        const customSound = winningItem.sound;
+        if (customSound && customSound !== "") {
+          const foundCustomAudio =
+            finalState.customWinAudios.find((a) => a.id === customSound) || null;
+          playWinSound(0.6, customSound, foundCustomAudio, finalVolume);
+        } else {
+          const genericCustomWin = finalState.customWinAudios.find(a => a.id === finalState.winSoundType) || null;
+          playWinSound(0.6, finalState.winSoundType, genericCustomWin, finalVolume);
+        }
+      }
+    }
+  }, []);
+
   return {
     handleAddEmptyItem,
     handleUpdateItem,
@@ -484,6 +600,7 @@ export const useWheelActions = () => {
     handleAddColor,
     handleRemoveColor,
     spinWheel,
+    completeRaceDraw,
     clearTimeouts,
     stopContinuousAudio,
     stopWinSound

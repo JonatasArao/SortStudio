@@ -106,6 +106,9 @@ export const useAppInitialization = () => {
           if (settings.centerBgColor !== undefined) state.setCenterBgColor(settings.centerBgColor);
           if (settings.penaltySaveWins !== undefined) state.setPenaltySaveWins(settings.penaltySaveWins);
           if (settings.testModeEnabled !== undefined) state.setTestModeEnabled(settings.testModeEnabled);
+          if (settings.raceTrackStyle !== undefined) {
+            state.setRaceTrackStyle(settings.raceTrackStyle === 'daytona' ? 'daytona' : 'interlagos');
+          }
         }
 
         const dbAudios = await getAudios().catch(() => undefined);
@@ -234,6 +237,7 @@ export const useAppInitialization = () => {
   const centerBgColor = useAppStore(s => s.centerBgColor);
   const penaltySaveWins = useAppStore(s => s.penaltySaveWins);
   const testModeEnabled = useAppStore(s => s.testModeEnabled);
+  const raceTrackStyle = useAppStore(s => s.raceTrackStyle);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -271,14 +275,15 @@ export const useAppInitialization = () => {
       uiDensity,
       centerBgColor,
       penaltySaveWins,
-      testModeEnabled
+      testModeEnabled,
+      raceTrackStyle
     });
   }, [
     isLoaded, spinTime, showConfetti, autoRemoveWinner, soundEnabled, 
     masterVolume, tickSoundType, spinSoundMode, winSoundType, textSize, 
     centerSize, isAdvancedEntries, eliminationMessage, grandWinnerMessage,
     eliminationMode, autoContinueElimination, balanceWeightsByWins, balanceWeightsMode, balanceScope, pitySystemEnabled, ignoreNewItemWeight, newItemWeightMode, showPitySystemVisually, antiRepetitionEnabled, antiRepetitionCount, eliminationSoundType,
-    eliminationSpinTime, wheelTheme, wheelScale, sliceBorderWidth, pointerStyle, uiDensity, centerBgColor, penaltySaveWins, testModeEnabled
+    eliminationSpinTime, wheelTheme, wheelScale, sliceBorderWidth, pointerStyle, uiDensity, centerBgColor, penaltySaveWins, testModeEnabled, raceTrackStyle
   ]);
 
   // Save Results

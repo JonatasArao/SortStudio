@@ -26,6 +26,7 @@ import {
   Moon,
   Check,
   AlertCircle,
+  Gauge,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../../store/useAppStore';
@@ -49,6 +50,8 @@ export const VisualSettings: React.FC = () => {
 
   const wheelType = useAppStore((s) => s.wheelType);
   const setWheelType = useAppStore((s) => s.setWheelType);
+  const raceTrackStyle = useAppStore((s) => s.raceTrackStyle);
+  const setRaceTrackStyle = useAppStore((s) => s.setRaceTrackStyle);
   const testModeEnabled = useAppStore((s) => s.testModeEnabled);
 
   const wheelTheme = useAppStore((s) => s.wheelTheme);
@@ -219,6 +222,57 @@ export const VisualSettings: React.FC = () => {
                 );
               })}
             </div>
+
+            {wheelType === 'race' && (
+              <div className="pt-3 mt-1 border-t border-[var(--studio-border)] space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-[var(--studio-text)] flex items-center gap-1.5">
+                    <Flag size={13} className="text-[var(--studio-accent-fg)]" />
+                    <span>{t('settings.general.raceTrackStyle', 'Personalização do Modo Corrida')}</span>
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    {
+                      id: 'interlagos' as const,
+                      title: t('settings.general.raceTrackInterlagos', 'Interlagos · Fórmula 1'),
+                      desc: t('settings.general.raceTrackInterlagosDesc', 'Circuito misto com elevações 3D, boxes e zonas de DRS.'),
+                      icon: Flag,
+                    },
+                    {
+                      id: 'daytona' as const,
+                      title: t('settings.general.raceTrackDaytona', 'Daytona Oval · NASCAR'),
+                      desc: t('settings.general.raceTrackDaytonaDesc', 'Tri-oval a 31°, Stock Cars com aerofólio e vácuo intenso.'),
+                      icon: Gauge,
+                    },
+                  ].map((option) => {
+                    const Icon = option.icon;
+                    const isSelected = raceTrackStyle === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setRaceTrackStyle(option.id)}
+                        className={`p-3 rounded-xl border text-left transition-colors flex flex-col gap-1 cursor-pointer ${
+                          isSelected
+                            ? 'border-[var(--studio-accent)] bg-[var(--studio-accent-soft)] ring-1 ring-[var(--studio-accent)]'
+                            : 'border-[var(--studio-border)] bg-[var(--studio-input)] hover:border-[var(--studio-border-strong)]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
+                            <Icon size={14} className={isSelected ? 'text-[var(--studio-accent-fg)]' : 'text-[var(--studio-text-muted)]'} />
+                            <span>{option.title}</span>
+                          </span>
+                          {isSelected && <Check size={14} className="text-[var(--studio-accent-fg)] shrink-0" />}
+                        </div>
+                        <p className="text-[11px] text-[var(--studio-text-muted)] leading-snug">{option.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* 2. Global Interface Themes */}

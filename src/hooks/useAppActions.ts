@@ -201,6 +201,7 @@ export const useAppActions = () => {
           antiRepetitionEnabled: state.antiRepetitionEnabled,
           antiRepetitionCount: state.antiRepetitionCount,
           wheelType: state.wheelType,
+          raceTrackStyle: state.raceTrackStyle,
         } : {}),
         ...(options.configVisual ? {
           wheelTheme: state.wheelTheme,
@@ -288,6 +289,9 @@ export const useAppActions = () => {
           const validModes = ['classic', 'horizon', 'mystery_box', 'race', 'penalty_shootout', 'test'];
           if (stateToSet.wheelType && !validModes.includes(stateToSet.wheelType)) {
             stateToSet.wheelType = 'classic';
+          }
+          if (stateToSet.raceTrackStyle && !['interlagos', 'daytona'].includes(stateToSet.raceTrackStyle)) {
+            stateToSet.raceTrackStyle = 'interlagos';
           }
 
           useAppStore.setState(stateToSet);

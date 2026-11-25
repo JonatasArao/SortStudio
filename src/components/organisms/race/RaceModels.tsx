@@ -3,9 +3,12 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import type { RaceTrackStyle } from '../../../types';
 import {
   TRACK_HALF_WIDTH,
   TRACK_WIDTH,
+  DAYTONA_HALF_WIDTH,
+  DAYTONA_TRACK_WIDTH,
   CIRCUIT_SAMPLES,
   TRACK_SAMPLES,
   CAR_VISUAL_SCALE,
@@ -17,9 +20,13 @@ import {
   DRS_ZONE_2_START,
   DRS_ZONE_2_END,
   LAKE_CENTER,
+  DAYTONA_LAKE_CENTER,
+  getCircuitConfig,
   getCircuitPosition,
+  getCelebrationArenaPose,
   createCircuitRibbonGeometry,
   createPitLaneRibbonGeometry,
+  createDaytonaPitLaneGeometry,
   createCircuitBarrierGeometry,
   createTerrainGeometry,
   terrainHeightAt,
@@ -28,7 +35,6 @@ import {
   LiveRacerTelemetry,
   SimFrame,
   SIM_FPS,
-  USABLE_HALF_WIDTH,
 } from './raceSimulation';
 
 // Pre-allocated helpers at module scope for Zero-GC in 60fps useFrame loops
@@ -38,22 +44,27 @@ const _fxColor = new THREE.Color();
 /**
  * Generates procedural studio environment reflections without external HDR network fetches.
  */
-export const ProceduralEnvironment = () => {
+export const ProceduralEnvironment = ({
+  trackStyle = 'interlagos',
+}: {
+  trackStyle?: RaceTrackStyle;
+}) => {
   const { gl, scene } = useThree();
+  const isDaytona = trackStyle === 'daytona';
 
   useEffect(() => {
     const pmrem = new THREE.PMREMGenerator(gl);
     pmrem.compileEquirectangularShader();
     const envTarget = pmrem.fromScene(new RoomEnvironment(), 0.04);
     scene.environment = envTarget.texture;
-    scene.environmentIntensity = 0.72;
+    scene.environmentIntensity = isDaytona ? 0.85 : 0.72;
 
     return () => {
       scene.environment = null;
       envTarget.dispose();
       pmrem.dispose();
     };
-  }, [gl, scene]);
+  }, [gl, scene, isDaytona]);
 
   const skyTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -62,20 +73,29 @@ export const ProceduralEnvironment = () => {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       const grad = ctx.createLinearGradient(0, 0, 0, 256);
-      grad.addColorStop(0.0, '#0369a1');
-      grad.addColorStop(0.28, '#0ea5e9');
-      grad.addColorStop(0.54, '#7dd3fc');
-      grad.addColorStop(0.76, '#bae6fd');
-      grad.addColorStop(0.88, '#e0f2fe');
-      grad.addColorStop(1.0, '#cbd5e1');
+      if (isDaytona) {
+        // Bright sunny Daytona 500 Florida coastal sky
+        grad.addColorStop(0.0, '#0284c7');
+        grad.addColorStop(0.28, '#0ea5e9');
+        grad.addColorStop(0.56, '#38bdf8');
+        grad.addColorStop(0.78, '#bae6fd');
+        grad.addColorStop(0.9, '#e0f2fe');
+        grad.addColorStop(1.0, '#f1f5f9');
+      } else {
+        grad.addColorStop(0.0, '#0369a1');
+        grad.addColorStop(0.28, '#0ea5e9');
+        grad.addColorStop(0.54, '#7dd3fc');
+        grad.addColorStop(0.76, '#bae6fd');
+        grad.addColorStop(0.88, '#e0f2fe');
+        grad.addColorStop(1.0, '#cbd5e1');
+      }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 512, 256);
 
-      // Soft high-altitude São Paulo afternoon clouds near horizon
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
-      for (let i = 0; i < 22; i++) {
+      ctx.fillStyle = isDaytona ? 'rgba(255, 255, 255, 0.36)' : 'rgba(255, 255, 255, 0.24)';
+      for (let i = 0; i < (isDaytona ? 26 : 22); i++) {
         const cx = ((i * 89 + 23) % 512);
-        const cy = 132 + ((i * 19) % 42);
+        const cy = (isDaytona ? 116 : 132) + ((i * 19) % 44);
         const rx = 28 + (i % 4) * 16;
         const ry = 7 + (i % 3) * 4;
         ctx.beginPath();
@@ -86,7 +106,7 @@ export const ProceduralEnvironment = () => {
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
-  }, []);
+  }, [isDaytona]);
 
   useEffect(() => {
     return () => {
@@ -96,10 +116,10 @@ export const ProceduralEnvironment = () => {
 
   return (
     <>
-      <color attach="background" args={['#bae6fd']} />
-      <fogExp2 attach="fog" args={['#cfe8f7', 0.00115]} />
+      <color attach="background" args={[isDaytona ? '#cce9fc' : '#bae6fd']} />
+      <fogExp2 attach="fog" args={[isDaytona ? '#e0f2fe' : '#cfe8f7', isDaytona ? 0.00072 : 0.00115]} />
       <mesh scale={[-1, 1, 1]}>
-        <sphereGeometry args={[640, 32, 24]} />
+        <sphereGeometry args={[720, 32, 24]} />
         <meshBasicMaterial map={skyTexture} side={THREE.BackSide} depthWrite={false} fog={false} />
       </mesh>
     </>
@@ -148,6 +168,81 @@ function createAsphaltTexture(maxAnisotropy: number) {
     ctx.fillRect(491, 0, 11, 512);
   }
 
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = maxAnisotropy;
+  return tex;
+}
+
+function createDaytonaAsphaltTexture(maxAnisotropy: number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Weathered Daytona oval tarmac with 3 distinct NASCAR racing grooves
+    ctx.fillStyle = '#2b303a';
+    ctx.fillRect(0, 0, 512, 512);
+
+    const grooves = ctx.createLinearGradient(0, 0, 512, 0);
+    grooves.addColorStop(0.0, 'rgba(18, 21, 28, 0.18)');
+    grooves.addColorStop(0.24, 'rgba(10, 12, 16, 0.34)');
+    grooves.addColorStop(0.5, 'rgba(9, 11, 16, 0.44)');
+    grooves.addColorStop(0.76, 'rgba(10, 12, 16, 0.34)');
+    grooves.addColorStop(1.0, 'rgba(18, 21, 28, 0.28)');
+    ctx.fillStyle = grooves;
+    ctx.fillRect(0, 0, 512, 512);
+
+    for (let i = 0; i < 8500; i++) {
+      const x = (i * 73) % 512;
+      const y = (i * 197 + Math.floor(i / 512) * 31) % 512;
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.11)';
+      ctx.fillRect(x, y, 2, 2);
+    }
+
+    // Iconic NASCAR Double Yellow Inner Apron Boundary Lines (u near 0)
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(7, 0, 7, 512);
+    ctx.fillRect(19, 0, 7, 512);
+
+    // Subtle dashed lane divider down middle groove
+    ctx.fillStyle = 'rgba(248, 250, 252, 0.28)';
+    for (let y = 0; y < 512; y += 64) {
+      ctx.fillRect(254, y, 4, 24);
+    }
+
+    // Crisp White Outer SAFER Wall Boundary Line (u near 1)
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(492, 0, 11, 512);
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = maxAnisotropy;
+  return tex;
+}
+
+function createApronTexture(maxAnisotropy: number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#333a47';
+    ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 1800; i++) {
+      const x = (i * 53) % 256;
+      const y = (i * 131) % 256;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.08)';
+      ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(8, 0, 5, 256);
+  }
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = THREE.ClampToEdgeWrapping;
@@ -291,126 +386,143 @@ function createContactShadowTexture() {
 const StartLightGantry = ({
   lightsCount,
   isLightsOut,
+  trackStyle = 'interlagos',
 }: {
   lightsCount: number;
   isLightsOut: boolean;
+  trackStyle?: RaceTrackStyle;
 }) => {
-  const startPose = useMemo(() => getCircuitPosition(0, 0), []);
+  const isDaytona = trackStyle === 'daytona';
+  const cfg = getCircuitConfig(trackStyle);
+  const halfW = cfg.trackHalfWidth;
+  const trackW = cfg.trackWidth;
+  const startPose = useMemo(() => getCircuitPosition(0, 0, trackStyle), [trackStyle]);
 
   return (
     <group position={[startPose.x, startPose.y, startPose.z]} rotation={[0, startPose.angle, 0]}>
-      {/* Two Steel Truss Towers anchored below road edge */}
-      <mesh position={[0, 4.1, TRACK_HALF_WIDTH + 1.5]} castShadow receiveShadow>
-        <boxGeometry args={[0.95, 9.6, 0.95]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.85} roughness={0.25} />
-      </mesh>
-      <mesh position={[0, 4.1, -TRACK_HALF_WIDTH - 1.5]} castShadow receiveShadow>
-        <boxGeometry args={[0.95, 9.6, 0.95]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.85} roughness={0.25} />
-      </mesh>
+      <group rotation={[-startPose.bankAngle, 0, startPose.pitchAngle]}>
+        {/* Two Steel Truss Towers anchored below road edge */}
+        <mesh position={[0, 4.3, halfW + 1.6]} castShadow receiveShadow>
+          <boxGeometry args={[1.0, 10.2, 1.0]} />
+          <meshStandardMaterial color={isDaytona ? '#0f172a' : '#1e293b'} metalness={0.85} roughness={0.25} />
+        </mesh>
+        <mesh position={[0, 4.3, -halfW - 1.6]} castShadow receiveShadow>
+          <boxGeometry args={[1.0, 10.2, 1.0]} />
+          <meshStandardMaterial color={isDaytona ? '#0f172a' : '#1e293b'} metalness={0.85} roughness={0.25} />
+        </mesh>
 
-      {/* Overhead Bridge Span */}
-      <mesh position={[0, 8.6, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.4, 0.9, TRACK_WIDTH + 4.4]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.88} roughness={0.18} />
-      </mesh>
+        {/* Overhead Bridge Span */}
+        <mesh position={[0, 9.0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.45, 0.95, trackW + 4.6]} />
+          <meshStandardMaterial color="#0f172a" metalness={0.88} roughness={0.18} />
+        </mesh>
 
-      {/* Brazilian GP Green/Yellow/Blue Timing Fascia (visible from grid & front cameras) */}
-      <mesh position={[-0.62, 8.6, 0]}>
-        <boxGeometry args={[0.25, 0.72, TRACK_WIDTH + 2.0]} />
-        <meshStandardMaterial color="#15803d" metalness={0.25} roughness={0.45} />
-      </mesh>
-      <mesh position={[-0.66, 8.26, 0]}>
-        <boxGeometry args={[0.22, 0.14, TRACK_WIDTH + 2.0]} />
-        <meshStandardMaterial color="#facc15" metalness={0.2} roughness={0.4} />
-      </mesh>
-      <mesh position={[0.62, 8.6, 0]}>
-        <boxGeometry args={[0.25, 0.72, TRACK_WIDTH + 2.0]} />
-        <meshStandardMaterial color="#15803d" metalness={0.25} roughness={0.45} />
-      </mesh>
-      <mesh position={[0.66, 8.26, 0]}>
-        <boxGeometry args={[0.22, 0.14, TRACK_WIDTH + 2.0]} />
-        <meshStandardMaterial color="#facc15" metalness={0.2} roughness={0.4} />
-      </mesh>
+        {/* Timing Fascia (Daytona 500 Royal Blue & Gold OR Interlagos Green & Yellow) */}
+        <mesh position={[-0.64, 9.0, 0]}>
+          <boxGeometry args={[0.26, 0.78, trackW + 2.2]} />
+          <meshStandardMaterial color={isDaytona ? '#0369a1' : '#15803d'} metalness={0.25} roughness={0.45} />
+        </mesh>
+        <mesh position={[-0.68, 8.64, 0]}>
+          <boxGeometry args={[0.22, 0.16, trackW + 2.2]} />
+          <meshStandardMaterial color={isDaytona ? '#f59e0b' : '#facc15'} metalness={0.2} roughness={0.4} />
+        </mesh>
+        <mesh position={[0.64, 9.0, 0]}>
+          <boxGeometry args={[0.26, 0.78, trackW + 2.2]} />
+          <meshStandardMaterial color={isDaytona ? '#0369a1' : '#15803d'} metalness={0.25} roughness={0.45} />
+        </mesh>
+        <mesh position={[0.68, 8.64, 0]}>
+          <boxGeometry args={[0.22, 0.16, trackW + 2.2]} />
+          <meshStandardMaterial color={isDaytona ? '#f59e0b' : '#facc15'} metalness={0.2} roughness={0.4} />
+        </mesh>
 
-      {/* Light Pod Housing */}
-      <mesh position={[0, 7.1, 0]} castShadow>
-        <boxGeometry args={[1.35, 1.45, 11.2]} />
-        <meshStandardMaterial color="#020617" metalness={0.9} roughness={0.15} />
-      </mesh>
+        {/* Light Pod Housing */}
+        <mesh position={[0, 7.4, 0]} castShadow>
+          <boxGeometry args={[1.35, 1.45, 11.2]} />
+          <meshStandardMaterial color="#020617" metalness={0.9} roughness={0.15} />
+        </mesh>
 
-      {/* 5 FIA Dual Light Columns facing -X directly toward the Starting Grid */}
-      {[-4.0, -2.0, 0, 2.0, 4.0].map((zOffset, idx) => {
-        const isRedLit = !isLightsOut && idx < lightsCount;
-        const isGreenLit = isLightsOut;
+        {/* 5 Dual Light Columns facing -X directly toward the Starting Grid */}
+        {[-4.0, -2.0, 0, 2.0, 4.0].map((zOffset, idx) => {
+          const isRedLit = !isLightsOut && idx < lightsCount;
+          const isGreenLit = isLightsOut;
 
-        return (
-          <group key={idx} position={[-0.7, 7.1, zOffset]}>
-            <mesh position={[0.04, 0, 0]}>
-              <boxGeometry args={[0.08, 1.25, 1.45]} />
-              <meshStandardMaterial color="#000000" roughness={0.9} />
-            </mesh>
-
-            {/* Top Dual Red Lights */}
-            {[-0.32, 0.32].map((lz, j) => (
-              <mesh key={`r-${j}`} position={[-0.03, 0.3, lz]}>
-                <sphereGeometry args={[0.19, 16, 16]} />
-                <meshStandardMaterial
-                  color={isRedLit ? '#ff1e1e' : '#220606'}
-                  emissive={isRedLit ? '#ff1e1e' : '#000000'}
-                  emissiveIntensity={isRedLit ? 5.5 : 0}
-                  roughness={0.2}
-                />
+          return (
+            <group key={idx} position={[-0.7, 7.4, zOffset]}>
+              <mesh position={[0.04, 0, 0]}>
+                <boxGeometry args={[0.08, 1.25, 1.45]} />
+                <meshStandardMaterial color="#000000" roughness={0.9} />
               </mesh>
-            ))}
 
-            {/* Bottom Dual Green Lights */}
-            {[-0.32, 0.32].map((lz, j) => (
-              <mesh key={`g-${j}`} position={[-0.03, -0.3, lz]}>
-                <sphereGeometry args={[0.19, 16, 16]} />
-                <meshStandardMaterial
-                  color={isGreenLit ? '#10b981' : '#022017'}
-                  emissive={isGreenLit ? '#10b981' : '#000000'}
-                  emissiveIntensity={isGreenLit ? 5.5 : 0}
-                  roughness={0.2}
-                />
-              </mesh>
-            ))}
-          </group>
-        );
-      })}
+              {/* Top Dual Red Lights */}
+              {[-0.32, 0.32].map((lz, j) => (
+                <mesh key={`r-${j}`} position={[-0.03, 0.3, lz]}>
+                  <sphereGeometry args={[0.19, 16, 16]} />
+                  <meshStandardMaterial
+                    color={isRedLit ? '#ff1e1e' : '#220606'}
+                    emissive={isRedLit ? '#ff1e1e' : '#000000'}
+                    emissiveIntensity={isRedLit ? 5.5 : 0}
+                    roughness={0.2}
+                  />
+                </mesh>
+              ))}
+
+              {/* Bottom Dual Green Lights */}
+              {[-0.32, 0.32].map((lz, j) => (
+                <mesh key={`g-${j}`} position={[-0.03, -0.3, lz]}>
+                  <sphereGeometry args={[0.19, 16, 16]} />
+                  <meshStandardMaterial
+                    color={isGreenLit ? '#10b981' : '#022017'}
+                    emissive={isGreenLit ? '#10b981' : '#000000'}
+                    emissiveIntensity={isGreenLit ? 5.5 : 0}
+                    roughness={0.2}
+                  />
+                </mesh>
+              ))}
+            </group>
+          );
+        })}
+      </group>
     </group>
   );
 };
 
-const StartingGridMarkings = ({ total }: { total: number }) => {
+const StartingGridMarkings = ({
+  total,
+  trackStyle = 'interlagos',
+}: {
+  total: number;
+  trackStyle?: RaceTrackStyle;
+}) => {
+  const usableHalfW = getCircuitConfig(trackStyle).usableHalfWidth;
   const slots = useMemo(() => {
     return Array.from({ length: total }).map((_, idx) => {
       const startDist = GRID_FIRST_DIST - idx * GRID_STEP_DIST;
       const laneSide = idx % 2 === 0 ? -GRID_LANE_MAG : GRID_LANE_MAG;
-      const laneOffset = laneSide * USABLE_HALF_WIDTH;
-      return getCircuitPosition(startDist, laneOffset);
+      const laneOffset = laneSide * usableHalfW;
+      return getCircuitPosition(startDist, laneOffset, trackStyle);
     });
-  }, [total]);
+  }, [total, trackStyle, usableHalfW]);
 
   return (
     <group>
       {slots.map((pos, idx) => (
-        <group key={idx} position={[pos.x, pos.y + 0.02, pos.z]} rotation={[0, pos.angle, pos.pitchAngle]}>
-          {/* Grid Box Front Line */}
-          <mesh position={[1.0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[0.2, 1.55]} />
-            <meshStandardMaterial color="#f8fafc" roughness={0.6} polygonOffset polygonOffsetFactor={-2} />
-          </mesh>
-          {/* Side Brackets */}
-          <mesh position={[0.58, 0, 0.74]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[0.9, 0.12]} />
-            <meshStandardMaterial color="#f8fafc" roughness={0.6} polygonOffset polygonOffsetFactor={-2} />
-          </mesh>
-          <mesh position={[0.58, 0, -0.74]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[0.9, 0.12]} />
-            <meshStandardMaterial color="#f8fafc" roughness={0.6} polygonOffset polygonOffsetFactor={-2} />
-          </mesh>
+        <group key={idx} position={[pos.x, pos.y + 0.02, pos.z]} rotation={[0, pos.angle, 0]}>
+          <group rotation={[-pos.bankAngle, 0, pos.pitchAngle]}>
+            {/* Grid Box Front Line */}
+            <mesh position={[1.0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[0.2, 1.55]} />
+              <meshStandardMaterial color="#f8fafc" roughness={0.6} polygonOffset polygonOffsetFactor={-2} />
+            </mesh>
+            {/* Side Brackets */}
+            <mesh position={[0.58, 0, 0.74]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[0.9, 0.12]} />
+              <meshStandardMaterial color="#f8fafc" roughness={0.6} polygonOffset polygonOffsetFactor={-2} />
+            </mesh>
+            <mesh position={[0.58, 0, -0.74]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[0.9, 0.12]} />
+              <meshStandardMaterial color="#f8fafc" roughness={0.6} polygonOffset polygonOffsetFactor={-2} />
+            </mesh>
+          </group>
         </group>
       ))}
     </group>
@@ -474,11 +586,17 @@ export const TrackEffectsPool = ({
   isSpinning,
   startPhase,
   isCelebrating = false,
+  isReplayActive = false,
+  simTimeRef,
+  timeScaleRef,
 }: {
   positionsRef: React.MutableRefObject<LiveRacerTelemetry[]>;
   isSpinning: boolean;
   startPhase: string;
   isCelebrating?: boolean;
+  isReplayActive?: boolean;
+  simTimeRef?: React.MutableRefObject<number>;
+  timeScaleRef?: React.MutableRefObject<number>;
 }) => {
   const SKID_COUNT = 540;
   const SPARK_COUNT = 160;
@@ -499,7 +617,7 @@ export const TrackEffectsPool = ({
   }, [skidGeom]);
 
   const skidCursorRef = useRef(0);
-  const lastSkidTimeRef = useRef(0);
+  const lastSkidTimeRef = useRef(-1);
 
   // Pre-allocated spark particle state arrays (Zero-GC)
   const sparkDataRef = useRef({
@@ -516,9 +634,9 @@ export const TrackEffectsPool = ({
     cursor: 0,
   });
 
-  // Clear pools only when returning to idle (keep marks during post-race celebration)
+  // Clear pools only when returning to idle (keep marks during replay & celebration)
   useEffect(() => {
-    if (!isSpinning && !isCelebrating) {
+    if (!isSpinning && !isCelebrating && !isReplayActive) {
       if (skidMeshRef.current) {
         _fxDummy.scale.set(0, 0, 0);
         _fxDummy.updateMatrix();
@@ -528,17 +646,19 @@ export const TrackEffectsPool = ({
         skidMeshRef.current.instanceMatrix.needsUpdate = true;
       }
       skidCursorRef.current = 0;
+      lastSkidTimeRef.current = -1;
     }
-  }, [isSpinning, isCelebrating]);
+  }, [isSpinning, isCelebrating, isReplayActive]);
 
   useFrame((state, delta) => {
-    const dt = Math.min(0.05, delta);
-    const elapsed = state.clock.elapsedTime;
+    const scale = isSpinning || isReplayActive ? (timeScaleRef?.current ?? 1) : 1;
+    const dt = Math.min(0.05, delta) * scale;
+    const elapsed = (isSpinning || isReplayActive) && simTimeRef ? simTimeRef.current : state.clock.elapsedTime;
     const cars = positionsRef.current;
 
     // 1. Stamp asphalt skid marks on hard braking, launch wheelspin, kerb slip, or celebratory donuts
-    if (skidMeshRef.current && cars && cars.length > 0 && ((isSpinning && startPhase === 'racing') || isCelebrating)) {
-      if (elapsed - lastSkidTimeRef.current >= 0.04) {
+    if (skidMeshRef.current && cars && cars.length > 0 && ((isSpinning && startPhase === 'racing') || isReplayActive || isCelebrating)) {
+      if (scale > 0 && (lastSkidTimeRef.current < 0 || Math.abs(elapsed - lastSkidTimeRef.current) >= 0.04)) {
         lastSkidTimeRef.current = elapsed;
         let updatedSkids = false;
 
@@ -559,8 +679,16 @@ export const TrackEffectsPool = ({
           for (let side = -1; side <= 1; side += 2) {
             const idx = skidCursorRef.current;
             skidCursorRef.current = (idx + 1) % SKID_COUNT;
-            _fxDummy.position.set(rearX + sideX * side * 0.7, tel.y + 0.022, rearZ + sideZ * side * 0.7);
-            _fxDummy.rotation.set(0, tel.angle, tel.pitchAngle || 0);
+            const bank = tel.bankAngle || 0;
+            const cosB = Math.cos(bank);
+            const sinB = Math.sin(bank);
+            const lat = side * 0.7;
+            _fxDummy.position.set(
+              rearX + sideX * lat * cosB,
+              tel.y + 0.022 + lat * sinB,
+              rearZ + sideZ * lat * cosB
+            );
+            _fxDummy.rotation.set(-bank, tel.angle, tel.pitchAngle || 0, 'YXZ');
             _fxDummy.scale.set(1.15, 1, 0.24);
             _fxDummy.updateMatrix();
             skidMeshRef.current.setMatrixAt(idx, _fxDummy.matrix);
@@ -577,7 +705,7 @@ export const TrackEffectsPool = ({
     // 2. Emit & advance titanium plank sparks under kerbs & high-speed compressions
     if (sparkMeshRef.current) {
       const sd = sparkDataRef.current;
-      if (cars && cars.length > 0 && isSpinning && startPhase === 'racing') {
+      if (scale > 0 && cars && cars.length > 0 && ((isSpinning && startPhase === 'racing') || isReplayActive)) {
         for (let c = 0; c < cars.length; c++) {
           const tel = cars[c];
           if (!tel || tel.sparks < 0.28) continue;
@@ -938,6 +1066,273 @@ const FormulaCarModel = ({
   );
 };
 
+/**
+ * Multi-part procedural NASCAR Cup Stock Car with full-bodied fastback silhouette,
+ * hood cowl scoop, dark greenhouse cabin, door number panels, Goodyear-style slicks,
+ * and pronounced rear spoiler blade.
+ */
+const StockCarModel = ({
+  color,
+  rainLightRef,
+  wheelRefs,
+  frontLeftSteerRef,
+  frontRightSteerRef,
+  shadowTex,
+  aeroTrailRef,
+}: {
+  color: string;
+  rainLightRef: React.RefObject<THREE.MeshStandardMaterial | null>;
+  wheelRefs: React.MutableRefObject<(THREE.Mesh | null)[]>;
+  frontLeftSteerRef: React.RefObject<THREE.Group | null>;
+  frontRightSteerRef: React.RefObject<THREE.Group | null>;
+  shadowTex: THREE.Texture;
+  aeroTrailRef: React.RefObject<THREE.Group | null>;
+}) => {
+  // Sculpted fastback NASCAR Next Gen chassis silhouette
+  const bodyGeom = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(-1.18, 0.11);
+    shape.lineTo(1.22, 0.10);
+    shape.lineTo(1.24, 0.28); // front bumper fascia
+    shape.lineTo(0.95, 0.34); // sculpted hood slope
+    shape.lineTo(0.42, 0.39); // cowl base
+    shape.lineTo(0.12, 0.64); // raked windshield
+    shape.lineTo(-0.36, 0.64); // flat roof
+    shape.lineTo(-0.88, 0.45); // fastback rear glass
+    shape.lineTo(-1.17, 0.42); // trunk decklid
+    shape.lineTo(-1.19, 0.24); // rear bumper
+    shape.closePath();
+
+    const geom = new THREE.ExtrudeGeometry(shape, {
+      depth: 0.88,
+      bevelEnabled: true,
+      bevelThickness: 0.04,
+      bevelSize: 0.035,
+      bevelSegments: 2,
+    });
+    geom.translate(0, 0, -0.44);
+    geom.computeVertexNormals();
+    return geom;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      bodyGeom.dispose();
+    };
+  }, [bodyGeom]);
+
+  return (
+    <group>
+      {/* Ground Contact Shadow */}
+      <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[3.25, 1.9]} />
+        <meshBasicMaterial map={shadowTex} transparent opacity={0.86} depthWrite={false} />
+      </mesh>
+
+      {/* Carbon Front Splitter & Full Underbody Floor */}
+      <mesh position={[0.04, 0.08, 0]} castShadow receiveShadow>
+        <boxGeometry args={[2.46, 0.045, 1.0]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.68} metalness={0.3} />
+      </mesh>
+
+      {/* Primary Painted NASCAR Stock Car Body */}
+      <mesh geometry={bodyGeom} castShadow receiveShadow>
+        <meshPhysicalMaterial
+          color={color}
+          metalness={0.42}
+          roughness={0.19}
+          clearcoat={1.0}
+          clearcoatRoughness={0.08}
+        />
+      </mesh>
+
+      {/* Racing Roof & Hood Center Accent Stripe */}
+      <mesh position={[0.04, 0.405, 0]} rotation={[0, 0, -0.05]}>
+        <boxGeometry args={[1.45, 0.02, 0.24]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.35} />
+      </mesh>
+      <mesh position={[-0.12, 0.678, 0]}>
+        <boxGeometry args={[0.52, 0.018, 0.28]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.35} />
+      </mesh>
+
+      {/* Hood Cowl Induction Intake */}
+      <mesh position={[0.62, 0.39, 0]} castShadow>
+        <boxGeometry args={[0.42, 0.055, 0.34]} />
+        <meshStandardMaterial color="#111827" roughness={0.5} metalness={0.35} />
+      </mesh>
+
+      {/* Front Grille & Dual Angled Headlight Decals */}
+      <mesh position={[1.26, 0.21, 0]}>
+        <boxGeometry args={[0.04, 0.14, 0.56]} />
+        <meshStandardMaterial color="#05070a" roughness={0.85} />
+      </mesh>
+      {[-0.34, 0.34].map((zPos, i) => (
+        <mesh key={`hl-${i}`} position={[1.255, 0.27, zPos]}>
+          <boxGeometry args={[0.035, 0.065, 0.17]} />
+          <meshStandardMaterial color="#f8fafc" emissive="#fef08a" emissiveIntensity={0.45} roughness={0.2} />
+        </mesh>
+      ))}
+
+      {/* Dark Tinted Windshield, Fastback Rear Glass & Side Greenhouse */}
+      <mesh position={[0.28, 0.51, 0]} rotation={[0, 0, -0.72]}>
+        <boxGeometry args={[0.03, 0.39, 0.78]} />
+        <meshPhysicalMaterial color="#090d16" metalness={0.95} roughness={0.06} clearcoat={1.0} />
+      </mesh>
+      <mesh position={[-0.64, 0.54, 0]} rotation={[0, 0, 1.21]}>
+        <boxGeometry args={[0.03, 0.52, 0.76]} />
+        <meshPhysicalMaterial color="#090d16" metalness={0.95} roughness={0.06} clearcoat={1.0} />
+      </mesh>
+      {[-0.47, 0.47].map((zPos, i) => (
+        <group key={`win-${i}`}>
+          <mesh position={[-0.1, 0.51, zPos]}>
+            <boxGeometry args={[0.62, 0.17, 0.03]} />
+            <meshPhysicalMaterial color="#090d16" metalness={0.9} roughness={0.08} />
+          </mesh>
+          {/* Crisp White NASCAR Door Number Panel */}
+          <mesh position={[0.02, 0.26, zPos + (zPos > 0 ? 0.015 : -0.015)]}>
+            <boxGeometry args={[0.42, 0.19, 0.02]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.35} />
+          </mesh>
+          {/* Side Rocker Exhaust Port */}
+          <mesh position={[-0.18, 0.115, zPos + (zPos > 0 ? 0.025 : -0.025)]}>
+            <boxGeometry args={[0.26, 0.04, 0.04]} />
+            <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.25} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Prominent NASCAR Rear Spoiler Blade & Support Struts */}
+      <group position={[-1.14, 0.54, 0]}>
+        <mesh rotation={[0, 0, -0.34]} castShadow>
+          <boxGeometry args={[0.17, 0.032, 0.96]} />
+          <meshPhysicalMaterial color="#0f172a" metalness={0.55} roughness={0.28} clearcoat={0.8} />
+        </mesh>
+        <mesh position={[0.02, 0.02, 0]} rotation={[0, 0, -0.34]}>
+          <boxGeometry args={[0.14, 0.036, 0.92]} />
+          <meshPhysicalMaterial color={color} metalness={0.45} roughness={0.22} clearcoat={1.0} />
+        </mesh>
+        {[-0.3, 0, 0.3].map((zPos, i) => (
+          <mesh key={`sp-strut-${i}`} position={[0.03, -0.06, zPos]}>
+            <boxGeometry args={[0.05, 0.1, 0.025]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.25} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Rear Brake / Bumper LED Strip */}
+      <mesh position={[-1.21, 0.29, 0]}>
+        <boxGeometry args={[0.04, 0.065, 0.68]} />
+        <meshStandardMaterial
+          ref={rainLightRef}
+          color="#ef4444"
+          emissive="#ef4444"
+          emissiveIntensity={0.45}
+          roughness={0.2}
+        />
+      </mesh>
+
+      {/* Front Left Wheel (Steerable) */}
+      <group ref={frontLeftSteerRef} position={[0.72, 0.21, 0.48]}>
+        <mesh
+          ref={(el) => {
+            wheelRefs.current[0] = el;
+          }}
+          rotation={[Math.PI / 2, 0, 0]}
+          castShadow
+        >
+          <cylinderGeometry args={[0.21, 0.21, 0.2, 20]} />
+          <meshStandardMaterial color="#111317" roughness={0.86} metalness={0.08} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.135, 0.135, 0.205, 14]} />
+          <meshStandardMaterial color="#facc15" roughness={0.6} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.115, 0.115, 0.21, 12]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.22} />
+        </mesh>
+      </group>
+
+      {/* Front Right Wheel (Steerable) */}
+      <group ref={frontRightSteerRef} position={[0.72, 0.21, -0.48]}>
+        <mesh
+          ref={(el) => {
+            wheelRefs.current[1] = el;
+          }}
+          rotation={[Math.PI / 2, 0, 0]}
+          castShadow
+        >
+          <cylinderGeometry args={[0.21, 0.21, 0.2, 20]} />
+          <meshStandardMaterial color="#111317" roughness={0.86} metalness={0.08} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.135, 0.135, 0.205, 14]} />
+          <meshStandardMaterial color="#facc15" roughness={0.6} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.115, 0.115, 0.21, 12]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.22} />
+        </mesh>
+      </group>
+
+      {/* Rear Left Wheel */}
+      <group position={[-0.72, 0.215, 0.485]}>
+        <mesh
+          ref={(el) => {
+            wheelRefs.current[2] = el;
+          }}
+          rotation={[Math.PI / 2, 0, 0]}
+          castShadow
+        >
+          <cylinderGeometry args={[0.215, 0.215, 0.22, 20]} />
+          <meshStandardMaterial color="#111317" roughness={0.86} metalness={0.08} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.138, 0.138, 0.225, 14]} />
+          <meshStandardMaterial color="#facc15" roughness={0.6} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.118, 0.118, 0.23, 12]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.22} />
+        </mesh>
+      </group>
+
+      {/* Rear Right Wheel */}
+      <group position={[-0.72, 0.215, -0.485]}>
+        <mesh
+          ref={(el) => {
+            wheelRefs.current[3] = el;
+          }}
+          rotation={[Math.PI / 2, 0, 0]}
+          castShadow
+        >
+          <cylinderGeometry args={[0.215, 0.215, 0.22, 20]} />
+          <meshStandardMaterial color="#111317" roughness={0.86} metalness={0.08} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.138, 0.138, 0.225, 14]} />
+          <meshStandardMaterial color="#facc15" roughness={0.6} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.118, 0.118, 0.23, 12]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.22} />
+        </mesh>
+      </group>
+
+      {/* NASCAR Draft Slipstream Vortex Ribbons off Rear Spoiler */}
+      <group ref={aeroTrailRef} visible={false}>
+        {[-0.44, 0.44].map((zPos, i) => (
+          <mesh key={`trail-${i}`} position={[-2.15, 0.56, zPos]}>
+            <boxGeometry args={[1.85, 0.02, 0.04]} />
+            <meshBasicMaterial color="#38bdf8" transparent opacity={0.42} depthWrite={false} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+};
+
 export const GrandPrixRacer = ({
   item,
   color,
@@ -951,6 +1346,10 @@ export const GrandPrixRacer = ({
   startPhase,
   shadowTex,
   textScale,
+  trackStyle = 'interlagos',
+  simTimeRef,
+  timeScaleRef,
+  isReplayActive = false,
 }: {
   item: { id: string; text: string };
   color: string;
@@ -964,8 +1363,14 @@ export const GrandPrixRacer = ({
   startPhase: string;
   shadowTex: THREE.Texture;
   textScale: number;
+  trackStyle?: RaceTrackStyle;
+  simTimeRef: React.MutableRefObject<number>;
+  timeScaleRef: React.MutableRefObject<number>;
+  isReplayActive?: boolean;
 }) => {
+  const isDaytona = trackStyle === 'daytona';
   const groupRef = useRef<THREE.Group>(null);
+  const bankPitchRef = useRef<THREE.Group>(null);
   const chassisTiltRef = useRef<THREE.Group>(null);
   const drsFlapRef = useRef<THREE.Group>(null);
   const rainLightRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -976,36 +1381,53 @@ export const GrandPrixRacer = ({
   const smokeIntensityRef = useRef(0);
 
   const raceData = useRef({
-    startTime: 0,
+    prevSimTime: 0,
     celebrateStartTime: 0,
     wheelSpin: 0,
     finalPose: null as LiveRacerTelemetry | null,
   });
 
+  const usableHalfWidth = useMemo(() => getCircuitConfig(trackStyle).usableHalfWidth, [trackStyle]);
   const gridLane = index % 2 === 0 ? -GRID_LANE_MAG : GRID_LANE_MAG;
   const gridStartDist = GRID_FIRST_DIST - index * GRID_STEP_DIST;
   const gridPose = useMemo(
-    () => getCircuitPosition(gridStartDist, gridLane * USABLE_HALF_WIDTH),
-    [gridStartDist, gridLane]
+    () => getCircuitPosition(gridStartDist, gridLane * usableHalfWidth, trackStyle),
+    [gridStartDist, gridLane, usableHalfWidth, trackStyle]
   );
-  const donutCenterPose = useMemo(() => getCircuitPosition(6, 0), []);
-  const parcFermePose = useMemo(
-    () => getCircuitPosition(44 + index * 5.2, (index % 2 === 0 ? -0.58 : 0.58) * USABLE_HALF_WIDTH),
-    [index]
-  );
+  const donutCenterPose = useMemo(() => getCelebrationArenaPose(trackStyle), [trackStyle]);
+  const parcFermePose = useMemo(() => {
+    if (isDaytona) {
+      const base = getCircuitPosition(44 + index * 5.8, 0, 'daytona');
+      const apronOffset = -DAYTONA_HALF_WIDTH - 2.4;
+      return {
+        ...base,
+        x: base.x + base.nx * apronOffset,
+        y: 0.01,
+        z: base.z + base.nz * apronOffset,
+        bankAngle: 0,
+        pitchAngle: 0,
+      };
+    }
+    return getCircuitPosition(
+      44 + index * 5.2,
+      (index % 2 === 0 ? -0.58 : 0.58) * usableHalfWidth,
+      'interlagos'
+    );
+  }, [index, isDaytona, usableHalfWidth]);
 
   useFrame((state, delta) => {
-    if (!groupRef.current || !chassisTiltRef.current) return;
+    if (!groupRef.current || !bankPitchRef.current || !chassisTiltRef.current) return;
     const clampedDelta = Math.min(0.05, delta);
     const elapsedClock = state.clock.elapsedTime;
+    const isSimPlayback = (isSpinning && startPhase === 'racing') || isReplayActive;
 
-    if (isSpinning) {
+    if (isSpinning || isReplayActive) {
       raceData.current.celebrateStartTime = 0;
-      if (startPhase === 'racing') {
-        if (raceData.current.startTime === 0) {
-          raceData.current.startTime = elapsedClock;
-        }
-        const elapsed = elapsedClock - raceData.current.startTime;
+      if (isSimPlayback) {
+        const elapsed = simTimeRef.current;
+        const simDelta = elapsed - raceData.current.prevSimTime;
+        raceData.current.prevSimTime = elapsed;
+        const effectiveDt = timeScaleRef.current === 0 ? clampedDelta : Math.max(0.0001, clampedDelta * timeScaleRef.current);
 
         let dist = gridStartDist;
         let lane = gridLane;
@@ -1077,44 +1499,42 @@ export const GrandPrixRacer = ({
           }
         }
 
-        const trackPose = getCircuitPosition(dist, lane * USABLE_HALF_WIDTH);
+        const trackPose = getCircuitPosition(dist, lane * usableHalfWidth, trackStyle);
         const worldHeading = trackPose.angle + yawAngle;
 
         groupRef.current.position.set(trackPose.x, trackPose.y + 0.012, trackPose.z);
-        groupRef.current.rotation.set(0, worldHeading, trackPose.pitchAngle);
+        groupRef.current.rotation.set(0, worldHeading, 0);
+        bankPitchRef.current.rotation.set(-trackPose.bankAngle, 0, trackPose.pitchAngle);
 
         // Physically grounded suspension dynamics:
-        // +Z rotation lifts nose (rear squat on acceleration); -Z rotation drops nose (dive on braking)
         const targetPitch = Math.max(-0.075, Math.min(0.065, longAccel * 0.062));
-        // +X rotation tilts top toward +Z (rightward outward roll in left turns)
-        const targetRoll = Math.max(-0.095, Math.min(0.095, latAccel * 0.072));
-        // Subtle kerb heave vibration when riding apex or exit kerbs
-        const kerbBump = onKerb ? Math.sin(elapsedClock * 58 + index * 2.1) * 0.018 + 0.015 : 0;
+        const targetRoll = Math.max(-0.095, Math.min(0.095, latAccel * (isDaytona ? 0.055 : 0.072)));
+        const kerbBump = onKerb ? Math.sin(elapsed * 58 + index * 2.1) * 0.018 + 0.015 : 0;
 
         chassisTiltRef.current.rotation.z = THREE.MathUtils.damp(
           chassisTiltRef.current.rotation.z,
           targetPitch,
           11,
-          clampedDelta
+          effectiveDt
         );
         chassisTiltRef.current.rotation.x = THREE.MathUtils.damp(
           chassisTiltRef.current.rotation.x,
           targetRoll,
           10,
-          clampedDelta
+          effectiveDt
         );
         chassisTiltRef.current.position.y = THREE.MathUtils.damp(
           chassisTiltRef.current.position.y,
           kerbBump,
           18,
-          clampedDelta
+          effectiveDt
         );
-        // Minor wheelspin shimmy only right off the standing launch
         chassisTiltRef.current.rotation.y =
           elapsed < 1.1 ? Math.sin(elapsed * 26 + index * 2.4) * 0.016 * (1 - elapsed / 1.1) : 0;
 
-        // Wheel angular velocity & front steering angle
-        raceData.current.wheelSpin -= (speed / (0.19 * CAR_VISUAL_SCALE)) * clampedDelta;
+        // Wheel angular velocity & front steering angle scaled by simulation delta
+        const wheelRad = isDaytona ? 0.21 : 0.19;
+        raceData.current.wheelSpin -= (speed / (wheelRad * CAR_VISUAL_SCALE)) * simDelta;
         for (let w = 0; w < 4; w++) {
           const wm = wheelRefs.current[w];
           if (wm) wm.rotation.y = raceData.current.wheelSpin;
@@ -1124,7 +1544,7 @@ export const GrandPrixRacer = ({
             frontLeftSteerRef.current.rotation.y,
             steerAngle,
             16,
-            clampedDelta
+            effectiveDt
           );
         }
         if (frontRightSteerRef.current) {
@@ -1132,24 +1552,24 @@ export const GrandPrixRacer = ({
             frontRightSteerRef.current.rotation.y,
             steerAngle,
             16,
-            clampedDelta
+            effectiveDt
           );
         }
 
-        // DRS flap articulation
+        // DRS flap articulation (F1 only)
         if (drsFlapRef.current) {
           const targetDrsRot = drsActive ? 0.5 : 0;
           drsFlapRef.current.rotation.z = THREE.MathUtils.damp(
             drsFlapRef.current.rotation.z,
             targetDrsRot,
             15,
-            clampedDelta
+            effectiveDt
           );
         }
 
-        // Brake / ERS rain light (intense glow on braking, subtle ERS harvest blink when in tow)
+        // Brake / ERS rain light
         if (rainLightRef.current) {
-          const ersBlink = inSlipstream && !braking ? (Math.sin(elapsedClock * 24) > 0 ? 2.2 : 0.35) : 0.45;
+          const ersBlink = !isDaytona && inSlipstream && !braking ? (Math.sin(elapsed * 24) > 0 ? 2.2 : 0.35) : 0.4;
           rainLightRef.current.emissiveIntensity = braking
             ? 1.5 + brakeIntensity * 5.2
             : ersBlink;
@@ -1157,10 +1577,10 @@ export const GrandPrixRacer = ({
 
         // Slipstream / DRS aero ribbons
         if (aeroTrailRef.current) {
-          aeroTrailRef.current.visible = drsActive || (inSlipstream && displayKmh > 210);
+          aeroTrailRef.current.visible = drsActive || (inSlipstream && displayKmh > (isDaytona ? 255 : 210));
         }
 
-        smokeIntensityRef.current = tireSmoke;
+        smokeIntensityRef.current = timeScaleRef.current === 0 ? 0 : tireSmoke;
 
         const liveTelemetry: LiveRacerTelemetry = {
           id: item.id,
@@ -1170,6 +1590,7 @@ export const GrandPrixRacer = ({
           angle: worldHeading,
           trackAngle: trackPose.angle,
           pitchAngle: trackPose.pitchAngle,
+          bankAngle: trackPose.bankAngle,
           yawAngle,
           totalDistance: dist,
           lane,
@@ -1197,9 +1618,10 @@ export const GrandPrixRacer = ({
         onUpdatePosition(index, liveTelemetry, item.id);
       } else {
         // Pre-start grid lineup
-        raceData.current.startTime = 0;
+        raceData.current.prevSimTime = 0;
         groupRef.current.position.set(gridPose.x, gridPose.y + 0.012, gridPose.z);
-        groupRef.current.rotation.set(0, gridPose.angle, gridPose.pitchAngle);
+        groupRef.current.rotation.set(0, gridPose.angle, 0);
+        bankPitchRef.current.rotation.set(-gridPose.bankAngle, 0, gridPose.pitchAngle);
         chassisTiltRef.current.rotation.set(0, 0, 0);
         chassisTiltRef.current.position.y = 0;
         if (drsFlapRef.current) drsFlapRef.current.rotation.z = 0;
@@ -1214,6 +1636,7 @@ export const GrandPrixRacer = ({
           angle: gridPose.angle,
           trackAngle: gridPose.angle,
           pitchAngle: gridPose.pitchAngle,
+          bankAngle: gridPose.bankAngle,
           yawAngle: 0,
           totalDistance: gridStartDist,
           lane: gridLane,
@@ -1240,7 +1663,7 @@ export const GrandPrixRacer = ({
         onUpdatePosition(index, gridTelemetry, item.id);
       }
     } else {
-      raceData.current.startTime = 0;
+      raceData.current.prevSimTime = 0;
       const useFinish = (expectedWinnerId || isWinner) && raceData.current.finalPose;
       const pose = useFinish ? raceData.current.finalPose! : null;
 
@@ -1251,7 +1674,7 @@ export const GrandPrixRacer = ({
         const celebElapsed = elapsedClock - raceData.current.celebrateStartTime;
 
         if (isWinner) {
-          // Real circular donuts on the open Main Straight with oversteer drift angle & counter-steer
+          // Real circular donuts on the Main Straight / Tri-Oval Infield with oversteer drift angle & counter-steer
           const radius = 4.4;
           const phi = celebElapsed * 2.65;
           const targetX = donutCenterPose.x + radius * Math.cos(phi);
@@ -1283,7 +1706,14 @@ export const GrandPrixRacer = ({
           while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
           while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
           groupRef.current.rotation.y += angleDiff * Math.min(1, clampedDelta * (celebElapsed < 1.2 ? 5 : 14));
-          groupRef.current.rotation.z = donutCenterPose.pitchAngle * Math.cos(groupRef.current.rotation.y);
+          groupRef.current.rotation.x = 0;
+          groupRef.current.rotation.z = 0;
+
+          bankPitchRef.current.rotation.set(
+            0,
+            0,
+            isDaytona ? 0 : donutCenterPose.pitchAngle * Math.cos(groupRef.current.rotation.y)
+          );
 
           chassisTiltRef.current.rotation.y = 0;
           chassisTiltRef.current.rotation.x = THREE.MathUtils.damp(
@@ -1300,7 +1730,6 @@ export const GrandPrixRacer = ({
           );
           chassisTiltRef.current.position.y = 0;
 
-          // Counter-steer front wheels & spin rear tyres rapidly
           raceData.current.wheelSpin -= 28 * clampedDelta;
           for (let w = 0; w < 4; w++) {
             const wm = wheelRefs.current[w];
@@ -1334,12 +1763,14 @@ export const GrandPrixRacer = ({
             y: groupRef.current.position.y,
             z: groupRef.current.position.z,
             angle: groupRef.current.rotation.y,
+            bankAngle: 0,
+            pitchAngle: 0,
             tireSmoke: celebElapsed > 0.45 ? 0.96 : 0,
             brakeIntensity: 0,
             displayKmh: 94,
           }, item.id);
         } else {
-          // Non-winners smoothly pull off into staggered parc ferme formation past the finish line
+          // Non-winners smoothly pull off into staggered parc ferme formation
           groupRef.current.position.x = THREE.MathUtils.damp(
             groupRef.current.position.x,
             parcFermePose.x,
@@ -1362,7 +1793,9 @@ export const GrandPrixRacer = ({
           while (parkDiff > Math.PI) parkDiff -= Math.PI * 2;
           while (parkDiff < -Math.PI) parkDiff += Math.PI * 2;
           groupRef.current.rotation.y += parkDiff * Math.min(1, clampedDelta * 3.5);
-          groupRef.current.rotation.z = parcFermePose.pitchAngle;
+          groupRef.current.rotation.x = 0;
+          groupRef.current.rotation.z = 0;
+          bankPitchRef.current.rotation.set(-parcFermePose.bankAngle, 0, parcFermePose.pitchAngle);
 
           chassisTiltRef.current.rotation.set(0, 0, 0);
           chassisTiltRef.current.position.y = 0;
@@ -1390,7 +1823,8 @@ export const GrandPrixRacer = ({
       } else {
         raceData.current.celebrateStartTime = 0;
         groupRef.current.position.set(gridPose.x, gridPose.y + 0.012, gridPose.z);
-        groupRef.current.rotation.set(0, gridPose.angle, gridPose.pitchAngle);
+        groupRef.current.rotation.set(0, gridPose.angle, 0);
+        bankPitchRef.current.rotation.set(-gridPose.bankAngle, 0, gridPose.pitchAngle);
         chassisTiltRef.current.rotation.set(0, 0, 0);
         chassisTiltRef.current.position.y = 0;
         smokeIntensityRef.current = 0;
@@ -1405,38 +1839,52 @@ export const GrandPrixRacer = ({
 
   return (
     <group ref={groupRef} position={[gridPose.x, gridPose.y + 0.012, gridPose.z]}>
-      <group ref={chassisTiltRef} scale={[CAR_VISUAL_SCALE, CAR_VISUAL_SCALE, CAR_VISUAL_SCALE]}>
-        <FormulaCarModel
-          color={color}
-          drsFlapRef={drsFlapRef}
-          rainLightRef={rainLightRef}
-          wheelRefs={wheelRefs}
-          frontLeftSteerRef={frontLeftSteerRef}
-          frontRightSteerRef={frontRightSteerRef}
-          shadowTex={shadowTex}
-          aeroTrailRef={aeroTrailRef}
-        />
-        <TyreSmoke intensityRef={smokeIntensityRef} />
-      </group>
+      <group ref={bankPitchRef} rotation={[-gridPose.bankAngle, 0, gridPose.pitchAngle]}>
+        <group ref={chassisTiltRef} scale={[CAR_VISUAL_SCALE, CAR_VISUAL_SCALE, CAR_VISUAL_SCALE]}>
+          {isDaytona ? (
+            <StockCarModel
+              color={color}
+              rainLightRef={rainLightRef}
+              wheelRefs={wheelRefs}
+              frontLeftSteerRef={frontLeftSteerRef}
+              frontRightSteerRef={frontRightSteerRef}
+              shadowTex={shadowTex}
+              aeroTrailRef={aeroTrailRef}
+            />
+          ) : (
+            <FormulaCarModel
+              color={color}
+              drsFlapRef={drsFlapRef}
+              rainLightRef={rainLightRef}
+              wheelRefs={wheelRefs}
+              frontLeftSteerRef={frontLeftSteerRef}
+              frontRightSteerRef={frontRightSteerRef}
+              shadowTex={shadowTex}
+              aeroTrailRef={aeroTrailRef}
+            />
+          )}
+          <TyreSmoke intensityRef={smokeIntensityRef} />
+        </group>
 
-      <Billboard position={[0, 1.82, 0]}>
-        <Text
-          fontSize={labelFontSize}
-          color="#f8fafc"
-          anchorX="center"
-          anchorY="middle"
-          outlineWidth={0.075}
-          outlineColor="#020617"
-          fontWeight={700}
-        >
-          {item.text}
-        </Text>
-      </Billboard>
+        <Billboard position={[0, isDaytona ? 1.98 : 1.82, 0]}>
+          <Text
+            fontSize={labelFontSize}
+            color="#f8fafc"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.075}
+            outlineColor="#020617"
+            fontWeight={700}
+          >
+            {item.text}
+          </Text>
+        </Billboard>
+      </group>
     </group>
   );
 };
 
-export const CircuitScenery = ({
+const InterlagosCircuitScenery = ({
   totalRacers,
   lightsCount,
   isLightsOut,
@@ -1984,6 +2432,371 @@ export const CircuitScenery = ({
         <meshStandardMaterial color="#166534" roughness={0.88} />
       </instancedMesh>
     </group>
+  );
+};
+
+const DaytonaCircuitScenery = ({
+  totalRacers,
+  lightsCount,
+  isLightsOut,
+}: {
+  totalRacers: number;
+  lightsCount: number;
+  isLightsOut: boolean;
+}) => {
+  const { gl } = useThree();
+  const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
+
+  const textures = useMemo(() => {
+    return {
+      asphalt: createDaytonaAsphaltTexture(maxAniso),
+      apron: createApronTexture(maxAniso),
+      pitAsphalt: createPitAsphaltTexture(maxAniso),
+      turf: createTurfTexture(maxAniso),
+      checkered: createCheckeredTexture(maxAniso),
+    };
+  }, [maxAniso]);
+
+  const geometries = useMemo(() => {
+    const terrain = createTerrainGeometry('daytona');
+    const asphalt = createCircuitRibbonGeometry(-DAYTONA_HALF_WIDTH, DAYTONA_HALF_WIDTH, 0, 20, 0, 1, 'daytona');
+    // Watertight flat inner apron flush with inner banked edge (y = 0)
+    const innerApron = createCircuitRibbonGeometry(-DAYTONA_HALF_WIDTH - 4.2, -DAYTONA_HALF_WIDTH, 0, 18, 0, 1, 'daytona', 0);
+    const pitLane = createDaytonaPitLaneGeometry(4.4, 0.018);
+
+    // Outer 31°-banked SAFER concrete barrier + top red/white rail
+    const outerBarrier = createCircuitBarrierGeometry(DAYTONA_HALF_WIDTH + 0.52, 1.55, 0.72, -0.15, 0, 1, 'daytona');
+    const outerRail = createCircuitBarrierGeometry(DAYTONA_HALF_WIDTH + 0.52, 0.24, 0.78, 1.4, 0, 1, 'daytona');
+
+    return {
+      terrain,
+      asphalt,
+      innerApron,
+      pitLane,
+      outerBarrier,
+      outerRail,
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.values(textures).forEach((t) => t.dispose());
+      Object.values(geometries).forEach((g) => g.dispose());
+    };
+  }, [textures, geometries]);
+
+  const startPose = useMemo(() => getCircuitPosition(0, 0, 'daytona'), []);
+  const catchFencePosts = useMemo(() => {
+    const arr: { x: number; y: number; z: number; angle: number }[] = [];
+    const totalS = getCircuitConfig('daytona').perimeter;
+    const count = 48;
+    for (let i = 0; i < count; i++) {
+      const p = getCircuitPosition((i / count) * totalS, DAYTONA_HALF_WIDTH + 0.55, 'daytona');
+      arr.push({ x: p.x, y: p.y + 1.5, z: p.z, angle: p.angle });
+    }
+    return arr;
+  }, []);
+
+  // Instanced Florida palm & coastal trees grounded via terrainHeightAt(x, z, 'daytona')
+  const treeCount = 190;
+  const trunkMeshRef = useRef<THREE.InstancedMesh>(null);
+  const crownMeshRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    if (!trunkMeshRef.current || !crownMeshRef.current) return;
+    const daytonaSamples = getCircuitConfig('daytona').samples;
+    const dummy = new THREE.Object3D();
+    const color = new THREE.Color();
+    let placed = 0;
+
+    for (let i = 0; i < 1400 && placed < treeCount; i++) {
+      const r1 = Math.sin(i * 17.139) * 43758.5453;
+      const rand1 = r1 - Math.floor(r1);
+      const r2 = Math.sin(i * 63.719) * 43758.5453;
+      const rand2 = r2 - Math.floor(r2);
+      const r3 = Math.sin(i * 29.417) * 43758.5453;
+      const rand3 = r3 - Math.floor(r3);
+
+      const x = (rand1 - 0.5) * 780;
+      const z = (rand2 - 0.5) * 560;
+
+      // Stay clear of track corridor (> 42m) & tri-oval grandstand
+      let minTrackDistSq = Infinity;
+      for (let s = 0; s < TRACK_SAMPLES; s += 6) {
+        const samp = daytonaSamples[s];
+        const dx = x - samp.x;
+        const dz = z - samp.z;
+        const dSq = dx * dx + dz * dz;
+        if (dSq < minTrackDistSq) minTrackDistSq = dSq;
+      }
+      if (minTrackDistSq < 42 * 42) continue;
+
+      if (x > -150 && x < 150 && z > 45 && z < 235) continue;
+      const ldx = (x - DAYTONA_LAKE_CENTER.x) / (DAYTONA_LAKE_CENTER.radiusX + 8);
+      const ldz = (z - DAYTONA_LAKE_CENTER.z) / (DAYTONA_LAKE_CENTER.radiusZ + 8);
+      if (ldx * ldx + ldz * ldz < 1.0) continue;
+
+      const groundY = terrainHeightAt(x, z, 'daytona');
+      const scale = 0.9 + rand3 * 0.75;
+
+      dummy.position.set(x, groundY + 1.8 * scale - 0.2, z);
+      dummy.scale.set(scale * 0.85, scale * 1.4, scale * 0.85);
+      dummy.rotation.y = rand1 * Math.PI * 2;
+      dummy.updateMatrix();
+      trunkMeshRef.current.setMatrixAt(placed, dummy.matrix);
+
+      dummy.position.set(x, groundY + 4.4 * scale - 0.1, z);
+      dummy.scale.set(scale * 1.3, scale * 0.8, scale * 1.3);
+      dummy.updateMatrix();
+      crownMeshRef.current.setMatrixAt(placed, dummy.matrix);
+
+      color.setHSL(0.31 + (rand3 - 0.5) * 0.05, 0.56, 0.27 + rand1 * 0.1);
+      crownMeshRef.current.setColorAt(placed, color);
+      placed++;
+    }
+
+    trunkMeshRef.current.count = placed;
+    crownMeshRef.current.count = placed;
+    trunkMeshRef.current.instanceMatrix.needsUpdate = true;
+    crownMeshRef.current.instanceMatrix.needsUpdate = true;
+    if (crownMeshRef.current.instanceColor) crownMeshRef.current.instanceColor.needsUpdate = true;
+    trunkMeshRef.current.computeBoundingSphere();
+    crownMeshRef.current.computeBoundingSphere();
+  }, []);
+
+  const floodlightPositions: [number, number, number][] = useMemo(
+    () => [
+      [-120, 0, 178],
+      [-40, 0, 178],
+      [40, 0, 178],
+      [120, 0, 178],
+      [284, 0, 0],
+      [130, 0, -150],
+      [-130, 0, -150],
+      [-284, 0, 0],
+    ],
+    []
+  );
+
+  return (
+    <group>
+      {/* Flat Florida Coastal Speedbowl Terrain */}
+      <mesh geometry={geometries.terrain} receiveShadow>
+        <meshStandardMaterial map={textures.turf} vertexColors roughness={0.93} metalness={0.0} />
+      </mesh>
+
+      {/* Lake Lloyd (Sunlit Daytona Infield Lake) */}
+      <mesh
+        position={[DAYTONA_LAKE_CENTER.x, DAYTONA_LAKE_CENTER.y, DAYTONA_LAKE_CENTER.z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        scale={[1.15, 0.52, 1]}
+        receiveShadow
+      >
+        <circleGeometry args={[58, 40]} />
+        <meshStandardMaterial color="#0284c7" roughness={0.12} metalness={0.58} envMapIntensity={1.3} />
+      </mesh>
+
+      {/* Banked 31° Tri-Oval Asphalt Ribbon */}
+      <mesh geometry={geometries.asphalt} receiveShadow>
+        <meshStandardMaterial map={textures.asphalt} roughness={0.76} metalness={0.05} />
+      </mesh>
+
+      {/* Watertight Flat Inner Apron */}
+      <mesh geometry={geometries.innerApron} receiveShadow>
+        <meshStandardMaterial map={textures.apron} roughness={0.82} metalness={0.04} />
+      </mesh>
+
+      {/* Daytona Infield Pit Road */}
+      <mesh geometry={geometries.pitLane} receiveShadow>
+        <meshStandardMaterial map={textures.pitAsphalt} roughness={0.8} metalness={0.04} />
+      </mesh>
+
+      {/* Outer SAFER Barrier Wall & Red/White Top Safety Rail */}
+      <mesh geometry={geometries.outerBarrier} castShadow receiveShadow>
+        <meshStandardMaterial color="#e2e8f0" roughness={0.5} metalness={0.25} />
+      </mesh>
+      <mesh geometry={geometries.outerRail} castShadow>
+        <meshStandardMaterial color="#dc2626" roughness={0.45} metalness={0.3} />
+      </mesh>
+
+      {/* Perimeter Catch Fence Steel Posts */}
+      {catchFencePosts.map((p, i) => (
+        <mesh key={`cfp-${i}`} position={[p.x, p.y + 1.2, p.z]} rotation={[0, p.angle, 0]}>
+          <boxGeometry args={[0.14, 2.4, 0.14]} />
+          <meshStandardMaterial color="#475569" metalness={0.8} roughness={0.35} />
+        </mesh>
+      ))}
+
+      {/* Checkered Start/Finish Line flush with 18° Tri-Oval banking */}
+      <group position={[startPose.x, startPose.y + 0.025, startPose.z]} rotation={[0, startPose.angle, 0]}>
+        <group rotation={[-startPose.bankAngle, 0, startPose.pitchAngle]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={[3.8, DAYTONA_TRACK_WIDTH - 0.8]} />
+            <meshStandardMaterial
+              map={textures.checkered}
+              roughness={0.72}
+              polygonOffset
+              polygonOffsetFactor={-2}
+            />
+          </mesh>
+        </group>
+      </group>
+
+      {/* Daytona Starter Gantry & Sloped Tri-Oval Starting Grid Markings */}
+      <StartLightGantry lightsCount={lightsCount} isLightsOut={isLightsOut} trackStyle="daytona" />
+      <StartingGridMarkings total={totalRacers} trackStyle="daytona" />
+
+      {/* Iconic Tri-Oval Infield Turf Emblem Patch & Daytona Painted Deck */}
+      <group position={[0, 0.03, 121]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[86, 16]} />
+          <meshStandardMaterial color="#15803d" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[52, 4.2]} />
+          <meshStandardMaterial color="#facc15" roughness={0.55} polygonOffset polygonOffsetFactor={-2} />
+        </mesh>
+        <mesh position={[0, 0.02, -4.5]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[52, 1.4]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.55} polygonOffset polygonOffsetFactor={-2} />
+        </mesh>
+      </group>
+
+      {/* Daytona Infield Pit Wall & Team Pit Boxes */}
+      <group position={[0, 0, 74]}>
+        <mesh position={[0, 0.65, 0]} castShadow receiveShadow>
+          <boxGeometry args={[176, 1.3, 0.65]} />
+          <meshStandardMaterial color="#cbd5e1" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 1.35, 0]}>
+          <boxGeometry args={[176, 0.14, 0.72]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.45} />
+        </mesh>
+        {[-66, -44, -22, 0, 22, 44, 66].map((px, i) => (
+          <group key={`nascar-pit-${i}`} position={[px, 0.9, -2.5]}>
+            <mesh position={[0, 0.25, 0]} castShadow>
+              <boxGeometry args={[6.4, 2.2, 2.4]} />
+              <meshStandardMaterial color="#0f172a" roughness={0.65} />
+            </mesh>
+            <mesh position={[0, 1.45, 0]}>
+              <boxGeometry args={[6.8, 0.16, 2.8]} />
+              <meshStandardMaterial color={i % 2 === 0 ? '#0284c7' : '#eab308'} roughness={0.4} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* Daytona NASCAR Scoring Pylon Tower (Infield beside Lake Lloyd) */}
+      <group position={[88, 0, 48]}>
+        <mesh position={[0, 14, 0]} castShadow>
+          <boxGeometry args={[3.6, 28, 3.6]} />
+          <meshStandardMaterial color="#0f172a" metalness={0.65} roughness={0.3} />
+        </mesh>
+        {[6, 10, 14, 18, 22].map((py, idx) => (
+          <mesh key={`pylon-led-${idx}`} position={[0, py, 0]}>
+            <boxGeometry args={[3.85, 1.4, 3.85]} />
+            <meshStandardMaterial
+              color="#020617"
+              emissive={idx === 4 ? '#facc15' : '#ef4444'}
+              emissiveIntensity={idx === 4 ? 1.5 : 0.85}
+            />
+          </mesh>
+        ))}
+        <mesh position={[0, 29.5, 0]}>
+          <cylinderGeometry args={[0.2, 0.45, 5, 8]} />
+          <meshStandardMaterial color="#f8fafc" metalness={0.7} roughness={0.25} />
+        </mesh>
+      </group>
+
+      {/* Massive Daytona Tri-Oval Grandstand Stadium (World Center of Racing) */}
+      <group position={[0, 0, 198]}>
+        {/* Concrete Substructure */}
+        <mesh position={[0, 6.5, 6]} castShadow receiveShadow>
+          <boxGeometry args={[268, 13, 28]} />
+          <meshStandardMaterial color="#334155" roughness={0.88} />
+        </mesh>
+        {/* Multi-Tier NASCAR Seating Bowl facing Tri-Oval (-Z) */}
+        <mesh position={[0, 9.5, -5.5]} rotation={[-0.42, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[262, 1.6, 18]} />
+          <meshStandardMaterial color="#0284c7" roughness={0.76} />
+        </mesh>
+        <mesh position={[0, 15.8, 3.5]} rotation={[-0.44, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[262, 1.6, 17]} />
+          <meshStandardMaterial color="#ef4444" roughness={0.76} />
+        </mesh>
+        <mesh position={[0, 22.0, 12.2]} rotation={[-0.44, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[262, 1.6, 14]} />
+          <meshStandardMaterial color="#eab308" roughness={0.76} />
+        </mesh>
+        {/* Upper Skybox Press & VIP Suites */}
+        <mesh position={[0, 27.6, 17.5]} castShadow>
+          <boxGeometry args={[184, 5.2, 9.5]} />
+          <meshPhysicalMaterial color="#0c4a6e" metalness={0.85} roughness={0.14} clearcoat={0.95} />
+        </mesh>
+        {/* Overhead Stadium Roof Canopy */}
+        <mesh position={[0, 31.2, 14.5]} rotation={[0.06, 0, 0]} castShadow>
+          <boxGeometry args={[268, 0.9, 20]} />
+          <meshStandardMaterial color="#f1f5f9" roughness={0.4} metalness={0.35} />
+        </mesh>
+        <mesh position={[0, 30.8, 4.4]}>
+          <boxGeometry args={[268, 1.1, 0.7]} />
+          <meshStandardMaterial color="#0369a1" roughness={0.4} />
+        </mesh>
+      </group>
+
+      {/* Stadium Floodlight Masts around the Oval */}
+      {floodlightPositions.map(([fx, fy, fz], idx) => (
+        <group key={`fl-${idx}`} position={[fx, fy, fz]}>
+          <mesh position={[0, 19, 0]} castShadow>
+            <cylinderGeometry args={[0.35, 0.65, 38, 8]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.75} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 38, 0]}>
+            <boxGeometry args={[5.2, 2.1, 0.9]} />
+            <meshStandardMaterial color="#f8fafc" emissive="#fef9c3" emissiveIntensity={0.65} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Instanced Florida Palms & Coastal Trees */}
+      <instancedMesh ref={trunkMeshRef} args={[undefined, undefined, treeCount]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.18, 0.34, 3.6, 7]} />
+        <meshStandardMaterial color="#5c4033" roughness={0.95} />
+      </instancedMesh>
+      <instancedMesh ref={crownMeshRef} args={[undefined, undefined, treeCount]} castShadow receiveShadow>
+        <coneGeometry args={[2.5, 3.8, 7]} />
+        <meshStandardMaterial color="#15803d" roughness={0.85} />
+      </instancedMesh>
+    </group>
+  );
+};
+
+export const CircuitScenery = ({
+  totalRacers,
+  lightsCount,
+  isLightsOut,
+  trackStyle = 'interlagos',
+}: {
+  totalRacers: number;
+  lightsCount: number;
+  isLightsOut: boolean;
+  trackStyle?: RaceTrackStyle;
+}) => {
+  if (trackStyle === 'daytona') {
+    return (
+      <DaytonaCircuitScenery
+        totalRacers={totalRacers}
+        lightsCount={lightsCount}
+        isLightsOut={isLightsOut}
+      />
+    );
+  }
+  return (
+    <InterlagosCircuitScenery
+      totalRacers={totalRacers}
+      lightsCount={lightsCount}
+      isLightsOut={isLightsOut}
+    />
   );
 };
 
